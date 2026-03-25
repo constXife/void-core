@@ -9,23 +9,26 @@
     if cfg.generatedConfigPath != null
     then cfg.generatedConfigPath
     else "/etc/rauthy/config.toml";
+  templateEnvFiles = [cfg.envFile] ++ cfg.templateExtraEnvFiles;
   templateScript = ''
-    if [ ! -r ${lib.escapeShellArg cfg.envFile} ]; then
-      echo "Missing ${cfg.envFile}; skipping Rauthy config generation" >&2
-      exit 0
-    fi
-
     if [ ! -r ${lib.escapeShellArg cfg.configTemplate} ]; then
       echo "Missing ${cfg.configTemplate}; skipping Rauthy config generation" >&2
       exit 0
     fi
 
-    set -a
-    . ${lib.escapeShellArg cfg.envFile}
-    set +a
+    for env_file in ${lib.concatStringsSep " " (map lib.escapeShellArg templateEnvFiles)}; do
+      if [ ! -r "$env_file" ]; then
+        echo "Missing $env_file; skipping Rauthy config generation" >&2
+        exit 0
+      fi
+
+      set -a
+      . "$env_file"
+      set +a
+    done
 
     ${lib.concatStringsSep "\n" (map (entry: ''
-      : "''${${entry.envVar}:?Missing ${entry.envVar} in ${cfg.envFile}}"
+      : "''${${entry.envVar}:?Missing ${entry.envVar} in Rauthy template env files}"
     '') cfg.secretPlaceholders)}
 
     escape_sed() {
@@ -61,6 +64,12 @@ in {
       type = lib.types.str;
       default = "/run/secrets/rauthy.env";
       description = "Runtime env file with Rauthy secrets.";
+    };
+
+    templateExtraEnvFiles = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Additional env files sourced during config template rendering.";
     };
 
     configTemplate = lib.mkOption {
@@ -209,7 +218,7 @@ in {
     systemd.services."podman-rauthy".unitConfig.ConditionPathExists = [
       cfg.envFile
       cfg.configTemplate
-    ];
+    ] ++ cfg.templateExtraEnvFiles;
 
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0700 ${cfg.generatedConfigOwner} ${cfg.generatedConfigGroup} -"
