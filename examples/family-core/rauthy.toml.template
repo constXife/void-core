@@ -19,7 +19,7 @@ key_active = "__RAUTHY_KEY_ACTIVE__"
 listen_address = "0.0.0.0"
 port_http = 8080
 scheme = "http"
-pub_url = "__RAUTHY_PUBLIC_HOST__"
+pub_url = "__RAUTHY_PUBLIC_URL__"
 proxy_mode = true
 
 [webauthn]

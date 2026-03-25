@@ -41,7 +41,7 @@
     -e "s|__RAUTHY_PUBLIC_HOST__|$(escape_sed "$public_host")|g" \
     -e "s|__RAUTHY_PUBLIC_URL__|$(escape_sed "$public_url")|g" \
     ${lib.concatStringsSep " \\\n" (map (entry: ''
-      -e "s|${entry.placeholder}|$(escape_sed "$${entry.envVar}")|g"'') cfg.secretPlaceholders)} \
+      -e "s|${entry.placeholder}|$(escape_sed "$(${pkgs.coreutils}/bin/printenv ${lib.escapeShellArg entry.envVar})")|g"'') cfg.secretPlaceholders)} \
       ${lib.escapeShellArg cfg.configTemplate} > "$tmp"
 
     ${pkgs.coreutils}/bin/install -D -m ${cfg.generatedConfigMode} -o ${cfg.generatedConfigOwner} -g ${cfg.generatedConfigGroup} "$tmp" ${lib.escapeShellArg configPath}
