@@ -122,14 +122,10 @@ in {
             "${caHost}" = {
               extraConfig = ''
                 ${tlsSnippet}
-                @plaintext expression {http.request.scheme} == "http"
-                handle @plaintext {
+                @bootstrap path / /index.html /root_ca.crt /root_ca.der /root_ca.sha256
+                handle @bootstrap {
                   root * ${cfg.caPublicRoot}
                   file_server
-                }
-                @root path /
-                handle @root {
-                  respond "HTTPS works." 200
                 }
                 handle {
                   reverse_proxy ${cfg.caUpstream} {
