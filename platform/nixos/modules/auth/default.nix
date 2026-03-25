@@ -1,0 +1,6 @@
+{
+  imports = [
+    ../naming
+    ./rauthy.nix
+  ];
+}

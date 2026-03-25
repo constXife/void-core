@@ -1,0 +1,14 @@
+$ORIGIN site.home.arpa.
+$TTL 3600
+@ IN SOA core-01.site.home.arpa. admin.site.home.arpa. (
+  2026032401 ; serial
+  7200       ; refresh
+  3600       ; retry
+  1209600    ; expire
+  3600       ; minimum
+)
+
+@       IN NS core-01.site.home.arpa.
+core-01 IN A  192.0.2.10
+id      IN A  192.0.2.10
+ca      IN A  192.0.2.10

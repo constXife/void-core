@@ -1,0 +1,11 @@
+# Templates
+
+This directory contains reusable templates for downstream consumption.
+
+The initial focus is:
+- a minimal client deployment template for `family-core`.
+
+That template now includes:
+- the shared site-domain contract;
+- a runtime secret materialization example for `rauthy.env`;
+- opt-in placeholders for the private DNS / CA / ingress path.

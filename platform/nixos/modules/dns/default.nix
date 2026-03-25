@@ -1,0 +1,6 @@
+{
+  imports = [
+    ../naming
+    ./coredns.nix
+  ];
+}

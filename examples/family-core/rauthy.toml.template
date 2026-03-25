@@ -1,0 +1,27 @@
+[dev]
+dev_mode = false
+dpop_http = false
+
+[bootstrap]
+admin_email = "admin@example.internal"
+
+[cluster]
+node_id = 1
+nodes = ["1 localhost:8100 localhost:8200"]
+secret_raft = "__HQL_SECRET_RAFT__"
+secret_api = "__HQL_SECRET_API__"
+
+[encryption]
+keys = ["__RAUTHY_ENCRYPTION_KEYS__"]
+key_active = "__RAUTHY_KEY_ACTIVE__"
+
+[server]
+listen_address = "0.0.0.0"
+port_http = 8080
+scheme = "http"
+pub_url = "__RAUTHY_PUBLIC_HOST__"
+proxy_mode = true
+
+[webauthn]
+rp_id = "__RAUTHY_PUBLIC_HOST__"
+rp_origin = "__RAUTHY_PUBLIC_URL__"

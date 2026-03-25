@@ -1,0 +1,34 @@
+# Foundation Modules
+
+## Current Scaffold
+
+The first real foundation content in `void-core` is intentionally narrow:
+
+- `naming` — defines the site domain and service FQDN contract
+- `secrets/files` — defines the runtime secret-files contract
+- `secrets/sops-baseline` — provides a minimal `sops-nix` integration baseline
+- `auth/rauthy` — provides a minimal Rauthy container and config-generation integration
+- `dns/coredns` — provides a minimal private-zone resolver baseline
+- `ingress/caddy` — provides a minimal host-based ingress baseline
+- `pki/step-ca` — provides a minimal private CA baseline
+
+## Why This Comes First
+
+This order matches the first-wave implementation strategy:
+
+1. deployment skeleton
+2. private naming contract
+3. bootstrap secrets
+4. auth baseline
+5. private DNS, ingress, and PKI baseline
+6. shell and status later
+
+The current modules are scaffolds, not a production-complete identity stack.
+
+## Related Template
+
+`void-core` also ships a minimal client deployment template under:
+
+- `templates/client-deploy/family-core`
+
+This template shows how a client-owned deployment repository is expected to consume the foundation layer.
