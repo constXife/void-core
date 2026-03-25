@@ -37,10 +37,26 @@
 
     tmp="$(${pkgs.coreutils}/bin/mktemp)"
 
+    bootstrap_admin_line=""
+    ${lib.optionalString (cfg.bootstrapAdminPasswordEnvVar != null) ''
+      if [ -n "''${${cfg.bootstrapAdminPasswordEnvVar}:-}" ]; then
+        admin_password_salt="$(${pkgs.openssl}/bin/openssl rand -hex 16)"
+        if ! admin_password_hash="$(${pkgs.coreutils}/bin/printf '%s' "''${${cfg.bootstrapAdminPasswordEnvVar}}" | ${pkgs.libargon2}/bin/argon2 "$admin_password_salt" -id -e -k 131072 -t 4 -p 8)"; then
+          echo "Failed to hash ${cfg.bootstrapAdminPasswordEnvVar} with Argon2id" >&2
+          exit 1
+        fi
+
+        bootstrap_admin_line="pasword_argon2id = \"$admin_password_hash\""
+      fi
+    ''}
+
+    bootstrap_admin_email=${lib.escapeShellArg cfg.bootstrapAdminEmail}
     public_host=${lib.escapeShellArg cfg.publicHost}
     public_url=${lib.escapeShellArg "${cfg.publicScheme}://${cfg.publicHost}"}
 
     ${pkgs.gnused}/bin/sed \
+    -e "s|__RAUTHY_ADMIN_EMAIL__|$(escape_sed "$bootstrap_admin_email")|g" \
+    -e "s|__RAUTHY_ADMIN_BOOTSTRAP__|$(escape_sed "$bootstrap_admin_line")|g" \
     -e "s|__RAUTHY_PUBLIC_HOST__|$(escape_sed "$public_host")|g" \
     -e "s|__RAUTHY_PUBLIC_URL__|$(escape_sed "$public_url")|g" \
     ${lib.concatStringsSep " \\\n" (map (entry: ''
@@ -88,6 +104,18 @@ in {
       type = lib.types.str;
       default = "https";
       description = "Public URL scheme used for Rauthy external links.";
+    };
+
+    bootstrapAdminEmail = lib.mkOption {
+      type = lib.types.str;
+      default = "admin@example.internal";
+      description = "Bootstrap admin e-mail rendered into the Rauthy config template.";
+    };
+
+    bootstrapAdminPasswordEnvVar = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Optional env var containing the bootstrap admin password to hash into the config template.";
     };
 
     generatedConfigPath = lib.mkOption {

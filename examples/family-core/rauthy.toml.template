@@ -3,7 +3,8 @@ dev_mode = false
 dpop_http = false
 
 [bootstrap]
-admin_email = "admin@example.internal"
+admin_email = "__RAUTHY_ADMIN_EMAIL__"
+__RAUTHY_ADMIN_BOOTSTRAP__
 
 [cluster]
 node_id = 1
