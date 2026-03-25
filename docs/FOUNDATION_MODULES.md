@@ -6,7 +6,7 @@ The first real foundation content in `void-core` is intentionally narrow:
 
 - `naming` — defines the site domain and service FQDN contract
 - `secrets/files` — defines the runtime secret-files contract
-- `secrets/sops-baseline` — provides a minimal `sops-nix` integration baseline
+- `secrets/sops-baseline` — provides an optional `sops-nix` reference baseline for materializing runtime secret files
 - `auth/rauthy` — provides a minimal Rauthy container and config-generation integration
 - `dns/coredns` — provides a minimal private-zone resolver baseline
 - `ingress/caddy` — provides a minimal host-based ingress baseline

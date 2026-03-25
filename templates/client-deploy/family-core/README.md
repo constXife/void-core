@@ -47,7 +47,7 @@ The profile wires the shared naming and secret-delivery contract first:
 - `void.site.domain`
 - `void.network.dns.mode`
 - `void.network.tls.mode`
-- `rauthy.env` materialized via `sops-nix`
+- `rauthy.env` materialized via the optional `sops-nix` baseline shipped by `void-core`
 
 The private DNS / CA / ingress path remains opt-in until the client repo provides:
 - a real private zone file under `dns/`;
