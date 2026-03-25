@@ -24,4 +24,4 @@ proxy_mode = true
 
 [webauthn]
 rp_id = "__RAUTHY_PUBLIC_HOST__"
-rp_origin = "__RAUTHY_PUBLIC_URL__"
+rp_origin = "__RAUTHY_PUBLIC_URL__:443"
