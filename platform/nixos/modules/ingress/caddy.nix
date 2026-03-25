@@ -93,48 +93,54 @@ in {
 
         virtualHosts =
           {
-            ":80".extraConfig = ''
-              ${lib.optionalString (cfg.exposeCa && caHost != null) ''
-                @ca host ${caHost}
-                handle @ca {
+            ":80" = {
+              extraConfig = ''
+                ${lib.optionalString (cfg.exposeCa && caHost != null) ''
+                  @ca host ${caHost}
+                  handle @ca {
+                    root * ${cfg.caPublicRoot}
+                    file_server
+                  }
+                ''}
+                handle {
+                  redir https://{host}{uri} 308
+                }
+              '';
+              logFormat = null;
+            };
+          }
+          // lib.optionalAttrs (cfg.exposeIdentity && idHost != null) {
+            "${idHost}" = {
+              extraConfig = ''
+                ${tlsSnippet}
+                reverse_proxy ${cfg.idUpstream}
+              '';
+              logFormat = null;
+            };
+          }
+          // lib.optionalAttrs (cfg.exposeCa && caHost != null) {
+            "${caHost}" = {
+              extraConfig = ''
+                ${tlsSnippet}
+                @plaintext expression {http.request.scheme} == "http"
+                handle @plaintext {
                   root * ${cfg.caPublicRoot}
                   file_server
                 }
-              ''}
-              handle {
-                redir https://{host}{uri} 308
-              }
-            '';
-            ":80".logFormat = null;
-          }
-          // lib.optionalAttrs (cfg.exposeIdentity && idHost != null) {
-            "${idHost}".extraConfig = ''
-              ${tlsSnippet}
-              reverse_proxy ${cfg.idUpstream}
-            '';
-            "${idHost}".logFormat = null;
-          }
-          // lib.optionalAttrs (cfg.exposeCa && caHost != null) {
-            "${caHost}".extraConfig = ''
-              ${tlsSnippet}
-              @plaintext expression {http.request.scheme} == "http"
-              handle @plaintext {
-                root * ${cfg.caPublicRoot}
-                file_server
-              }
-              @root path /
-              handle @root {
-                respond "HTTPS works." 200
-              }
-              handle {
-                reverse_proxy ${cfg.caUpstream} {
-                  transport http {
-                    tls_insecure_skip_verify
+                @root path /
+                handle @root {
+                  respond "HTTPS works." 200
+                }
+                handle {
+                  reverse_proxy ${cfg.caUpstream} {
+                    transport http {
+                      tls_insecure_skip_verify
+                    }
                   }
                 }
-              }
-            '';
-            "${caHost}".logFormat = null;
+              '';
+              logFormat = null;
+            };
           };
       }
       // lib.optionalAttrs (cfg.acmeCA != null) {
