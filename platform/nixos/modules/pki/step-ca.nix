@@ -66,6 +66,7 @@ in {
           address = cfg.address;
           port = cfg.port;
           intermediatePasswordFile = cfg.intermediatePasswordFile;
+          settings = lib.mkDefault {};
         }
         // lib.optionalAttrs (cfg.settingsFile != null) {
           settings = builtins.fromJSON (builtins.readFile cfg.settingsFile);
