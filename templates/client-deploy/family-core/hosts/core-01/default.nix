@@ -1,4 +1,4 @@
-{ ... }: {
+{...}: {
   imports = [
     ./hardware-configuration.nix
     ../../profiles/family-core/default.nix

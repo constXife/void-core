@@ -3,14 +3,17 @@
   lib,
   ...
 }: let
+  types = import ../../lib/types.nix {inherit lib;};
   cfg = config.void.trust.stepCa;
 in {
   options.void.trust.stepCa = {
     enable = lib.mkEnableOption "step-ca private CA baseline";
 
     address = lib.mkOption {
+      # governance-open-contract: step-ca may bind wildcard or specific addresses.
       type = lib.types.str;
       default = "0.0.0.0";
+      example = "0.0.0.0";
       description = "Bind address for step-ca.";
     };
 
@@ -23,18 +26,21 @@ in {
     settingsFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
+      example = ./step-ca.json;
       description = "Optional evaluated JSON config for step-ca.";
     };
 
     runtimeConfigFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "/run/secrets/step-ca.json";
+      type = lib.types.nullOr types.absoluteRuntimePath;
+      default = null;
+      example = "/run/secrets/step-ca.json";
       description = "Runtime JSON config path used by the step-ca systemd unit.";
     };
 
     intermediatePasswordFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+      type = lib.types.nullOr types.absoluteRuntimePath;
       default = "/var/lib/step-ca/secrets/intermediate_password";
+      example = "/var/lib/step-ca/secrets/intermediate_password";
       description = "Password file used for the intermediate CA key.";
     };
 
@@ -45,8 +51,9 @@ in {
     };
 
     publicRootDir = lib.mkOption {
-      type = lib.types.str;
+      type = types.absoluteRuntimePath;
       default = "/var/lib/step-ca/public";
+      example = "/var/lib/step-ca/public";
       description = "Directory that exposes root CA material for bootstrap download.";
     };
   };
@@ -63,16 +70,14 @@ in {
       services.step-ca =
         {
           enable = true;
-          address = cfg.address;
-          port = cfg.port;
-          intermediatePasswordFile = cfg.intermediatePasswordFile;
+          inherit (cfg) address port intermediatePasswordFile;
           settings = lib.mkDefault {};
         }
         // lib.optionalAttrs (cfg.settingsFile != null) {
           settings = builtins.fromJSON (builtins.readFile cfg.settingsFile);
         };
 
-      networking.firewall.allowedTCPPorts = [ cfg.port ];
+      networking.firewall.allowedTCPPorts = [cfg.port];
     }
 
     (lib.mkIf (cfg.runtimeConfigFile != null) {

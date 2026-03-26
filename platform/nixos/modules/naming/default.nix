@@ -3,6 +3,7 @@
   lib,
   ...
 }: let
+  types = import ../../lib/types.nix {inherit lib;};
   mkFqdn = subdomain:
     if subdomain == null
     then null
@@ -10,8 +11,9 @@
 in {
   options.void = {
     site.domain = lib.mkOption {
-      type = lib.types.str;
+      type = types.fqdn;
       default = "site.home.arpa";
+      example = "family.home.arpa";
       description = "Canonical site domain for this deployment.";
     };
 
@@ -35,28 +37,32 @@ in {
       description = "How TLS certificates are obtained for private endpoints.";
     };
 
-    services.id.subdomain = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "id";
-      description = "Subdomain used for the identity endpoint.";
-    };
+    services = {
+      id.subdomain = lib.mkOption {
+        type = lib.types.nullOr types.dnsLabel;
+        default = "id";
+        example = "id";
+        description = "Subdomain used for the identity endpoint.";
+      };
 
-    services.id.fqdn = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      readOnly = true;
-      description = "Fully-qualified domain name for the identity endpoint.";
-    };
+      id.fqdn = lib.mkOption {
+        type = lib.types.nullOr types.fqdn;
+        readOnly = true;
+        description = "Fully-qualified domain name for the identity endpoint.";
+      };
 
-    services.ca.subdomain = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "ca";
-      description = "Subdomain used for the private CA endpoint.";
-    };
+      ca.subdomain = lib.mkOption {
+        type = lib.types.nullOr types.dnsLabel;
+        default = "ca";
+        example = "ca";
+        description = "Subdomain used for the private CA endpoint.";
+      };
 
-    services.ca.fqdn = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      readOnly = true;
-      description = "Fully-qualified domain name for the private CA endpoint.";
+      ca.fqdn = lib.mkOption {
+        type = lib.types.nullOr types.fqdn;
+        readOnly = true;
+        description = "Fully-qualified domain name for the private CA endpoint.";
+      };
     };
   };
 

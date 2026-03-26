@@ -1,4 +1,4 @@
-{ ... }: {
+{...}: {
   imports = [
     ../../../modules/naming
     ../../../modules/auth

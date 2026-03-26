@@ -6,10 +6,10 @@
     void-core.url = "path:../../../";
   };
 
-  outputs = inputs@{ nixpkgs, ... }: {
+  outputs = inputs @ {nixpkgs, ...}: {
     nixosConfigurations.core-01 = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
+      specialArgs = {inherit inputs;};
       modules = [
         inputs.void-core.nixosModules.foundation
         ./hosts/core-01/default.nix

@@ -11,6 +11,7 @@ The first real foundation content in `void-core` is intentionally narrow:
 - `dns/coredns` — provides a minimal private-zone resolver baseline
 - `ingress/caddy` — provides a minimal host-based ingress baseline
 - `pki/step-ca` — provides a minimal private CA baseline
+- `shell/atrium` — provides the first foundation portal shell source tree and NixOS module baseline
 
 ## Why This Comes First
 
@@ -21,9 +22,18 @@ This order matches the first-wave implementation strategy:
 3. bootstrap secrets
 4. auth baseline
 5. private DNS, ingress, and PKI baseline
-6. shell and status later
+6. shell baseline via Atrium
+7. richer status later
 
 The current modules are scaffolds, not a production-complete identity stack.
+
+## Generated Docs
+
+The foundation module surface also has generated options documentation:
+
+- `nix build .#foundation-options-doc`
+
+That output is included in the flake `checks` so the generated contract docs stay in sync with the module surface.
 
 ## Related Template
 

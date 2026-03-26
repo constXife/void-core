@@ -4,6 +4,7 @@
   pkgs,
   ...
 }: let
+  types = import ../../lib/types.nix {inherit lib;};
   cfg = config.void.auth.rauthy;
   configPath =
     if cfg.generatedConfigPath != null
@@ -28,8 +29,9 @@
     done
 
     ${lib.concatStringsSep "\n" (map (entry: ''
-      : "''${${entry.envVar}:?Missing ${entry.envVar} in Rauthy template env files}"
-    '') cfg.secretPlaceholders)}
+        : "''${${entry.envVar}:?Missing ${entry.envVar} in Rauthy template env files}"
+      '')
+      cfg.secretPlaceholders)}
 
     escape_sed() {
       printf '%s' "$1" | ${pkgs.gnused}/bin/sed -e 's/[\\/&|]/\\&/g'
@@ -60,7 +62,8 @@
     -e "s|__RAUTHY_PUBLIC_HOST__|$(escape_sed "$public_host")|g" \
     -e "s|__RAUTHY_PUBLIC_URL__|$(escape_sed "$public_url")|g" \
     ${lib.concatStringsSep " \\\n" (map (entry: ''
-      -e "s|${entry.placeholder}|$(escape_sed "$(${pkgs.coreutils}/bin/printenv ${lib.escapeShellArg entry.envVar})")|g"'') cfg.secretPlaceholders)} \
+      -e "s|${entry.placeholder}|$(escape_sed "$(${pkgs.coreutils}/bin/printenv ${lib.escapeShellArg entry.envVar})")|g"'')
+    cfg.secretPlaceholders)} \
       ${lib.escapeShellArg cfg.configTemplate} > "$tmp"
 
     ${pkgs.coreutils}/bin/install -D -m ${cfg.generatedConfigMode} -o ${cfg.generatedConfigOwner} -g ${cfg.generatedConfigGroup} "$tmp" ${lib.escapeShellArg configPath}
@@ -71,19 +74,22 @@ in {
     enable = lib.mkEnableOption "Rauthy foundation integration";
 
     image = lib.mkOption {
+      # governance-open-contract: OCI image references are intentionally free-form.
       type = lib.types.str;
       default = "ghcr.io/sebadob/rauthy:0.34.1";
+      example = "ghcr.io/sebadob/rauthy:0.35.0";
       description = "OCI image used for the Rauthy container.";
     };
 
     envFile = lib.mkOption {
-      type = lib.types.str;
+      type = types.absoluteRuntimePath;
       default = "/run/secrets/rauthy.env";
+      example = "/run/secrets/rauthy.env";
       description = "Runtime env file with Rauthy secrets.";
     };
 
     templateExtraEnvFiles = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+      type = lib.types.listOf types.absoluteRuntimePath;
       default = [];
       description = "Additional env files sourced during config template rendering.";
     };
@@ -95,60 +101,69 @@ in {
     };
 
     publicHost = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+      type = lib.types.nullOr types.fqdn;
       default = config.void.services.id.fqdn;
+      example = "id.family.home.arpa";
       description = "Public hostname used for the Rauthy endpoint.";
     };
 
     publicScheme = lib.mkOption {
-      type = lib.types.str;
+      type = lib.types.enum [
+        "http"
+        "https"
+      ];
       default = "https";
+      example = "https";
       description = "Public URL scheme used for Rauthy external links.";
     };
 
     bootstrapAdminEmail = lib.mkOption {
-      type = lib.types.str;
+      type = types.emailAddress;
       default = "admin@example.internal";
+      example = "admin@family.home.arpa";
       description = "Bootstrap admin e-mail rendered into the Rauthy config template.";
     };
 
     bootstrapAdminPasswordEnvVar = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+      type = lib.types.nullOr types.envVarName;
       default = null;
       description = "Optional env var containing the bootstrap admin password to hash into the config template.";
     };
 
     generatedConfigPath = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+      type = lib.types.nullOr types.absoluteRuntimePath;
       default = "/etc/rauthy/config.toml";
+      example = "/etc/rauthy/config.toml";
       description = "Generated runtime config path for Rauthy.";
     };
 
     generatedConfigOwner = lib.mkOption {
-      type = lib.types.str;
+      type = types.userOrGroupRef;
       default = "10001";
       description = "Owner of the generated config file.";
     };
 
     generatedConfigGroup = lib.mkOption {
-      type = lib.types.str;
+      type = types.userOrGroupRef;
       default = "10001";
       description = "Group of the generated config file.";
     };
 
     generatedConfigMode = lib.mkOption {
-      type = lib.types.str;
+      type = types.octalModeString;
       default = "0640";
       description = "Mode of the generated config file.";
     };
 
     dataDir = lib.mkOption {
-      type = lib.types.str;
+      type = types.absoluteRuntimePath;
       default = "/var/lib/rauthy";
+      example = "/var/lib/rauthy";
       description = "Persistent data directory for Rauthy.";
     };
 
     hostAddress = lib.mkOption {
+      # governance-open-contract: bind addresses may be IPv4, IPv6, or wildcard forms.
       type = lib.types.str;
       default = "127.0.0.1";
       description = "Host bind address for the exposed HTTP port.";
@@ -167,26 +182,30 @@ in {
     };
 
     extraPorts = lib.mkOption {
+      # governance-open-contract: podman port mappings intentionally preserve CLI syntax.
       type = lib.types.listOf lib.types.str;
       default = [];
       description = "Additional podman port mappings exposed for the Rauthy container.";
     };
 
     podmanExtraOptions = lib.mkOption {
+      # governance-open-contract: podman extra options are an explicit escape hatch.
       type = lib.types.listOf lib.types.str;
       default = [];
       description = "Additional podman options for the Rauthy container.";
     };
 
     secretPlaceholders = lib.mkOption {
-      type = lib.types.listOf (lib.types.submodule ({ ... }: {
+      type = lib.types.listOf (lib.types.submodule (_: {
         options = {
           envVar = lib.mkOption {
-            type = lib.types.str;
+            type = types.envVarName;
+            example = "RAUTHY_ENCRYPTION_KEYS";
             description = "Environment variable expected in the env file.";
           };
           placeholder = lib.mkOption {
-            type = lib.types.str;
+            type = types.placeholderToken;
+            example = "__RAUTHY_ENCRYPTION_KEYS__";
             description = "Placeholder to replace in the config template.";
           };
         };
@@ -227,12 +246,14 @@ in {
 
     virtualisation.oci-containers.backend = lib.mkDefault "podman";
     virtualisation.oci-containers.containers.rauthy = {
-      image = cfg.image;
+      inherit (cfg) image;
       autoStart = true;
       environmentFiles = [];
-      ports = [
-        "${cfg.hostAddress}:${toString cfg.hostPort}:${toString cfg.containerPort}"
-      ] ++ cfg.extraPorts;
+      ports =
+        [
+          "${cfg.hostAddress}:${toString cfg.hostPort}:${toString cfg.containerPort}"
+        ]
+        ++ cfg.extraPorts;
       volumes = [
         "${configPath}:/app/config.toml:ro"
         "${cfg.dataDir}:/app/data"
@@ -240,17 +261,23 @@ in {
       extraOptions = cfg.podmanExtraOptions;
     };
 
-    systemd.services."podman-rauthy".serviceConfig.EnvironmentFile = [
-      "-${cfg.envFile}"
-    ];
-    systemd.services."podman-rauthy".unitConfig.ConditionPathExists = [
-      cfg.envFile
-      cfg.configTemplate
-    ] ++ cfg.templateExtraEnvFiles;
+    systemd = {
+      services."podman-rauthy" = {
+        serviceConfig.EnvironmentFile = [
+          "-${cfg.envFile}"
+        ];
+        unitConfig.ConditionPathExists =
+          [
+            cfg.envFile
+            cfg.configTemplate
+          ]
+          ++ cfg.templateExtraEnvFiles;
+      };
 
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0700 ${cfg.generatedConfigOwner} ${cfg.generatedConfigGroup} -"
-    ];
+      tmpfiles.rules = [
+        "d ${cfg.dataDir} 0700 ${cfg.generatedConfigOwner} ${cfg.generatedConfigGroup} -"
+      ];
+    };
 
     system.activationScripts.void-rauthy-config = templateScript;
   };

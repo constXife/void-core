@@ -4,6 +4,7 @@
   pkgs,
   ...
 }: let
+  types = import ../../lib/types.nix {inherit lib;};
   cfg = config.void.ingress.caddy;
   idHost = config.void.services.id.fqdn;
   caHost = config.void.services.ca.fqdn;
@@ -25,11 +26,12 @@ in {
     };
 
     acmeCA = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+      type = lib.types.nullOr types.httpUrl;
       default =
-        if config.void.network.tls.mode == "private-ca" && caHost != null
+        if config.void.network.tls.mode == "private-ca" && config.void.trust.stepCa.enable && caHost != null
         then "https://${caHost}:${toString config.void.trust.stepCa.port}/acme/acme/directory"
         else null;
+      example = "https://ca.family.home.arpa:9000/acme/acme/directory";
       description = "Custom ACME directory URL used by Caddy.";
     };
 
@@ -48,8 +50,9 @@ in {
     };
 
     idUpstream = lib.mkOption {
-      type = lib.types.str;
+      type = types.httpUrl;
       default = "http://127.0.0.1:8080";
+      example = "http://127.0.0.1:8080";
       description = "Upstream for the identity endpoint.";
     };
 
@@ -60,14 +63,16 @@ in {
     };
 
     caUpstream = lib.mkOption {
-      type = lib.types.str;
+      type = types.httpUrl;
       default = "https://127.0.0.1:${toString config.void.trust.stepCa.port}";
+      example = "https://127.0.0.1:9000";
       description = "Upstream for the private CA endpoint.";
     };
 
     caPublicRoot = lib.mkOption {
-      type = lib.types.str;
+      type = types.absoluteRuntimePath;
       default = config.void.trust.stepCa.publicRootDir;
+      example = "/var/lib/step-ca/public";
       description = "Directory used to serve public CA bootstrap material over HTTP.";
     };
   };
@@ -79,6 +84,10 @@ in {
         message = "void.ingress.caddy does not manage external TLS termination; use void.network.tls.mode = private-ca or acme.";
       }
       {
+        assertion = config.void.network.tls.mode != "private-ca" || config.void.trust.stepCa.enable;
+        message = "void.ingress.caddy requires void.trust.stepCa.enable = true when private-ca mode is enabled.";
+      }
+      {
         assertion = config.void.network.tls.mode != "private-ca" || cfg.acmeCA != null;
         message = "void.ingress.caddy requires void.ingress.caddy.acmeCA when private-ca mode is enabled.";
       }
@@ -87,9 +96,8 @@ in {
     services.caddy =
       {
         enable = true;
-        package = cfg.package;
+        inherit (cfg) package globalConfig;
         logFormat = "";
-        globalConfig = cfg.globalConfig;
 
         virtualHosts =
           {
@@ -140,13 +148,13 @@ in {
           };
       }
       // lib.optionalAttrs (cfg.acmeCA != null) {
-        acmeCA = cfg.acmeCA;
+        inherit (cfg) acmeCA;
       };
 
     systemd.services.caddy.after = lib.optionals config.void.trust.stepCa.enable [
       "step-ca.service"
     ];
 
-    networking.firewall.allowedTCPPorts = [ 80 443 ];
+    networking.firewall.allowedTCPPorts = [80 443];
   };
 }

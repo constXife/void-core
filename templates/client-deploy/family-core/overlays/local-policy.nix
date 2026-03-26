@@ -1,3 +1,3 @@
-{ ... }: {
-  void.secrets.files.readerUsers = [ "root" ];
+_: {
+  void.secrets.files.readerUsers = ["root"];
 }

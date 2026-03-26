@@ -1,28 +1,37 @@
-{ inputs, lib, ... }: {
+{
+  inputs,
+  lib,
+  ...
+}: {
   imports = [
-    inputs.void-core.nixosProfiles.reference.family-core-minimal
+    inputs.void-core.nixosModules.reference-family-core-minimal
     ../../inventory/hosts.nix
     ../../overlays/local-policy.nix
   ];
 
-  void.site.domain = lib.mkDefault "site.home.arpa";
-  void.network.dns.mode = lib.mkDefault "local-resolver";
-  void.network.tls.mode = lib.mkDefault "private-ca";
-
-  virtualisation.podman.enable = true;
-
-  void.secrets.sops.enable = true;
-  void.secrets.sops.defaultSopsFile = ../../secrets/core-01.yaml;
-  void.secrets.sops.files."rauthy-env" = {
-    key = "rauthy.env";
-    path = "/run/secrets/rauthy.env";
-    mode = "0400";
-    restartUnits = [ "podman-rauthy.service" ];
+  void = {
+    site.domain = lib.mkDefault "site.home.arpa";
+    network = {
+      dns.mode = lib.mkDefault "local-resolver";
+      tls.mode = lib.mkDefault "private-ca";
+    };
+    secrets.sops = {
+      enable = true;
+      defaultSopsFile = ../../secrets/core-01.yaml;
+      files."rauthy-env" = {
+        key = "rauthy.env";
+        path = "/run/secrets/rauthy.env";
+        mode = "0400";
+        restartUnits = ["podman-rauthy.service"];
+      };
+    };
+    auth.rauthy = {
+      enable = true;
+      configTemplate = inputs.void-core + "/examples/family-core/rauthy.toml.template";
+    };
   };
 
-  void.auth.rauthy.enable = true;
-  void.auth.rauthy.configTemplate =
-    inputs.void-core + "/examples/family-core/rauthy.toml.template";
+  virtualisation.podman.enable = true;
 
   # Enable these once the client repo contains a real zone file, root CA
   # certificate, and step-ca runtime config materialized from SOPS.
