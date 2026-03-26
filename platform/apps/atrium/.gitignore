@@ -1,0 +1,11 @@
+/db_data
+*.log
+*.tmp
+/frontend/node_modules
+/frontend/dist
+/backend/internal/web/dist/*
+!/backend/internal/web/dist/index.html
+.env
+.DS_Store
+bun.lockb
+data/

@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: atrium
+      POSTGRES_USER: atrium
+      POSTGRES_PASSWORD: atrium
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atrium"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://atrium:atrium@db:5432/atrium?sslmode=disable
+      MIGRATIONS_DIR: /app/migrations
+      SERVICES_YAML: /app/configs/services.yaml
+      PROVISIONING_PATH: /app/configs/provisioning.yaml
+      AUTH_DISABLED: "0"
+      AUTH_LOCAL_ENABLED: "1"
+      AUTH_LOCAL_ADMIN_EMAIL: "admin@example.com"
+      AUTH_LOCAL_ADMIN_PASSWORD: "admin123"
+      OIDC_ISSUER: ""
+      OIDC_CLIENT_ID: ""
+      OIDC_CLIENT_SECRET: ""
+      OIDC_REDIRECT_URL: ""
+      AUTH_ALLOWED_EMAILS: ""
+      AUTH_ADMIN_EMAILS: ""
+      AUTH_COOKIE_SECRET: "dev-cookie-secret"
+      AUTH_COOKIE_SECURE: "0"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - ./backend/configs/services.yaml:/app/configs/services.yaml:ro
+      - ./backend/configs/provisioning.yaml:/app/configs/provisioning.yaml:ro
+
+volumes:
+  db_data:

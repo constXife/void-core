@@ -4,6 +4,7 @@ This documentation set defines the public foundation baseline of `void-core`.
 
 ## Canonical Docs
 
+- `ATRIUM.md` — the role, scope, and boundaries of the Atrium foundation shell
 - `TRUST_MODEL.md` — what `void-core` promises and what it explicitly does not own
 - `CA_ROTATION.md` — the canonical root/intermediate rotation model for `step-ca` baselines
 - `DISTRIBUTION_BASELINE.md` — the expected self-hosted and NixOS-first distribution model

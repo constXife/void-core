@@ -6,6 +6,7 @@ Public foundation repository for reusable self-hosted building blocks.
 - reusable platform primitives;
 - NixOS modules for the foundation layer;
 - reference profiles and examples;
+- foundation app source for shell/navigation capabilities;
 - foundation-facing contracts and documentation.
 
 `void-core` does not contain:
@@ -18,6 +19,7 @@ Public foundation repository for reusable self-hosted building blocks.
 The initial scaffold focuses on:
 - a minimal Nix flake;
 - foundation module placeholders;
+- the `Atrium` foundation shell source and module scaffold;
 - a reference profile for `family-core-minimal`;
 - a client deployment template for `family-core`;
 - a first naming / DNS / ingress / private-CA scaffold for private deployments;
@@ -31,3 +33,19 @@ Translations may be added later as optional convenience material, but the Englis
 - repository structure;
 - contracts and interfaces;
 - trust and distribution guarantees.
+
+## Key Docs
+
+- `docs/ATRIUM.md` — role and boundary of the Atrium foundation shell
+- `docs/TRUST_MODEL.md` — trust and ownership baseline
+- `docs/DISTRIBUTION_BASELINE.md` — distribution and deployment assumptions
+- `docs/FOUNDATION_MODULES.md` — current module scaffold and priorities
+
+## Quality Gates
+
+The canonical local quality baseline is:
+
+- `nix fmt` for formatting via `alejandra`
+- `nix run .#lint` for the repository lint bundle
+- `nix run .#governance-lint` for `void`-specific NixOS governance checks
+- `nix flake check` for formatter, lints, and governance checks through the flake interface

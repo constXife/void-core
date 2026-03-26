@@ -1,0 +1,92 @@
+version: "3"
+
+output: prefixed
+
+vars:
+  COMPOSE: '{{.COMPOSE | default "podman compose"}}'
+  DATABASE_URL: '{{.DATABASE_URL | default "postgres://atrium:atrium@localhost:5432/atrium?sslmode=disable"}}'
+  MIGRATIONS_DIR: '{{.MIGRATIONS_DIR | default "backend/migrations"}}'
+
+tasks:
+  compose-up:
+    desc: Start app and database via compose
+    cmds:
+      - '{{.COMPOSE}} up -d --build'
+
+  compose-db:
+    desc: Start only the database via compose
+    cmds:
+      - '{{.COMPOSE}} up -d db'
+
+  compose-down:
+    desc: Stop compose services
+    cmds:
+      - '{{.COMPOSE}} down'
+
+  compose-logs:
+    desc: Tail compose logs
+    cmds:
+      - '{{.COMPOSE}} logs -f --tail=100'
+
+  run:
+    desc: Run API server locally
+    cmds:
+      - DATABASE_URL={{.DATABASE_URL}} MIGRATIONS_DIR={{.MIGRATIONS_DIR}} go run ./backend/cmd/server
+
+  migrate:
+    desc: Apply migrations locally
+    cmds:
+      - sh -c 'unset GOROOT; set -a; [ -f ./.env ] && . ./.env; set +a; MIGRATIONS_DIR=${MIGRATIONS_DIR#backend/}; go -C backend run ./cmd/migrate'
+
+  test:
+    desc: Run backend tests
+    cmds:
+      - go test ./backend/...
+
+  fmt:
+    desc: Format backend Go files
+    cmds:
+      - gofmt -w ./backend
+
+  tidy:
+    desc: Tidy Go modules
+    cmds:
+      - (cd backend && go mod tidy)
+
+  smoke:
+    desc: Run smoke checks against running server
+    cmds:
+      - ./scripts/smoke.sh
+
+  frontend-install:
+    desc: Install frontend dependencies
+    cmds:
+      - (cd frontend && bun install)
+
+  frontend-dev:
+    desc: Run frontend dev server
+    cmds:
+      - (cd frontend && bun run dev)
+
+  backend-dev:
+    desc: Run backend dev server with env
+    cmds:
+      - sh -c 'unset GOROOT; set -a; . ./.env; set +a; MIGRATIONS_DIR=${MIGRATIONS_DIR#backend/}; PROVISIONING_PATH=${PROVISIONING_PATH#backend/}; FAMILY_NOTE_PATH=${FAMILY_NOTE_PATH:-./data/family_note.md}; if [ -f "$FAMILY_NOTE_PATH" ]; then FAMILY_NOTE_PATH="../${FAMILY_NOTE_PATH#./}"; fi; export FAMILY_NOTE_PATH; WIDGETS_CONFIG_PATH=${WIDGETS_CONFIG_PATH:-./data/widgets.yaml}; if [ -f "$WIDGETS_CONFIG_PATH" ]; then WIDGETS_CONFIG_PATH="../${WIDGETS_CONFIG_PATH#./}"; fi; export WIDGETS_CONFIG_PATH; FRONTEND_DEV_URL=http://localhost:5173 APP_ENV=dev PROFILE={{.PROFILE}} go -C backend run ./cmd/server'
+
+  frontend-build:
+    desc: Build frontend assets and sync embedded dist
+    cmds:
+      - (cd frontend && bun install && bun run build)
+      - sh -c 'rm -rf backend/internal/web/dist && mkdir -p backend/internal/web/dist && cp -R frontend/dist/. backend/internal/web/dist/'
+
+  dev:
+    desc: Run db and then start backend + frontend in parallel
+    cmds:
+      - task: compose-db
+      - task: dev-start
+
+  dev-start:
+    desc: Run backend + frontend in parallel
+    deps:
+      - backend-dev
+      - frontend-dev

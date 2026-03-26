@@ -1,1 +1,5 @@
-{ ... }: {}
+{
+  imports = [
+    ./atrium.nix
+  ];
+}
