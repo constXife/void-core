@@ -2,6 +2,8 @@
 
 Public foundation repository for reusable self-hosted building blocks.
 
+`void-core` is licensed under Apache License 2.0.
+
 `void-core` contains:
 - reusable platform primitives;
 - NixOS modules for the foundation layer;
