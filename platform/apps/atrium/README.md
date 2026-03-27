@@ -1,13 +1,23 @@
 # atrium
 
-Audience-first foundation shell with configurable spaces, dashboards, and directory content.
+Admin-first Atrium implementation for `void-core`, with config-first spaces,
+dashboards, directory content, and operator workflows.
 
-This source tree is the current implementation of the public `Atrium` shell in `void-core`.
+This source tree is the current public `Atrium` app in `void-core`.
 
 Canonical integration points live in:
 - `../../nixos/modules/shell/atrium.nix`
 - `../../packages/atrium`
 - `../../contracts/atrium`
+
+## Current release scope
+Current `v0` is intentionally narrow:
+- the shipped product surface is `Admin`-first and operator-facing;
+- the default dashboard is resource-first and built around pinned directory resources;
+- spaces are declarative and reconciled from provisioning;
+- archived spaces stay in provisioning but are removed from the active runtime/UI;
+- announcements CRUD, service catalog CRUD, service placements, and `/ws` live transport are not part of the shipped `v0` surface;
+- multi-space/family-facing expansion remains future work rather than a current promise.
 
 ## Quick start
 1) Start Postgres and app:
@@ -30,6 +40,11 @@ On startup Atrium reads a provisioning file and reconciles DB state.
 Default path: `/etc/atrium/provisioning.yaml` (overridable via `PROVISIONING_PATH`).
 Widgets path: `/etc/atrium/widgets.yaml` (overridable via `WIDGETS_CONFIG_PATH`).
 
+For shipped `v0`, the canonical product path is:
+- one provisioned `Admin` space;
+- one dashboard template with `core.resources_pinned`;
+- one resource catalog backed by `directory_items`.
+
 Example:
 ```yaml
 roles:
@@ -39,16 +54,17 @@ roles:
     is_builtin: true
 
 spaces:
-  - id: "home-admin"
+  - id: "admin"
     title: "Admin"
     type: "staff"
+    state: "active"
     layout_mode: "grid"
-    url: "home-admin"
+    url: "admin"
     groups: ["admin"]
-    dashboard_template: "home-admin"
+    dashboard_template: "admin"
 
 dashboard_templates:
-  - key: "home-admin"
+  - key: "admin"
     version: 1
     blocks:
       - id: "admin-pinned-resources"
@@ -68,24 +84,24 @@ directory_items:
     description: "Metrics and observability"
     icon_url: "https://raw.githubusercontent.com/lllllllillllllillll/Dashboard-Icons/main/png/grafana.png"
     url: "https://grafana.arkham.void"
-    type: "service"
-    space: "home-admin"
+    type: "resource"
+    space: "admin"
     pinned: true
     audience_groups: ["admin"]
   - key: "id.arkham.void"
     title: "Rauthy"
     description: "OIDC identity provider"
     url: "https://id.arkham.void"
-    type: "service"
-    space: "home-admin"
+    type: "resource"
+    space: "admin"
     pinned: true
     audience_groups: ["admin"]
   - key: "mail.arkham.void"
     title: "Mailpit"
     description: "Local mail catcher"
     url: "https://mail.arkham.void"
-    type: "service"
-    space: "home-admin"
+    type: "resource"
+    space: "admin"
     pinned: true
     audience_groups: ["admin"]
 ```
@@ -130,6 +146,18 @@ Enable config-first to make YAML the source of truth for spaces, dashboard templ
 directory items, and widgets. Admin changes write back to the provisioning file and
 trigger a reload into the DB.
 
+In current `v0`, config-first write-back should be read as an operator convenience for
+the narrow `Admin` resource catalog flow, not as a generic topology editor or a broader
+service-catalog authoring model.
+
+Space lifecycle in config-first mode should be read as:
+- add a space: add its declaration to `provisioning.yaml`;
+- archive a space: keep the declaration, but set its state to `archived`;
+- delete a space: remove its declaration from `provisioning.yaml` so the next reconcile removes it from the active product UI.
+
+The product contract should not rely on a global env flag as the main way to archive one specific space.
+Per-space lifecycle belongs in provisioning data, not in process-level toggles.
+
 Environment variables:
 - `CONFIG_FIRST` (`true`/`false`, default `false`)
 - `CONFIG_DIR` (when set, uses `provisioning.yaml` and `widgets.yaml` from that folder)
@@ -138,10 +166,6 @@ Environment variables:
 
 Reload endpoint (admin-only when auth is enabled):
 - `POST /api/config/reload`
-
-## Service library
-Service catalog model (`services` + `service_placements`) and materialization into
-`directory_items` are documented in `docs/service-library.md`.
 
 ## Personas matrix
 | Feature / Profile | Family | SMB | HOA | Hotel |
@@ -205,6 +229,45 @@ Use `auth.RequireRole("admin", handler)` for admin-only endpoints (e.g. provisio
 
 ## Spaces API
 - `GET /api/categories` - list categories (auth if enabled)
+- `GET /api/spaces?include_archived=1` - list active + archived spaces for admin UI
 - `POST /api/categories` - create category (admin-only)
 - `PATCH /api/categories/:id` - update category (admin-only)
+- `POST /api/spaces/:id/archive` - archive a provisioned space (admin-only)
+- `POST /api/spaces/:id/restore` - restore an archived provisioned space (admin-only)
 - `DELETE /api/categories/:id` - delete category (admin-only)
+
+## Dashboard and workspace API
+- `GET /api/v1/workspace` - load the current workspace shell model
+- `GET /api/spaces/:id/dashboard` - load dashboard payload for a space
+- `PUT /api/spaces/:id/dashboard` - save dashboard blocks/preferences
+- `GET /api/spaces/:id/blocks/data` - resolve block data for dashboard blocks
+- `POST /api/actions/invoke` - invoke a directory-backed action in the current session
+- `GET /api/dashboard/templates` - list dashboard templates (admin-only)
+
+## Directory API
+- `GET /api/directory_items?space_id=:id` - list directory items for a space (admin-only)
+- `POST /api/directory_items` - create a directory item (admin-only)
+- `PATCH /api/directory_items/:id` - update a directory item (admin-only)
+- `DELETE /api/directory_items/:id` - delete a directory item (admin-only)
+
+## Admin support API
+- `GET /api/roles` - list roles (admin-only)
+- `GET /api/memberships` - list memberships (admin-only)
+- `POST /api/memberships` - upsert membership (admin-only)
+- `POST /api/memberships/import` - import memberships (admin-only)
+- `DELETE /api/memberships/:principal_id/:space_id` - delete membership (admin-only)
+- `PATCH /api/users/:id` - update user segment (admin-only)
+- `POST /api/config/reload` - reload config-first state (admin-only when auth is enabled)
+
+## Auxiliary read API
+- `GET /api/me` - current auth/session payload
+- `GET /api/auth/modes` - available auth modes
+- `GET /api/widgets` - auxiliary note/widget feed
+- `GET /api/widgets/note` - auxiliary note payload
+
+Not part of shipped `v0` API:
+- announcements CRUD;
+- service catalog CRUD;
+- service placement CRUD;
+- notifications API;
+- `/ws` websocket transport.

@@ -12,7 +12,6 @@ import (
 	"atrium/internal/directory"
 	"atrium/internal/portal"
 	"atrium/internal/provisioning"
-	"atrium/internal/services"
 	"atrium/internal/spaces"
 )
 
@@ -78,7 +77,7 @@ func (c configFirstDeps) UpdateCategory(ctx context.Context, id int, input space
 }
 
 func (c configFirstDeps) DeleteCategory(ctx context.Context, id int) error {
-	existing, err := spaces.Get(ctx, c.db, id)
+	existing, err := spaces.GetAny(ctx, c.db, id)
 	if err != nil {
 		return err
 	}
@@ -89,8 +88,43 @@ func (c configFirstDeps) DeleteCategory(ctx context.Context, id int) error {
 		}
 		file.Spaces = append(file.Spaces[:idx], file.Spaces[idx+1:]...)
 		removeDirectoryItemsForSpace(file, existing.Slug)
-		removePlacementsForSpace(file, existing.Slug)
 		clearParentReferences(file, existing.Slug)
+		return nil
+	}); err != nil {
+		return err
+	}
+	return c.reload(ctx)
+}
+
+func (c configFirstDeps) ArchiveCategory(ctx context.Context, id int) error {
+	existing, err := spaces.GetAny(ctx, c.db, id)
+	if err != nil {
+		return err
+	}
+	if err := c.store.Update(func(file *provisioning.File) error {
+		idx := findSpaceIndex(file.Spaces, existing.Slug)
+		if idx < 0 {
+			return fmt.Errorf("space %s not found in provisioning", existing.Slug)
+		}
+		file.Spaces[idx].State = "archived"
+		return nil
+	}); err != nil {
+		return err
+	}
+	return c.reload(ctx)
+}
+
+func (c configFirstDeps) RestoreCategory(ctx context.Context, id int) error {
+	existing, err := spaces.GetAny(ctx, c.db, id)
+	if err != nil {
+		return err
+	}
+	if err := c.store.Update(func(file *provisioning.File) error {
+		idx := findSpaceIndex(file.Spaces, existing.Slug)
+		if idx < 0 {
+			return fmt.Errorf("space %s not found in provisioning", existing.Slug)
+		}
+		file.Spaces[idx].State = "active"
 		return nil
 	}); err != nil {
 		return err
@@ -193,156 +227,6 @@ func (c configFirstDeps) DeleteDirectory(ctx context.Context, id string) error {
 	return c.reload(ctx)
 }
 
-func (c configFirstDeps) CreateService(ctx context.Context, input services.ServiceInput) (services.Service, error) {
-	if strings.TrimSpace(input.Key) == "" {
-		return services.Service{}, fmt.Errorf("key is required")
-	}
-	if strings.TrimSpace(input.Title) == "" {
-		return services.Service{}, fmt.Errorf("title is required")
-	}
-	item := provisioningServiceFromInput(input)
-	if err := c.store.Update(func(file *provisioning.File) error {
-		if findServiceIndex(file.Services, item.Key) >= 0 {
-			return fmt.Errorf("service %s already exists", item.Key)
-		}
-		file.Services = append(file.Services, item)
-		return nil
-	}); err != nil {
-		return services.Service{}, err
-	}
-	if err := c.reload(ctx); err != nil {
-		return services.Service{}, err
-	}
-	return services.GetServiceByKey(ctx, c.db, item.Key)
-}
-
-func (c configFirstDeps) UpdateService(ctx context.Context, id int, input services.ServiceInput) (services.Service, error) {
-	if strings.TrimSpace(input.Key) == "" {
-		return services.Service{}, fmt.Errorf("key is required")
-	}
-	if strings.TrimSpace(input.Title) == "" {
-		return services.Service{}, fmt.Errorf("title is required")
-	}
-	existing, err := services.GetService(ctx, c.db, id)
-	if err != nil {
-		return services.Service{}, err
-	}
-	item := provisioningServiceFromInput(input)
-	if err := c.store.Update(func(file *provisioning.File) error {
-		idx := findServiceIndex(file.Services, existing.Key)
-		if idx < 0 {
-			return fmt.Errorf("service %s not found in provisioning", existing.Key)
-		}
-		file.Services[idx] = item
-		if existing.Key != input.Key {
-			updatePlacementServiceKey(file, existing.Key, input.Key)
-		}
-		return nil
-	}); err != nil {
-		return services.Service{}, err
-	}
-	if err := c.reload(ctx); err != nil {
-		return services.Service{}, err
-	}
-	return services.GetServiceByKey(ctx, c.db, input.Key)
-}
-
-func (c configFirstDeps) DeleteService(ctx context.Context, id int) error {
-	existing, err := services.GetService(ctx, c.db, id)
-	if err != nil {
-		return err
-	}
-	if err := c.store.Update(func(file *provisioning.File) error {
-		idx := findServiceIndex(file.Services, existing.Key)
-		if idx < 0 {
-			return fmt.Errorf("service %s not found in provisioning", existing.Key)
-		}
-		file.Services = append(file.Services[:idx], file.Services[idx+1:]...)
-		removePlacementsForService(file, existing.Key)
-		return nil
-	}); err != nil {
-		return err
-	}
-	return c.reload(ctx)
-}
-
-func (c configFirstDeps) CreatePlacement(ctx context.Context, input services.PlacementInput) (services.Placement, error) {
-	if strings.TrimSpace(input.ServiceKey) == "" {
-		return services.Placement{}, fmt.Errorf("service_key is required")
-	}
-	if input.SpaceID == 0 {
-		return services.Placement{}, fmt.Errorf("space_id is required")
-	}
-	space, err := spaces.Get(ctx, c.db, input.SpaceID)
-	if err != nil {
-		return services.Placement{}, err
-	}
-	item := provisioningPlacementFromInput(space, input)
-	if err := c.store.Update(func(file *provisioning.File) error {
-		if findPlacementIndex(file.Placements, item.Space, item.ServiceKey) >= 0 {
-			return fmt.Errorf("placement %s already exists in %s", item.ServiceKey, item.Space)
-		}
-		file.Placements = append(file.Placements, item)
-		return nil
-	}); err != nil {
-		return services.Placement{}, err
-	}
-	if err := c.reload(ctx); err != nil {
-		return services.Placement{}, err
-	}
-	return findPlacementByKey(ctx, c.db, input)
-}
-
-func (c configFirstDeps) UpdatePlacement(ctx context.Context, id int, input services.PlacementInput) (services.Placement, error) {
-	if strings.TrimSpace(input.ServiceKey) == "" {
-		return services.Placement{}, fmt.Errorf("service_key is required")
-	}
-	if input.SpaceID == 0 {
-		return services.Placement{}, fmt.Errorf("space_id is required")
-	}
-	existing, err := services.GetPlacement(ctx, c.db, id)
-	if err != nil {
-		return services.Placement{}, err
-	}
-	space, err := spaces.Get(ctx, c.db, input.SpaceID)
-	if err != nil {
-		return services.Placement{}, err
-	}
-	item := provisioningPlacementFromInput(space, input)
-	if err := c.store.Update(func(file *provisioning.File) error {
-		idx := findPlacementIndex(file.Placements, existing.SpaceSlug, existing.ServiceKey)
-		if idx < 0 {
-			return fmt.Errorf("placement %s not found in provisioning", existing.ServiceKey)
-		}
-		file.Placements[idx] = item
-		return nil
-	}); err != nil {
-		return services.Placement{}, err
-	}
-	if err := c.reload(ctx); err != nil {
-		return services.Placement{}, err
-	}
-	return services.GetPlacement(ctx, c.db, id)
-}
-
-func (c configFirstDeps) DeletePlacement(ctx context.Context, id int) error {
-	existing, err := services.GetPlacement(ctx, c.db, id)
-	if err != nil {
-		return err
-	}
-	if err := c.store.Update(func(file *provisioning.File) error {
-		idx := findPlacementIndex(file.Placements, existing.SpaceSlug, existing.ServiceKey)
-		if idx < 0 {
-			return fmt.Errorf("placement %s not found in provisioning", existing.ServiceKey)
-		}
-		file.Placements = append(file.Placements[:idx], file.Placements[idx+1:]...)
-		return nil
-	}); err != nil {
-		return err
-	}
-	return c.reload(ctx)
-}
-
 func (c configFirstDeps) SaveDashboard(ctx context.Context, spaceID int, session auth.Session, input portal.DashboardSaveInput) (portal.DashboardPayload, error) {
 	if len(input.Blocks) == 0 {
 		return portal.SaveDashboard(ctx, c.db, spaceID, session, input)
@@ -426,6 +310,7 @@ func (c configFirstDeps) spaceFromInput(ctx context.Context, input spaces.Input,
 	return provisioning.Space{
 		ID:                   input.Slug,
 		Title:                input.Title,
+		State:                "active",
 		Type:                 spaceType,
 		Parent:               parentSlug,
 		DashboardTemplate:    templateKey,
@@ -479,45 +364,6 @@ func provisioningDirectoryItem(space spaces.Space, input directory.CreateInput, 
 	}
 }
 
-func provisioningServiceFromInput(input services.ServiceInput) provisioning.Service {
-	return provisioning.Service{
-		Key:            input.Key,
-		Title:          input.Title,
-		Description:    input.Description,
-		IconURL:        input.IconURL,
-		ServiceType:    input.ServiceType,
-		Tags:           input.Tags,
-		Owners:         configstore.DecodeJSON(input.Owners, map[string]any{}),
-		Links:          configstore.DecodeJSON(input.Links, map[string]any{}),
-		Endpoints:      configstore.DecodeJSON(input.Endpoints, []any{}),
-		Tier:           input.Tier,
-		Lifecycle:      input.Lifecycle,
-		Classification: input.Classification,
-		DependsOn:      configstore.DecodeJSON(input.DependsOn, []any{}),
-	}
-}
-
-func provisioningPlacementFromInput(space spaces.Space, input services.PlacementInput) provisioning.Placement {
-	audience := input.AudienceGroups
-	if len(audience) == 0 {
-		audience = decodeStringSlice(space.VisibilityGroups)
-	}
-	return provisioning.Placement{
-		ServiceKey:      input.ServiceKey,
-		Space:           space.Slug,
-		Label:           input.Label,
-		Pinned:          input.Pinned,
-		Order:           input.Order,
-		GroupLabel:      input.GroupLabel,
-		AudienceGroups:  audience,
-		AllowedActions:  input.AllowedActions,
-		VisibleLinks:    input.VisibleLinks,
-		PrimaryURL:      input.PrimaryURL,
-		DefaultEndpoint: input.DefaultEndpoint,
-		AccessPath:      input.AccessPath,
-	}
-}
-
 func decodeStringSlice(raw json.RawMessage) []string {
 	value := configstore.DecodeJSON(raw, []string{})
 	if list, ok := value.([]any); ok {
@@ -564,24 +410,6 @@ func findDirectoryIndex(items []provisioning.DirectoryItem, spaceSlug string, ke
 	return -1
 }
 
-func findServiceIndex(items []provisioning.Service, key string) int {
-	for idx, item := range items {
-		if item.Key == key {
-			return idx
-		}
-	}
-	return -1
-}
-
-func findPlacementIndex(items []provisioning.Placement, spaceSlug string, key string) int {
-	for idx, item := range items {
-		if item.Space == spaceSlug && item.ServiceKey == key {
-			return idx
-		}
-	}
-	return -1
-}
-
 func findTemplateIndex(items []provisioning.Template, key string) int {
 	for idx, item := range items {
 		if item.Key == key {
@@ -602,11 +430,6 @@ func updateSpaceReferences(file *provisioning.File, oldSlug, newSlug string) {
 			file.DirectoryItems[idx].Space = newSlug
 		}
 	}
-	for idx := range file.Placements {
-		if file.Placements[idx].Space == oldSlug {
-			file.Placements[idx].Space = newSlug
-		}
-	}
 }
 
 func clearParentReferences(file *provisioning.File, slug string) {
@@ -625,45 +448,4 @@ func removeDirectoryItemsForSpace(file *provisioning.File, slug string) {
 		}
 	}
 	file.DirectoryItems = filtered
-}
-
-func removePlacementsForSpace(file *provisioning.File, slug string) {
-	filtered := file.Placements[:0]
-	for _, item := range file.Placements {
-		if item.Space != slug {
-			filtered = append(filtered, item)
-		}
-	}
-	file.Placements = filtered
-}
-
-func removePlacementsForService(file *provisioning.File, key string) {
-	filtered := file.Placements[:0]
-	for _, item := range file.Placements {
-		if item.ServiceKey != key {
-			filtered = append(filtered, item)
-		}
-	}
-	file.Placements = filtered
-}
-
-func updatePlacementServiceKey(file *provisioning.File, oldKey, newKey string) {
-	for idx := range file.Placements {
-		if file.Placements[idx].ServiceKey == oldKey {
-			file.Placements[idx].ServiceKey = newKey
-		}
-	}
-}
-
-func findPlacementByKey(ctx context.Context, db *sql.DB, input services.PlacementInput) (services.Placement, error) {
-	spaceID := input.SpaceID
-	serviceKey := input.ServiceKey
-	items, err := services.ListPlacements(ctx, db, &spaceID, &serviceKey)
-	if err != nil {
-		return services.Placement{}, err
-	}
-	if len(items) == 0 {
-		return services.Placement{}, fmt.Errorf("placement not found")
-	}
-	return items[0], nil
 }

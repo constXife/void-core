@@ -10,14 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"atrium/internal/announcements"
 	"atrium/internal/auth"
 	"atrium/internal/directory"
 	"atrium/internal/memberships"
-	"atrium/internal/notifications"
 	"atrium/internal/portal"
 	"atrium/internal/roles"
-	"atrium/internal/services"
 	"atrium/internal/spaces"
 	"atrium/internal/web"
 	"atrium/internal/workspace"
@@ -26,12 +23,13 @@ import (
 type Deps struct {
 	LoadSpaces         func(ctx context.Context) (workspace.SpaceWorkspace, error)
 	ListCategories     func(ctx context.Context) ([]spaces.Space, error)
+	ListCategoriesAll  func(ctx context.Context) ([]spaces.Space, error)
 	CreateCategory     func(ctx context.Context, input spaces.Input) (spaces.Space, error)
 	UpdateCategory     func(ctx context.Context, id int, input spaces.Input) (spaces.Space, error)
+	ArchiveCategory    func(ctx context.Context, id int) error
+	RestoreCategory    func(ctx context.Context, id int) error
 	DeleteCategory     func(ctx context.Context, id int) error
 	Auth               *auth.Manager
-	NotificationStore  *notifications.Store
-	Broadcast          func(msg any) // WebSocket broadcast function
 	LoadDashboard      func(ctx context.Context, spaceID int, session auth.Session) (portal.DashboardPayload, error)
 	LoadBlocksData     func(ctx context.Context, spaceID int, session auth.Session, blocks []portal.BlockDescriptor) (map[string]any, error)
 	InvokeAction       func(ctx context.Context, input portal.ActionInvokeInput, session auth.Session) (portal.ActionInvokeResult, error)
@@ -45,23 +43,11 @@ type Deps struct {
 	ImportMemberships  func(ctx context.Context, input memberships.ImportInput) (int, error)
 	DeleteMembership   func(ctx context.Context, principalID string, spaceID int) error
 	UpdateUserSegment  func(ctx context.Context, userID string, segment string) error
-	ListAnnouncements  func(ctx context.Context, spaceID int) ([]announcements.Announcement, error)
-	CreateAnnouncement func(ctx context.Context, input announcements.CreateInput) (announcements.Announcement, error)
-	UpdateAnnouncement func(ctx context.Context, id string, input announcements.UpdateInput) (announcements.Announcement, error)
-	DeleteAnnouncement func(ctx context.Context, id string) error
 	ListDirectory      func(ctx context.Context, spaceID int) ([]directory.Item, error)
 	CreateDirectory    func(ctx context.Context, input directory.CreateInput) (directory.Item, error)
 	UpdateDirectory    func(ctx context.Context, id string, input directory.UpdateInput) (directory.Item, error)
 	DeleteDirectory    func(ctx context.Context, id string) error
 	ReloadConfig       func(ctx context.Context) error
-	ListServices       func(ctx context.Context) ([]services.Service, error)
-	CreateService      func(ctx context.Context, input services.ServiceInput) (services.Service, error)
-	UpdateService      func(ctx context.Context, id int, input services.ServiceInput) (services.Service, error)
-	DeleteService      func(ctx context.Context, id int) error
-	ListPlacements     func(ctx context.Context, spaceID *int, serviceKey *string) ([]services.Placement, error)
-	CreatePlacement    func(ctx context.Context, input services.PlacementInput) (services.Placement, error)
-	UpdatePlacement    func(ctx context.Context, id int, input services.PlacementInput) (services.Placement, error)
-	DeletePlacement    func(ctx context.Context, id int) error
 }
 
 func Handler(deps Deps) http.Handler {
@@ -132,7 +118,7 @@ func Handler(deps Deps) http.Handler {
 			http.Error(w, "auth not configured", http.StatusNotFound)
 			return
 		}
-		deps.Auth.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.Auth.OptionalMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handleMe(w, r, deps)
 		})).ServeHTTP(w, r)
 	})
@@ -304,35 +290,6 @@ func Handler(deps Deps) http.Handler {
 		}))).ServeHTTP(w, r)
 	})
 
-	mux.HandleFunc("/api/announcements", func(w http.ResponseWriter, r *http.Request) {
-		if deps.ListAnnouncements == nil || deps.CreateAnnouncement == nil {
-			http.Error(w, "announcements not configured", http.StatusInternalServerError)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleAnnouncements(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(handler))).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-	mux.HandleFunc("/api/announcements/", func(w http.ResponseWriter, r *http.Request) {
-		if deps.UpdateAnnouncement == nil || deps.DeleteAnnouncement == nil {
-			http.Error(w, "announcements not configured", http.StatusInternalServerError)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleAnnouncement(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(handler))).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-
 	mux.HandleFunc("/api/directory_items", func(w http.ResponseWriter, r *http.Request) {
 		if deps.ListDirectory == nil || deps.CreateDirectory == nil {
 			http.Error(w, "directory not configured", http.StatusInternalServerError)
@@ -361,117 +318,6 @@ func Handler(deps Deps) http.Handler {
 		}
 		handler(w, r)
 	})
-	mux.HandleFunc("/api/services", func(w http.ResponseWriter, r *http.Request) {
-		if deps.ListServices == nil || deps.CreateService == nil {
-			http.Error(w, "services not configured", http.StatusInternalServerError)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleServices(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(handler))).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-	mux.HandleFunc("/api/services/", func(w http.ResponseWriter, r *http.Request) {
-		if deps.UpdateService == nil || deps.DeleteService == nil {
-			http.Error(w, "services not configured", http.StatusInternalServerError)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleService(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(handler))).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-	mux.HandleFunc("/api/service_placements", func(w http.ResponseWriter, r *http.Request) {
-		if deps.ListPlacements == nil || deps.CreatePlacement == nil {
-			http.Error(w, "placements not configured", http.StatusInternalServerError)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handlePlacements(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(handler))).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-	mux.HandleFunc("/api/service_placements/", func(w http.ResponseWriter, r *http.Request) {
-		if deps.UpdatePlacement == nil || deps.DeletePlacement == nil {
-			http.Error(w, "placements not configured", http.StatusInternalServerError)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handlePlacement(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(handler))).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-
-	// Notification routes
-	notifDeps := NotificationDeps{
-		Store:     deps.NotificationStore,
-		Broadcast: deps.Broadcast,
-		Auth:      deps.Auth,
-	}
-
-	// POST /api/notify - create notification (webhook endpoint, no auth required)
-	mux.HandleFunc("/api/notify", func(w http.ResponseWriter, r *http.Request) {
-		if deps.NotificationStore == nil {
-			http.Error(w, "notifications not configured", http.StatusNotFound)
-			return
-		}
-		handleNotify(w, r, notifDeps)
-	})
-
-	// GET /api/notifications - list notifications (requires auth if enabled)
-	mux.HandleFunc("/api/notifications", func(w http.ResponseWriter, r *http.Request) {
-		if deps.NotificationStore == nil {
-			http.Error(w, "notifications not configured", http.StatusNotFound)
-			return
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				handleNotifications(w, r, notifDeps)
-			})).ServeHTTP(w, r)
-			return
-		}
-		handleNotifications(w, r, notifDeps)
-	})
-
-	// POST /api/notifications/:id/action - trigger action
-	// POST /api/notifications/:id/dismiss - dismiss notification
-	mux.HandleFunc("/api/notifications/", func(w http.ResponseWriter, r *http.Request) {
-		if deps.NotificationStore == nil {
-			http.Error(w, "notifications not configured", http.StatusNotFound)
-			return
-		}
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/action") {
-				handleNotificationAction(w, r, notifDeps)
-			} else if strings.HasSuffix(r.URL.Path, "/dismiss") {
-				handleNotificationDismiss(w, r, notifDeps)
-			} else {
-				http.Error(w, "not found", http.StatusNotFound)
-			}
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-
 	mux.Handle("/", web.Handler())
 
 	return mux
@@ -540,8 +386,11 @@ func readNoteFile(path string) ([]byte, error) {
 
 func handleMe(w http.ResponseWriter, r *http.Request, deps Deps) {
 	session, ok := auth.UserFromContext(r.Context())
+	w.Header().Set("Content-Type", "application/json")
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(nil); err != nil {
+			http.Error(w, "failed to encode anonymous session", http.StatusInternalServerError)
+		}
 		return
 	}
 	permissions := []string{"view"}
@@ -571,21 +420,28 @@ func handleMe(w http.ResponseWriter, r *http.Request, deps Deps) {
 		ExpiresAt:   session.ExpiresAt,
 		Permissions: permissions,
 	}
-	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		http.Error(w, "failed to encode session", http.StatusInternalServerError)
 	}
 }
 
-
 func handleCategories(w http.ResponseWriter, r *http.Request, deps Deps) {
 	switch r.Method {
 	case http.MethodGet:
-		if deps.ListCategories == nil {
+		includeArchived := r.URL.Query().Get("include_archived") == "1"
+		listFn := deps.ListCategories
+		if includeArchived {
+			if deps.Auth != nil && !auth.IsAdmin(r.Context()) {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			listFn = deps.ListCategoriesAll
+		}
+		if listFn == nil {
 			http.Error(w, "categories list not configured", http.StatusInternalServerError)
 			return
 		}
-		items, err := deps.ListCategories(r.Context())
+		items, err := listFn(r.Context())
 		if err != nil {
 			http.Error(w, "failed to load categories", http.StatusInternalServerError)
 			return
@@ -630,13 +486,53 @@ func handleCategory(w http.ResponseWriter, r *http.Request, deps Deps) {
 	if strings.HasPrefix(r.URL.Path, "/api/spaces/") {
 		prefix = "/api/spaces/"
 	}
-	id, err := parseID(r.URL.Path, prefix)
+	archiveAction := false
+	restoreAction := false
+	path := r.URL.Path
+	if strings.HasSuffix(path, "/archive") {
+		archiveAction = true
+		path = strings.TrimSuffix(path, "/archive")
+	} else if strings.HasSuffix(path, "/restore") {
+		restoreAction = true
+		path = strings.TrimSuffix(path, "/restore")
+	}
+	id, err := parseID(path, prefix)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 	switch r.Method {
+	case http.MethodPost:
+		if !archiveAction && !restoreAction {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if archiveAction {
+			if deps.ArchiveCategory == nil {
+				http.Error(w, "category archive not configured", http.StatusInternalServerError)
+				return
+			}
+			if err := deps.ArchiveCategory(r.Context(), id); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		if restoreAction {
+			if deps.RestoreCategory == nil {
+				http.Error(w, "category restore not configured", http.StatusInternalServerError)
+				return
+			}
+			if err := deps.RestoreCategory(r.Context(), id); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
 	case http.MethodPatch:
+		if archiveAction || restoreAction {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 		if deps.UpdateCategory == nil {
 			http.Error(w, "category update not configured", http.StatusInternalServerError)
 			return
@@ -656,6 +552,10 @@ func handleCategory(w http.ResponseWriter, r *http.Request, deps Deps) {
 			http.Error(w, "failed to encode category", http.StatusInternalServerError)
 		}
 	case http.MethodDelete:
+		if archiveAction || restoreAction {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 		if deps.DeleteCategory == nil {
 			http.Error(w, "category delete not configured", http.StatusInternalServerError)
 			return

@@ -56,7 +56,7 @@ func filterGuestBlocks(blocks json.RawMessage) json.RawMessage {
 
 func isGuestSafeBlockType(value string) bool {
 	switch normalizeBlockType(value) {
-	case "announcements_list", "resources_pinned", "text":
+	case "resources_pinned", "text":
 		return true
 	default:
 		return false
@@ -180,44 +180,12 @@ func LoadBlocksData(ctx context.Context, db *sql.DB, spaceID int, session auth.S
 			continue
 		}
 		switch normalizedType {
-		case "announcements_list":
-			items, err := loadAnnouncements(ctx, db, scopeIDs, 10, role, isAdmin, strings.EqualFold(space.AccessMode, "public_readonly"))
-			if err != nil {
-				return nil, err
-			}
-			response[block.ID] = items
-		case "tickets_inbox":
-			items, err := loadTicketsInbox(ctx, db, spaceID, userID, 10, role, isAdmin)
-			if err != nil {
-				return nil, err
-			}
-			response[block.ID] = items
-		case "tickets_queue":
-			items, err := loadTicketsQueue(ctx, db, spaceID, 10, role, isAdmin)
-			if err != nil {
-				return nil, err
-			}
-			response[block.ID] = items
 		case "resources_pinned":
 			items, err := loadPinnedDirectory(ctx, db, scopeIDs, 20, role, isAdmin, strings.EqualFold(space.AccessMode, "public_readonly"))
 			if err != nil {
 				return nil, err
 			}
 			response[block.ID] = items
-		case "activity_feed":
-			if strings.EqualFold(space.AccessMode, "public_readonly") {
-				continue
-			}
-			items, err := loadActivity(ctx, db, scopeIDs, 20)
-			if err != nil {
-				return nil, err
-			}
-			response[block.ID] = items
-		case "quick_actions":
-			if strings.EqualFold(space.AccessMode, "public_readonly") {
-				continue
-			}
-			response[block.ID] = []any{}
 		default:
 			if strings.EqualFold(space.AccessMode, "public_readonly") {
 				continue
@@ -231,18 +199,8 @@ func LoadBlocksData(ctx context.Context, db *sql.DB, spaceID int, session auth.S
 func normalizeBlockType(value string) string {
 	raw := strings.TrimSpace(strings.ToLower(value))
 	switch raw {
-	case "announcements", "announcements_list", "core.announcements_list", "core.announcements":
-		return "announcements_list"
-	case "tickets_inbox", "core.tickets_inbox":
-		return "tickets_inbox"
-	case "tickets_queue", "core.tickets_queue":
-		return "tickets_queue"
 	case "resources_pinned", "core.resources_pinned":
 		return "resources_pinned"
-	case "activity_feed", "core.activity_feed":
-		return "activity_feed"
-	case "quick_actions", "core.quick_actions":
-		return "quick_actions"
 	default:
 		return raw
 	}
@@ -348,7 +306,7 @@ func loadSpace(ctx context.Context, db *sql.DB, spaceID int) (SpaceSummary, erro
 		       access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
 		       visibility_groups, display_config, personalization_rules, public_entry
 		FROM spaces
-		WHERE id = $1
+		WHERE id = $1 AND is_provisioned = true
 	`, spaceID).Scan(
 		&item.ID,
 		&item.Title,
@@ -662,162 +620,6 @@ func unitIDByStay(ctx context.Context, db *sql.DB, stayID string) (int, error) {
 	return unitID, nil
 }
 
-func loadAnnouncements(ctx context.Context, db *sql.DB, spaceIDs []int, limit int, role string, isAdmin bool, publicLayer bool) ([]map[string]any, error) {
-	where, args := buildSpaceFilter(spaceIDs, 1)
-	if !isAdmin {
-		audienceWhere, audienceArgs := buildAudienceFilter(role, len(args)+1)
-		if publicLayer {
-			audienceWhere, audienceArgs = buildGuestAudienceFilter(len(args) + 1)
-		}
-		where = fmt.Sprintf("(%s) AND (%s)", where, audienceWhere)
-		args = append(args, audienceArgs...)
-	}
-	args = append(args, limit)
-	query := fmt.Sprintf(`
-		SELECT id, priority, title, body, expires_at, pinned, created_at
-		FROM announcements
-		WHERE %s
-		ORDER BY pinned DESC, created_at DESC
-		LIMIT $%d
-	`, where, len(args))
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("list announcements: %w", err)
-	}
-	defer rows.Close()
-
-	var items []map[string]any
-	for rows.Next() {
-		var (
-			id        string
-			priority  string
-			title     string
-			body      sql.NullString
-			expiresAt sql.NullTime
-			pinned    bool
-			createdAt time.Time
-		)
-		if err := rows.Scan(&id, &priority, &title, &body, &expiresAt, &pinned, &createdAt); err != nil {
-			return nil, fmt.Errorf("scan announcement: %w", err)
-		}
-		item := map[string]any{
-			"id":         id,
-			"priority":   priority,
-			"title":      title,
-			"body":       body.String,
-			"pinned":     pinned,
-			"created_at": createdAt,
-		}
-		if expiresAt.Valid {
-			item["expires_at"] = expiresAt.Time
-		}
-		items = append(items, item)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate announcements: %w", err)
-	}
-	return items, nil
-}
-
-func loadTicketsInbox(ctx context.Context, db *sql.DB, spaceID int, userID string, limit int, role string, isAdmin bool) ([]map[string]any, error) {
-	if userID == "" {
-		return []map[string]any{}, nil
-	}
-	query := `
-		SELECT id, status, priority, created_at, assigned_to
-		FROM tickets
-		WHERE space_id = $1 AND created_by = $2
-	`
-	args := []any{spaceID, userID}
-	if !isAdmin {
-		audienceWhere, audienceArgs := buildAudienceFilter(role, len(args)+1)
-		query = query + " AND " + audienceWhere
-		args = append(args, audienceArgs...)
-	}
-	query = query + `
-		ORDER BY created_at DESC
-		LIMIT $` + fmt.Sprintf("%d", len(args)+1)
-	args = append(args, limit)
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("list tickets inbox: %w", err)
-	}
-	defer rows.Close()
-
-	var items []map[string]any
-	for rows.Next() {
-		var (
-			id         string
-			status     string
-			priority   string
-			createdAt  time.Time
-			assignedTo sql.NullString
-		)
-		if err := rows.Scan(&id, &status, &priority, &createdAt, &assignedTo); err != nil {
-			return nil, fmt.Errorf("scan ticket inbox: %w", err)
-		}
-		items = append(items, map[string]any{
-			"id":          id,
-			"status":      status,
-			"priority":    priority,
-			"created_at":  createdAt,
-			"assigned_to": assignedTo.String,
-		})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate tickets inbox: %w", err)
-	}
-	return items, nil
-}
-
-func loadTicketsQueue(ctx context.Context, db *sql.DB, spaceID int, limit int, role string, isAdmin bool) ([]map[string]any, error) {
-	query := `
-		SELECT id, status, priority, created_at, assigned_to
-		FROM tickets
-		WHERE space_id = $1
-	`
-	args := []any{spaceID}
-	if !isAdmin {
-		audienceWhere, audienceArgs := buildAudienceFilter(role, len(args)+1)
-		query = query + " AND " + audienceWhere
-		args = append(args, audienceArgs...)
-	}
-	query = query + `
-		ORDER BY created_at DESC
-		LIMIT $` + fmt.Sprintf("%d", len(args)+1)
-	args = append(args, limit)
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("list tickets queue: %w", err)
-	}
-	defer rows.Close()
-
-	var items []map[string]any
-	for rows.Next() {
-		var (
-			id         string
-			status     string
-			priority   string
-			createdAt  time.Time
-			assignedTo sql.NullString
-		)
-		if err := rows.Scan(&id, &status, &priority, &createdAt, &assignedTo); err != nil {
-			return nil, fmt.Errorf("scan ticket queue: %w", err)
-		}
-		items = append(items, map[string]any{
-			"id":          id,
-			"status":      status,
-			"priority":    priority,
-			"created_at":  createdAt,
-			"assigned_to": assignedTo.String,
-		})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate tickets queue: %w", err)
-	}
-	return items, nil
-}
-
 func loadPinnedDirectory(ctx context.Context, db *sql.DB, spaceIDs []int, limit int, role string, isAdmin bool, publicLayer bool) ([]map[string]any, error) {
 	where, args := buildSpaceFilter(spaceIDs, 1)
 	if !isAdmin {
@@ -906,48 +708,6 @@ func loadPinnedDirectory(ctx context.Context, db *sql.DB, spaceIDs []int, limit 
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate directory: %w", err)
-	}
-	return items, nil
-}
-
-func loadActivity(ctx context.Context, db *sql.DB, spaceIDs []int, limit int) ([]map[string]any, error) {
-	where, args := buildSpaceFilter(spaceIDs, 1)
-	args = append(args, limit)
-	query := fmt.Sprintf(`
-		SELECT id, type, entity_ref, payload, created_at
-		FROM activity_events
-		WHERE %s
-		ORDER BY created_at DESC
-		LIMIT $%d
-	`, where, len(args))
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("list activity: %w", err)
-	}
-	defer rows.Close()
-
-	var items []map[string]any
-	for rows.Next() {
-		var (
-			id        string
-			eventType string
-			entity    []byte
-			payload   []byte
-			createdAt time.Time
-		)
-		if err := rows.Scan(&id, &eventType, &entity, &payload, &createdAt); err != nil {
-			return nil, fmt.Errorf("scan activity: %w", err)
-		}
-		items = append(items, map[string]any{
-			"id":         id,
-			"type":       eventType,
-			"entity_ref": json.RawMessage(normalizeJSON(entity, "{}")),
-			"payload":    json.RawMessage(normalizeJSON(payload, "{}")),
-			"created_at": createdAt,
-		})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate activity: %w", err)
 	}
 	return items, nil
 }

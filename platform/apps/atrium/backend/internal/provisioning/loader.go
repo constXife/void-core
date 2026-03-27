@@ -16,13 +16,12 @@ type File struct {
 	Templates      []Template      `yaml:"dashboard_templates" json:"dashboard_templates"`
 	Spaces         []Space         `yaml:"spaces" json:"spaces"`
 	DirectoryItems []DirectoryItem `yaml:"directory_items" json:"directory_items"`
-	Services       []Service       `yaml:"services" json:"services"`
-	Placements     []Placement     `yaml:"service_placements" json:"service_placements"`
 }
 
 type Space struct {
 	ID                   string   `yaml:"id" json:"id"`
 	Title                string   `yaml:"title" json:"title"`
+	State                string   `yaml:"state" json:"state"`
 	Type                 string   `yaml:"type" json:"type"`
 	Parent               string   `yaml:"parent" json:"parent"`
 	DashboardTemplate    string   `yaml:"dashboard_template" json:"dashboard_template"`
@@ -75,43 +74,15 @@ type DirectoryItem struct {
 	DependsOn      any      `yaml:"depends_on" json:"depends_on"`
 }
 
-type Service struct {
-	Key            string   `yaml:"key" json:"key"`
-	Title          string   `yaml:"title" json:"title"`
-	Description    string   `yaml:"description" json:"description"`
-	IconURL        string   `yaml:"icon_url" json:"icon_url"`
-	ServiceType    string   `yaml:"service_type" json:"service_type"`
-	Tags           []string `yaml:"tags" json:"tags"`
-	Owners         any      `yaml:"owners" json:"owners"`
-	Links          any      `yaml:"links" json:"links"`
-	Endpoints      any      `yaml:"endpoints" json:"endpoints"`
-	Tier           string   `yaml:"tier" json:"tier"`
-	Lifecycle      string   `yaml:"lifecycle" json:"lifecycle"`
-	Classification string   `yaml:"classification" json:"classification"`
-	DependsOn      any      `yaml:"depends_on" json:"depends_on"`
-}
-
-type Placement struct {
-	ServiceKey      string   `yaml:"service_key" json:"service_key"`
-	Space           string   `yaml:"space" json:"space"`
-	Label           string   `yaml:"label" json:"label"`
-	Pinned          bool     `yaml:"pinned" json:"pinned"`
-	Order           int      `yaml:"order" json:"order"`
-	GroupLabel      string   `yaml:"group" json:"group"`
-	AudienceGroups  []string `yaml:"audience_groups" json:"audience_groups"`
-	AllowedActions  []string `yaml:"allowed_actions" json:"allowed_actions"`
-	VisibleLinks    []string `yaml:"visible_links" json:"visible_links"`
-	PrimaryURL      string   `yaml:"primary_url" json:"primary_url"`
-	DefaultEndpoint string   `yaml:"default_endpoint" json:"default_endpoint"`
-	AccessPath      string   `yaml:"access_path" json:"access_path"`
-}
-
 type Options struct {
-	ArchiveMissing  bool
-	PruneTemplates  bool
-	PruneDirectory  bool
-	PruneServices   bool
-	PrunePlacements bool
+	ArchiveMissing bool
+	PruneTemplates bool
+	PruneDirectory bool
+}
+
+type spaceSyncIndex struct {
+	Declared map[string]int
+	Active   map[string]int
 }
 
 func Load(ctx context.Context, db *sql.DB, path string, opts Options) error {
@@ -133,25 +104,13 @@ func Load(ctx context.Context, db *sql.DB, path string, opts Options) error {
 		return err
 	}
 
-	serviceIDs, err := syncServices(ctx, db, file.Services)
+	spaceIndex, err := syncSpaces(ctx, db, file.Spaces)
 	if err != nil {
 		return err
 	}
+	activeDirectoryItems := filterDirectoryItemsForActiveSpaces(file.DirectoryItems, spaceIndex)
 
-	spaceIDs, err := syncSpaces(ctx, db, file.Spaces)
-	if err != nil {
-		return err
-	}
-
-	if err := syncPlacements(ctx, db, file.Placements, serviceIDs, spaceIDs); err != nil {
-		return err
-	}
-
-	if err := syncDirectoryItems(ctx, db, file.DirectoryItems, spaceIDs); err != nil {
-		return err
-	}
-
-	if err := materializePlacements(ctx, db, file.Services, file.Placements, spaceIDs); err != nil {
+	if err := syncDirectoryItems(ctx, db, activeDirectoryItems, spaceIndex.Active); err != nil {
 		return err
 	}
 
@@ -160,26 +119,20 @@ func Load(ctx context.Context, db *sql.DB, path string, opts Options) error {
 			return err
 		}
 	}
-	if opts.PruneServices {
-		if err := clearMissingServices(ctx, db, file.Services); err != nil {
-			return err
-		}
-	}
-	if opts.PrunePlacements {
-		if err := clearMissingPlacements(ctx, db, file.Placements, spaceIDs); err != nil {
-			return err
-		}
-	}
 	if opts.PruneDirectory {
-		if err := clearMissingDirectoryItems(ctx, db, spaceIDs, file.DirectoryItems); err != nil {
+		if err := clearMissingDirectoryItems(ctx, db, spaceIndex.Active, activeDirectoryItems); err != nil {
 			return err
 		}
 	}
 
 	if opts.ArchiveMissing {
-		if err := clearMissingSpaces(ctx, db, spaceIDs); err != nil {
+		if err := clearMissingSpaces(ctx, db, spaceIndex.Declared); err != nil {
 			return err
 		}
+	}
+
+	if err := clearArchivedSpaceArtifacts(ctx, db); err != nil {
+		return err
 	}
 
 	return nil
@@ -210,10 +163,16 @@ func parseFile(path string, data []byte) (File, error) {
 	return file, nil
 }
 
-func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int, error) {
-	ids := make(map[string]int, len(spaces))
+func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (spaceSyncIndex, error) {
+	index := spaceSyncIndex{
+		Declared: make(map[string]int, len(spaces)),
+		Active:   make(map[string]int, len(spaces)),
+	}
 	defaultPublicSpaceID := ""
 	for _, space := range spaces {
+		if normalizeSpaceState(space.State) != "active" {
+			continue
+		}
 		accessMode := strings.TrimSpace(space.AccessMode)
 		if accessMode != "public_readonly" {
 			continue
@@ -222,7 +181,7 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 			continue
 		}
 		if defaultPublicSpaceID != "" {
-			return nil, fmt.Errorf("multiple default public entry spaces: %s, %s", defaultPublicSpaceID, space.ID)
+			return spaceSyncIndex{}, fmt.Errorf("multiple default public entry spaces: %s, %s", defaultPublicSpaceID, space.ID)
 		}
 		defaultPublicSpaceID = space.ID
 	}
@@ -232,12 +191,12 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 			SET is_default_public_entry = false
 			WHERE is_default_public_entry = true
 		`); err != nil {
-			return nil, fmt.Errorf("clear existing default public entry: %w", err)
+			return spaceSyncIndex{}, fmt.Errorf("clear existing default public entry: %w", err)
 		}
 	}
 	for _, space := range spaces {
 		if space.ID == "" {
-			return nil, fmt.Errorf("space id is required")
+			return spaceSyncIndex{}, fmt.Errorf("space id is required")
 		}
 		layout := space.LayoutMode
 		if layout == "" {
@@ -250,25 +209,25 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 
 		displayConfig, err := normalizeJSON(space.DisplayConfig)
 		if err != nil {
-			return nil, fmt.Errorf("space %s display_config: %w", space.ID, err)
+			return spaceSyncIndex{}, fmt.Errorf("space %s display_config: %w", space.ID, err)
 		}
 		if space.URL != "" {
 			displayConfig, err = mergeDisplayConfigURL(displayConfig, space.URL)
 			if err != nil {
-				return nil, fmt.Errorf("space %s display_config url: %w", space.ID, err)
+				return spaceSyncIndex{}, fmt.Errorf("space %s display_config url: %w", space.ID, err)
 			}
 		}
 		rulesConfig, err := normalizeJSON(space.PersonalizationRules)
 		if err != nil {
-			return nil, fmt.Errorf("space %s personalization_rules: %w", space.ID, err)
+			return spaceSyncIndex{}, fmt.Errorf("space %s personalization_rules: %w", space.ID, err)
 		}
 		publicEntryConfig, err := normalizeJSON(space.PublicEntry)
 		if err != nil {
-			return nil, fmt.Errorf("space %s public_entry: %w", space.ID, err)
+			return spaceSyncIndex{}, fmt.Errorf("space %s public_entry: %w", space.ID, err)
 		}
 		groupsJSON, err := json.Marshal(space.VisibilityGroups)
 		if err != nil {
-			return nil, fmt.Errorf("space %s groups: %w", space.ID, err)
+			return spaceSyncIndex{}, fmt.Errorf("space %s groups: %w", space.ID, err)
 		}
 		spaceType := space.Type
 		if spaceType == "" {
@@ -286,13 +245,18 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 			isDefaultPublicEntry = false
 		}
 
+		state := normalizeSpaceState(space.State)
+		isProvisioned := state == "active"
+		if !isProvisioned {
+			isDefaultPublicEntry = false
+		}
 		var id int
 		err = db.QueryRowContext(ctx, `
 			INSERT INTO spaces (
 				slug, title, space_type, access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
-				visibility_groups, display_config, personalization_rules, public_entry, is_provisioned
+				visibility_groups, display_config, personalization_rules, public_entry, is_provisioned, provisioning_state
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 			ON CONFLICT (slug) DO UPDATE SET
 				title = EXCLUDED.title,
 				space_type = EXCLUDED.space_type,
@@ -305,13 +269,17 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 				display_config = EXCLUDED.display_config,
 				personalization_rules = EXCLUDED.personalization_rules,
 				public_entry = EXCLUDED.public_entry,
-				is_provisioned = true
+				is_provisioned = EXCLUDED.is_provisioned,
+				provisioning_state = EXCLUDED.provisioning_state
 			RETURNING id
-		`, space.ID, space.Title, spaceType, accessMode, isDefaultPublicEntry, layout, space.BackgroundURL, lockable, groupsJSON, displayConfig, rulesConfig, publicEntryConfig).Scan(&id)
+		`, space.ID, space.Title, spaceType, accessMode, isDefaultPublicEntry, layout, space.BackgroundURL, lockable, groupsJSON, displayConfig, rulesConfig, publicEntryConfig, isProvisioned, state).Scan(&id)
 		if err != nil {
-			return nil, fmt.Errorf("upsert space %s: %w", space.ID, err)
+			return spaceSyncIndex{}, fmt.Errorf("upsert space %s: %w", space.ID, err)
 		}
-		ids[space.ID] = id
+		index.Declared[space.ID] = id
+		if isProvisioned {
+			index.Active[space.ID] = id
+		}
 	}
 	for _, space := range spaces {
 		if space.ID == "" {
@@ -319,9 +287,9 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 		}
 		var parentID sql.NullInt64
 		if space.Parent != "" {
-			id, ok := ids[space.Parent]
+			id, ok := index.Declared[space.Parent]
 			if !ok {
-				return nil, fmt.Errorf("unknown parent space %s for %s", space.Parent, space.ID)
+				return spaceSyncIndex{}, fmt.Errorf("unknown parent space %s for %s", space.Parent, space.ID)
 			}
 			parentID = sql.NullInt64{Int64: int64(id), Valid: true}
 		}
@@ -330,7 +298,7 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 		if space.DashboardTemplate != "" {
 			id, err := templateIDByKey(ctx, db, space.DashboardTemplate)
 			if err != nil {
-				return nil, fmt.Errorf("space %s dashboard_template: %w", space.ID, err)
+				return spaceSyncIndex{}, fmt.Errorf("space %s dashboard_template: %w", space.ID, err)
 			}
 			if id != 0 {
 				templateID = sql.NullInt64{Int64: int64(id), Valid: true}
@@ -343,10 +311,24 @@ func syncSpaces(ctx context.Context, db *sql.DB, spaces []Space) (map[string]int
 			WHERE slug = $3
 		`, parentID, templateID, space.ID)
 		if err != nil {
-			return nil, fmt.Errorf("update space %s hierarchy: %w", space.ID, err)
+			return spaceSyncIndex{}, fmt.Errorf("update space %s hierarchy: %w", space.ID, err)
 		}
 	}
-	return ids, nil
+	return index, nil
+}
+
+func filterDirectoryItemsForActiveSpaces(items []DirectoryItem, index spaceSyncIndex) []DirectoryItem {
+	filtered := make([]DirectoryItem, 0, len(items))
+	for _, item := range items {
+		if _, declared := index.Declared[item.Space]; !declared {
+			filtered = append(filtered, item)
+			continue
+		}
+		if _, active := index.Active[item.Space]; active {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
 }
 
 func syncRoles(ctx context.Context, db *sql.DB, roles []Role) error {
@@ -555,355 +537,6 @@ func syncDirectoryItems(ctx context.Context, db *sql.DB, items []DirectoryItem, 
 	return nil
 }
 
-func syncServices(ctx context.Context, db *sql.DB, services []Service) (map[string]int, error) {
-	ids := make(map[string]int, len(services))
-	for _, svc := range services {
-		if strings.TrimSpace(svc.Key) == "" {
-			return nil, fmt.Errorf("service key is required")
-		}
-		title := svc.Title
-		if title == "" {
-			title = svc.Key
-		}
-		tagsJSON, err := json.Marshal(svc.Tags)
-		if err != nil {
-			return nil, fmt.Errorf("encode tags for %s: %w", svc.Key, err)
-		}
-		ownersJSON, err := normalizeJSON(ownersWithDefault(svc.Owners, "service"))
-		if err != nil {
-			return nil, fmt.Errorf("encode owners for %s: %w", svc.Key, err)
-		}
-		linksJSON, err := normalizeJSON(svc.Links)
-		if err != nil {
-			return nil, fmt.Errorf("encode links for %s: %w", svc.Key, err)
-		}
-		endpointsJSON, err := normalizeJSONArray(svc.Endpoints)
-		if err != nil {
-			return nil, fmt.Errorf("encode endpoints for %s: %w", svc.Key, err)
-		}
-		dependsOnJSON, err := normalizeJSONArray(svc.DependsOn)
-		if err != nil {
-			return nil, fmt.Errorf("encode depends_on for %s: %w", svc.Key, err)
-		}
-
-		var id int
-		err = db.QueryRowContext(ctx, `
-			INSERT INTO services (
-				key, title, description, icon_url, service_type, tags, owners_json,
-				links_json, endpoints_json, tier, lifecycle, classification, depends_on_json,
-				updated_at
-			) VALUES (
-				$1, $2, $3, $4, $5, $6, $7,
-				$8, $9, $10, $11, $12, $13,
-				NOW()
-			)
-			ON CONFLICT (key) DO UPDATE SET
-				title = EXCLUDED.title,
-				description = EXCLUDED.description,
-				icon_url = EXCLUDED.icon_url,
-				service_type = EXCLUDED.service_type,
-				tags = EXCLUDED.tags,
-				owners_json = EXCLUDED.owners_json,
-				links_json = EXCLUDED.links_json,
-				endpoints_json = EXCLUDED.endpoints_json,
-				tier = EXCLUDED.tier,
-				lifecycle = EXCLUDED.lifecycle,
-				classification = EXCLUDED.classification,
-				depends_on_json = EXCLUDED.depends_on_json,
-				updated_at = NOW()
-			RETURNING id
-		`, svc.Key, title, svc.Description, svc.IconURL, svc.ServiceType, tagsJSON, ownersJSON,
-			linksJSON, endpointsJSON, svc.Tier, svc.Lifecycle, svc.Classification, dependsOnJSON).Scan(&id)
-		if err != nil {
-			return nil, fmt.Errorf("upsert service %s: %w", svc.Key, err)
-		}
-		ids[svc.Key] = id
-	}
-	return ids, nil
-}
-
-func syncPlacements(ctx context.Context, db *sql.DB, placements []Placement, serviceIDs map[string]int, spaceIDs map[string]int) error {
-	for _, placement := range placements {
-		if strings.TrimSpace(placement.ServiceKey) == "" {
-			return fmt.Errorf("placement service_key is required")
-		}
-		if strings.TrimSpace(placement.Space) == "" {
-			return fmt.Errorf("placement space is required for %s", placement.ServiceKey)
-		}
-		serviceID, ok := serviceIDs[placement.ServiceKey]
-		if !ok {
-			return fmt.Errorf("unknown service %s", placement.ServiceKey)
-		}
-		spaceID, ok := spaceIDs[placement.Space]
-		if !ok {
-			return fmt.Errorf("unknown space %s for placement %s", placement.Space, placement.ServiceKey)
-		}
-		audienceJSON, err := json.Marshal(placement.AudienceGroups)
-		if err != nil {
-			return fmt.Errorf("encode audience_groups for %s: %w", placement.ServiceKey, err)
-		}
-		actionsJSON, err := json.Marshal(placement.AllowedActions)
-		if err != nil {
-			return fmt.Errorf("encode allowed_actions for %s: %w", placement.ServiceKey, err)
-		}
-		linksJSON, err := json.Marshal(placement.VisibleLinks)
-		if err != nil {
-			return fmt.Errorf("encode visible_links for %s: %w", placement.ServiceKey, err)
-		}
-
-		_, err = db.ExecContext(ctx, `
-			INSERT INTO service_placements (
-				service_id, space_id, label, pinned, sort_order, group_label, audience_groups,
-				allowed_actions, visible_links, primary_url, default_endpoint, access_path,
-				updated_at
-			) VALUES (
-				$1, $2, $3, $4, $5, $6, $7,
-				$8, $9, $10, $11, $12,
-				NOW()
-			)
-			ON CONFLICT (service_id, space_id) DO UPDATE SET
-				label = EXCLUDED.label,
-				pinned = EXCLUDED.pinned,
-				sort_order = EXCLUDED.sort_order,
-				group_label = EXCLUDED.group_label,
-				audience_groups = EXCLUDED.audience_groups,
-				allowed_actions = EXCLUDED.allowed_actions,
-				visible_links = EXCLUDED.visible_links,
-				primary_url = EXCLUDED.primary_url,
-				default_endpoint = EXCLUDED.default_endpoint,
-				access_path = EXCLUDED.access_path,
-				updated_at = NOW()
-		`, serviceID, spaceID, placement.Label, placement.Pinned, placement.Order, placement.GroupLabel, audienceJSON,
-			actionsJSON, linksJSON, placement.PrimaryURL, placement.DefaultEndpoint, placement.AccessPath)
-		if err != nil {
-			return fmt.Errorf("upsert placement %s: %w", placement.ServiceKey, err)
-		}
-	}
-	return nil
-}
-
-func materializePlacements(ctx context.Context, db *sql.DB, services []Service, placements []Placement, spaceIDs map[string]int) error {
-	serviceMap := make(map[string]Service, len(services))
-	for _, svc := range services {
-		if strings.TrimSpace(svc.Key) == "" {
-			continue
-		}
-		serviceMap[svc.Key] = svc
-	}
-	spaceGroups := make(map[int][]string)
-	for _, placement := range placements {
-		svc, ok := serviceMap[placement.ServiceKey]
-		if !ok {
-			continue
-		}
-		spaceID, ok := spaceIDs[placement.Space]
-		if !ok {
-			continue
-		}
-		linkPayload, err := normalizeJSON(svc.Links)
-		if err != nil {
-			return fmt.Errorf("encode links for %s: %w", svc.Key, err)
-		}
-		if len(placement.VisibleLinks) > 0 {
-			if filtered, err := filterLinks(linkPayload, placement.VisibleLinks); err == nil {
-				linkPayload = filtered
-			}
-		}
-		endpointsPayload, err := normalizeJSONArray(svc.Endpoints)
-		if err != nil {
-			return fmt.Errorf("encode endpoints for %s: %w", svc.Key, err)
-		}
-		url := resolvePrimaryURL(placement, linkPayload, endpointsPayload)
-		runbookURL := resolveRunbookURL(linkPayload)
-
-		title := svc.Title
-		if strings.TrimSpace(placement.Label) != "" {
-			title = placement.Label
-		}
-
-		ownersJSON, err := normalizeJSON(ownersWithDefault(svc.Owners, "service"))
-		if err != nil {
-			return fmt.Errorf("encode owners for %s: %w", svc.Key, err)
-		}
-		dependsOnJSON, err := normalizeJSONArray(svc.DependsOn)
-		if err != nil {
-			return fmt.Errorf("encode depends_on for %s: %w", svc.Key, err)
-		}
-		tagsJSON, err := json.Marshal(svc.Tags)
-		if err != nil {
-			return fmt.Errorf("encode tags for %s: %w", svc.Key, err)
-		}
-		actionJSON, err := json.Marshal(placement.AllowedActions)
-		if err != nil {
-			return fmt.Errorf("encode actions for %s: %w", svc.Key, err)
-		}
-		audience := placement.AudienceGroups
-		if len(audience) == 0 {
-			if cached, ok := spaceGroups[spaceID]; ok {
-				audience = cached
-			} else if loaded, err := loadSpaceGroups(ctx, db, spaceID); err == nil {
-				spaceGroups[spaceID] = loaded
-				audience = loaded
-			}
-		}
-		audienceJSON, err := json.Marshal(audience)
-		if err != nil {
-			return fmt.Errorf("encode audience for %s: %w", svc.Key, err)
-		}
-
-		_, err = db.ExecContext(ctx, `
-			INSERT INTO directory_items (
-				space_id, type, key, title, description, icon_url, url, pinned, tags, action_keys, audience_groups,
-				service_type, owners_json, links_json, endpoints_json, tier, lifecycle, access_path, runbook_url,
-				classification, depends_on_json
-			) VALUES (
-				$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-				$12, $13, $14, $15, $16, $17, $18, $19, $20, $21
-			)
-			ON CONFLICT (space_id, key) DO UPDATE SET
-				type = EXCLUDED.type,
-				title = EXCLUDED.title,
-				description = EXCLUDED.description,
-				icon_url = EXCLUDED.icon_url,
-				url = EXCLUDED.url,
-				pinned = EXCLUDED.pinned,
-				tags = EXCLUDED.tags,
-				action_keys = EXCLUDED.action_keys,
-				audience_groups = EXCLUDED.audience_groups,
-				service_type = EXCLUDED.service_type,
-				owners_json = EXCLUDED.owners_json,
-				links_json = EXCLUDED.links_json,
-				endpoints_json = EXCLUDED.endpoints_json,
-				tier = EXCLUDED.tier,
-				lifecycle = EXCLUDED.lifecycle,
-				access_path = EXCLUDED.access_path,
-				runbook_url = EXCLUDED.runbook_url,
-				classification = EXCLUDED.classification,
-				depends_on_json = EXCLUDED.depends_on_json
-		`, spaceID, "service", svc.Key, title, svc.Description, svc.IconURL, url, placement.Pinned, tagsJSON, actionJSON, audienceJSON,
-			svc.ServiceType, ownersJSON, linkPayload, endpointsPayload, svc.Tier, svc.Lifecycle, placement.AccessPath, runbookURL,
-			svc.Classification, dependsOnJSON)
-		if err != nil {
-			return fmt.Errorf("materialize placement %s: %w", svc.Key, err)
-		}
-	}
-	return nil
-}
-
-func loadSpaceGroups(ctx context.Context, db *sql.DB, spaceID int) ([]string, error) {
-	var raw []byte
-	if err := db.QueryRowContext(ctx, `SELECT visibility_groups FROM spaces WHERE id = $1`, spaceID).Scan(&raw); err != nil {
-		return nil, err
-	}
-	var groups []string
-	if len(raw) == 0 {
-		return []string{}, nil
-	}
-	if err := json.Unmarshal(raw, &groups); err != nil {
-		return []string{}, nil
-	}
-	return groups, nil
-}
-
-func filterLinks(raw json.RawMessage, allowed []string) (json.RawMessage, error) {
-	if len(allowed) == 0 {
-		return raw, nil
-	}
-	var payload map[string]any
-	if err := json.Unmarshal(raw, &payload); err != nil {
-		return raw, err
-	}
-	allow := make(map[string]struct{}, len(allowed))
-	for _, key := range allowed {
-		if strings.TrimSpace(key) != "" {
-			allow[key] = struct{}{}
-		}
-	}
-	filtered := make(map[string]any)
-	for key, value := range payload {
-		if _, ok := allow[key]; ok {
-			filtered[key] = value
-		}
-	}
-	out, err := json.Marshal(filtered)
-	if err != nil {
-		return raw, err
-	}
-	return json.RawMessage(out), nil
-}
-
-func resolvePrimaryURL(placement Placement, links json.RawMessage, endpoints json.RawMessage) string {
-	if strings.TrimSpace(placement.PrimaryURL) != "" {
-		return placement.PrimaryURL
-	}
-	if url := resolveLinkURL(links); url != "" {
-		return url
-	}
-	if url := resolveEndpointURL(endpoints, placement.DefaultEndpoint); url != "" {
-		return url
-	}
-	return ""
-}
-
-func resolveLinkURL(links json.RawMessage) string {
-	var payload map[string]any
-	if err := json.Unmarshal(links, &payload); err != nil {
-		return ""
-	}
-	candidates := []string{"docs", "runbook", "repo", "dashboard", "dashboards", "logs"}
-	for _, key := range candidates {
-		if value, ok := payload[key]; ok {
-			switch typed := value.(type) {
-			case string:
-				return typed
-			case []any:
-				if len(typed) > 0 {
-					if text, ok := typed[0].(string); ok {
-						return text
-					}
-				}
-			}
-		}
-	}
-	return ""
-}
-
-func resolveRunbookURL(links json.RawMessage) string {
-	var payload map[string]any
-	if err := json.Unmarshal(links, &payload); err != nil {
-		return ""
-	}
-	if value, ok := payload["runbook"]; ok {
-		if url, ok := value.(string); ok {
-			return url
-		}
-	}
-	return ""
-}
-
-func resolveEndpointURL(endpoints json.RawMessage, preferred string) string {
-	var payload []map[string]any
-	if err := json.Unmarshal(endpoints, &payload); err != nil {
-		return ""
-	}
-	preferred = strings.TrimSpace(preferred)
-	if preferred != "" {
-		for _, item := range payload {
-			if key, ok := item["key"].(string); ok && key == preferred {
-				if url, ok := item["url"].(string); ok {
-					return url
-				}
-			}
-		}
-	}
-	for _, item := range payload {
-		if url, ok := item["url"].(string); ok {
-			return url
-		}
-	}
-	return ""
-}
-
 func clearMissingSpaces(ctx context.Context, db *sql.DB, spaceIDs map[string]int) error {
 	list := make([]int, 0, len(spaceIDs))
 	for _, id := range spaceIDs {
@@ -912,7 +545,8 @@ func clearMissingSpaces(ctx context.Context, db *sql.DB, spaceIDs map[string]int
 
 	_, err := db.ExecContext(ctx, `
 		UPDATE spaces
-		SET is_provisioned = false
+		SET is_provisioned = false,
+		    provisioning_state = 'archived'
 		WHERE is_provisioned = true AND (
 			$1::int[] IS NULL OR array_length($1::int[], 1) IS NULL OR NOT (id = ANY($1::int[]))
 		)
@@ -974,117 +608,17 @@ func clearMissingDirectoryItems(ctx context.Context, db *sql.DB, spaceIDs map[st
 	return nil
 }
 
-func clearMissingServices(ctx context.Context, db *sql.DB, services []Service) error {
-	keys := make([]string, 0, len(services))
-	for _, svc := range services {
-		if strings.TrimSpace(svc.Key) != "" {
-			keys = append(keys, svc.Key)
-		}
-	}
-	if len(keys) == 0 {
-		_, err := db.ExecContext(ctx, `DELETE FROM services`)
-		if err != nil {
-			return fmt.Errorf("clear services: %w", err)
-		}
-		_, _ = db.ExecContext(ctx, `DELETE FROM directory_items WHERE type = 'service'`)
-		return nil
-	}
-	placeholders := make([]string, 0, len(keys))
-	args := make([]any, 0, len(keys))
-	for idx, key := range keys {
-		placeholders = append(placeholders, fmt.Sprintf("$%d", idx+1))
-		args = append(args, key)
-	}
-	query := fmt.Sprintf(`DELETE FROM services WHERE key NOT IN (%s)`, strings.Join(placeholders, ", "))
-	if _, err := db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("clear services: %w", err)
-	}
-	query = fmt.Sprintf(`DELETE FROM directory_items WHERE type = 'service' AND key NOT IN (%s)`, strings.Join(placeholders, ", "))
-	if _, err := db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("clear service directory_items: %w", err)
-	}
-	return nil
-}
-
-func clearMissingPlacements(ctx context.Context, db *sql.DB, placements []Placement, spaceIDs map[string]int) error {
-	type pair struct {
-		serviceID int
-		spaceID   int
-	}
-	pairs := make([]pair, 0, len(placements))
-	serviceIDs := make(map[string]int)
-	if len(placements) > 0 {
-		rows, err := db.QueryContext(ctx, `SELECT id, key FROM services`)
-		if err != nil {
-			return fmt.Errorf("load services: %w", err)
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var id int
-			var key string
-			if err := rows.Scan(&id, &key); err != nil {
-				return fmt.Errorf("scan services: %w", err)
-			}
-			serviceIDs[key] = id
-		}
-		if err := rows.Err(); err != nil {
-			return fmt.Errorf("iterate services: %w", err)
-		}
-	}
-	for _, placement := range placements {
-		serviceID, ok := serviceIDs[placement.ServiceKey]
-		if !ok {
-			continue
-		}
-		spaceID, ok := spaceIDs[placement.Space]
-		if !ok {
-			continue
-		}
-		if serviceID == 0 {
-			continue
-		}
-		pairs = append(pairs, pair{serviceID: serviceID, spaceID: spaceID})
-	}
-
-	if len(pairs) == 0 {
-		_, err := db.ExecContext(ctx, `DELETE FROM service_placements`)
-		if err != nil {
-			return fmt.Errorf("clear placements: %w", err)
-		}
-		_, _ = db.ExecContext(ctx, `DELETE FROM directory_items WHERE type = 'service'`)
-		return nil
-	}
-
-	values := make([]string, 0, len(pairs))
-	args := make([]any, 0, len(pairs)*2)
-	for idx, pair := range pairs {
-		values = append(values, fmt.Sprintf("($%d, $%d)", idx*2+1, idx*2+2))
-		args = append(args, pair.serviceID, pair.spaceID)
-	}
-	query := fmt.Sprintf(`
-		DELETE FROM service_placements
-		WHERE NOT EXISTS (
-			SELECT 1 FROM (VALUES %s) AS v(service_id, space_id)
-			WHERE v.service_id = service_placements.service_id
-			  AND v.space_id = service_placements.space_id
-		)
-	`, strings.Join(values, ", "))
-	if _, err := db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("clear placements: %w", err)
-	}
-
-	query = fmt.Sprintf(`
+func clearArchivedSpaceArtifacts(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, `
 		DELETE FROM directory_items
-		WHERE type = 'service'
-		  AND NOT EXISTS (
-			SELECT 1 FROM (VALUES %s) AS v(service_id, space_id)
-			JOIN services ON services.id = v.service_id
-			WHERE v.space_id = directory_items.space_id
-			  AND services.key = directory_items.key
+		WHERE EXISTS (
+			SELECT 1
+			FROM spaces
+			WHERE spaces.id = directory_items.space_id
+			  AND spaces.is_provisioned = false
 		)
-	`, strings.Join(values, ", "))
-	if _, err := db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("clear service directory_items: %w", err)
+	`); err != nil {
+		return fmt.Errorf("clear archived space directory items: %w", err)
 	}
 	return nil
 }
@@ -1096,7 +630,7 @@ func clearDirectoryItemsForSpace(ctx context.Context, db *sql.DB, spaceID int, k
 	if len(keys) == 0 {
 		_, err := db.ExecContext(ctx, `
 			DELETE FROM directory_items
-			WHERE space_id = $1 AND (type IS NULL OR type <> 'service')
+			WHERE space_id = $1
 		`, spaceID)
 		if err != nil {
 			return fmt.Errorf("clear directory items: %w", err)
@@ -1113,7 +647,6 @@ func clearDirectoryItemsForSpace(ctx context.Context, db *sql.DB, spaceID int, k
 	query := fmt.Sprintf(`
 		DELETE FROM directory_items
 		WHERE space_id = $1
-		  AND (type IS NULL OR type <> 'service')
 		  AND (key IS NULL OR key NOT IN (%s))
 	`, strings.Join(placeholders, ", "))
 	if _, err := db.ExecContext(ctx, query, args...); err != nil {
@@ -1178,4 +711,15 @@ func ParseArchiveFlag(value string) bool {
 		return true
 	}
 	return value == "1" || value == "true" || value == "yes"
+}
+
+func normalizeSpaceState(value string) string {
+	switch strings.TrimSpace(strings.ToLower(value)) {
+	case "", "active":
+		return "active"
+	case "archived":
+		return "archived"
+	default:
+		return "archived"
+	}
 }

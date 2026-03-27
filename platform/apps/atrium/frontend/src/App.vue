@@ -28,7 +28,6 @@ import {
   Users,
   X
 } from "lucide-vue-next";
-import { useWebSocket } from "./composables/useWebSocket";
 import Tooltip from "./components/Tooltip.vue";
 
 const HOTKEYS = {
@@ -55,7 +54,16 @@ const MESSAGES = {
     "app.addBlock": "Add block",
     "app.addBlockShort": "Add",
     "app.save": "Save",
+    "app.saveDashboard": "Save dashboard",
     "app.cancel": "Cancel",
+    "app.editLayout": "Edit layout",
+    "app.exit": "Exit",
+    "app.details": "Details",
+    "app.keyboardShortcuts": "Keyboard Shortcuts",
+    "app.shortcutsNavigateTitle": "Navigate spaces",
+    "app.shortcutsNavigateBody": "Move between workspaces",
+    "app.shortcutsHelpTitle": "Help",
+    "app.shortcutsHelpBody": "Show shortcuts overlay",
     "app.loading": "Loading",
     "app.noAccessSpaces": "No spaces available for {role}.",
     "auth.title": "Sign in to Atrium",
@@ -81,7 +89,13 @@ const MESSAGES = {
     "guest.trustNote": "Private spaces, titles, blocks, and metadata are not disclosed before sign-in.",
     "guest.loginCta": "Sign in",
     "guest.contactTitle": "Operator contact",
-    "guest.contactBody": "Use the configured operator or support contacts for access help.",
+    "guest.contactBody": "Ask your operator for access or use the support contact configured for this contour.",
+    "guest.valueTitle": "Why this Atrium exists",
+    "guest.valueBody": "One entry point for local services, people, and routines instead of scattered URLs and bookmarks.",
+    "guest.controlTitle": "Local control",
+    "guest.controlBody": "The baseline assumes a private, owner-controlled contour without hidden SaaS dependency for basic use.",
+    "guest.accessStepsTitle": "How to get access",
+    "guest.accessStepsBody": "Request an account from the operator, sign in with your own identity, then Atrium will open only the spaces meant for your role.",
     "guest.publicShellTitle": "Public spaces",
     "guest.publicShellSubtitle": "Only the spaces marked public_readonly are visible here.",
     "spaces.welcomeTitle": "Welcome to Atrium",
@@ -103,10 +117,178 @@ const MESSAGES = {
     "admin.subtitle.content": "Announcements and resources",
     "admin.subtitle.services": "Service canon and placement across spaces",
     "admin.subtitle.dashboard": "Dashboard block configuration",
+    "admin.spaces.create": "New space",
+    "admin.spaces.createAction": "Create space",
+    "admin.spaces.active": "Active spaces",
+    "admin.spaces.archived": "Archived spaces",
+    "admin.spaces.edit": "Edit",
+    "admin.spaces.archive": "Archive",
+    "admin.spaces.restore": "Restore",
+    "admin.spaces.delete": "Delete",
+    "admin.spaces.editTitle": "Edit space",
+    "admin.spaces.field.title": "Title",
+    "admin.spaces.field.description": "Description",
+    "admin.spaces.field.slug": "Slug",
+    "admin.spaces.field.visibilityGroups": "Visibility groups",
+    "admin.spaces.field.type": "Type",
+    "admin.spaces.field.parent": "Parent",
+    "admin.spaces.field.dashboardTemplate": "Dashboard template",
+    "admin.spaces.field.layoutMode": "Layout mode",
+    "admin.spaces.field.accessMode": "Visible before login",
+    "admin.spaces.field.backgroundUrl": "Background URL",
+    "admin.spaces.field.displayConfig": "Display config (JSON)",
+    "admin.spaces.field.personalizationRules": "Personalization rules (JSON)",
+    "admin.spaces.field.publicEntry": "Public entry",
+    "admin.spaces.field.publicEntryTitle": "Public intro title",
+    "admin.spaces.field.publicEntrySubtitle": "Public intro subtitle",
+    "admin.spaces.field.publicEntryHelp": "Public help block",
+    "admin.spaces.field.publicEntryContact": "Public contact block",
+    "admin.spaces.option.parentNone": "None",
+    "admin.spaces.option.templateAuto": "Auto by slug",
+    "admin.spaces.option.type.audience": "Audience",
+    "admin.spaces.option.type.shared": "Shared",
+    "admin.spaces.option.type.system": "System",
+    "admin.spaces.option.layout.grid": "Grid",
+    "admin.spaces.option.layout.hero": "Hero",
+    "admin.spaces.option.layout.list": "List",
+    "admin.spaces.option.access.private": "Private",
+    "admin.spaces.option.access.publicReadonly": "Public read-only",
+    "admin.spaces.lockable": "Lockable",
+    "admin.spaces.defaultPublicEntry": "Default public entry",
+    "admin.spaces.placeholder.title": "Media",
+    "admin.spaces.placeholder.description": "Films, music, and other things your household opens often.",
+    "admin.spaces.placeholder.slug": "media",
+    "admin.spaces.placeholder.visibilityGroups": "admin, user, guest",
+    "admin.spaces.placeholder.backgroundUrl": "https://...",
+    "admin.spaces.placeholder.publicEntryTitle": "Welcome to Atrium",
+    "admin.spaces.placeholder.publicEntrySubtitle": "Local private-by-default workspace.",
+    "admin.spaces.placeholder.publicEntryHelp": "Ask your operator for access.",
+    "admin.spaces.placeholder.publicEntryContact": "ops@company.local",
+    "admin.spaces.confirmDelete": "Delete space “{title}”?",
+    "admin.spaces.confirmArchive": "Archive space “{title}”? It will disappear from the active Atrium until you restore it.",
+    "admin.spaces.confirmRestore": "Restore space “{title}”? It will return to the active Atrium.",
+    "admin.spaces.archivedDone": "Space archived",
+    "admin.spaces.restoredDone": "Space restored",
+    "admin.common.space": "Space",
+    "admin.common.selectSpace": "Select space",
+    "admin.common.email": "Email",
+    "admin.common.role": "Role",
+    "admin.common.selectRole": "Select role",
+    "admin.common.validUntil": "Valid until",
+    "admin.common.bulkImport": "Bulk import",
+    "admin.common.title": "Title",
+    "admin.common.description": "Description",
+    "admin.common.body": "Body",
+    "admin.common.priority": "Priority",
+    "admin.common.pinned": "Pinned",
+    "admin.common.audienceGroups": "Audience groups",
+    "admin.common.type": "Type",
+    "admin.common.url": "URL",
+    "admin.common.iconUrl": "Icon URL",
+    "admin.common.tags": "Tags",
+    "admin.common.serviceType": "Service type",
+    "admin.common.tier": "Tier",
+    "admin.common.lifecycle": "Lifecycle",
+    "admin.common.classification": "Classification",
+    "admin.common.runbookUrl": "Runbook URL",
+    "admin.common.accessPath": "Access path",
+    "admin.common.dependsOn": "Depends on",
+    "admin.common.ownersJson": "Owners (JSON)",
+    "admin.common.linksJson": "Links (JSON)",
+    "admin.common.endpointsJson": "Endpoints (JSON)",
+    "admin.common.key": "Key",
+    "admin.common.service": "Service",
+    "admin.common.selectService": "Select service",
+    "admin.common.allSpaces": "All spaces",
+    "admin.common.allServices": "All services",
+    "admin.common.label": "Label",
+    "admin.common.group": "Group",
+    "admin.common.order": "Order",
+    "admin.common.primaryUrl": "Primary URL",
+    "admin.common.defaultEndpoint": "Default endpoint",
+    "admin.common.allowedActions": "Allowed actions",
+    "admin.common.visibleLinks": "Visible links",
+    "admin.common.create": "Create",
+    "admin.common.import": "Import",
+    "admin.common.remove": "Remove",
+    "admin.common.noItems": "Nothing here yet.",
+    "admin.common.option.normal": "Normal",
+    "admin.common.option.high": "High",
+    "admin.common.option.critical": "Critical",
+    "admin.common.option.type.resource": "Resource",
+    "admin.common.option.type.link": "Link",
+    "admin.common.option.type.action": "Action",
+    "admin.common.placeholder.email": "user@example.com",
+    "admin.common.placeholder.segment": "kid-girl",
+    "admin.common.placeholder.emails": "email1,email2,email3...",
+    "admin.common.placeholder.title": "Title",
+    "admin.common.placeholder.body": "Message...",
+    "admin.common.placeholder.description": "Short description",
+    "admin.common.placeholder.iconUrl": "printer or /icons/printer.svg",
+    "admin.common.placeholder.url": "https://...",
+    "admin.common.placeholder.tags": "tag1, tag2",
+    "admin.common.placeholder.serviceType": "http/postgres/s3",
+    "admin.common.placeholder.tier": "tier-1",
+    "admin.common.placeholder.lifecycle": "active/deprecated",
+    "admin.common.placeholder.classification": "internal/PII",
+    "admin.common.placeholder.runbookUrl": "https://runbook...",
+    "admin.common.placeholder.accessPath": "Access request / group",
+    "admin.common.placeholder.dependsOn": "service-a, service-b",
+    "admin.common.placeholder.ownersJson": "{\"team\":\"core\",\"primary\":\"a@b.com\"}",
+    "admin.common.placeholder.linksJson": "{\"docs\":\"...\",\"repo\":\"...\"}",
+    "admin.common.placeholder.endpointsJson": "[{\"type\":\"http\",\"url\":\"https://...\"}]",
+    "admin.members.title": "Memberships",
+    "admin.members.add": "Add member",
+    "admin.members.none": "No members yet.",
+    "admin.members.importDone": "Imported {count} members",
+    "admin.members.until": "until {date}",
+    "admin.members.selectSpaceError": "Select a space",
+    "admin.content.announcements": "Announcements",
+    "admin.content.directory": "Directory",
+    "admin.content.noneAnnouncements": "No announcements yet.",
+    "admin.content.noneDirectory": "No directory items yet.",
+    "admin.content.createdAnnouncement": "Announcement created",
+    "admin.content.updatedAnnouncement": "Announcement updated",
+    "admin.content.deletedAnnouncement": "Announcement deleted",
+    "admin.content.confirmDeleteAnnouncement": "Delete announcement \"{title}\"?",
+    "admin.content.createdDirectory": "Directory item created",
+    "admin.content.updatedDirectory": "Directory updated",
+    "admin.content.deletedDirectory": "Directory item deleted",
+    "admin.content.confirmDeleteDirectory": "Delete directory item \"{title}\"?",
+    "admin.services.catalog": "Service catalog",
+    "admin.services.none": "No services yet.",
+    "admin.services.create": "Create service",
+    "admin.services.edit": "Edit",
+    "admin.services.editTitle": "Edit service",
+    "admin.services.created": "Service created",
+    "admin.services.updated": "Service updated",
+    "admin.services.deleted": "Service deleted",
+    "admin.services.confirmDelete": "Delete service \"{title}\"?",
+    "admin.placements.title": "Placements",
+    "admin.placements.spaceFilter": "Space filter",
+    "admin.placements.serviceFilter": "Service filter",
+    "admin.placements.none": "No placements yet.",
+    "admin.placements.create": "Create placement",
+    "admin.placements.created": "Placement created",
+    "admin.placements.updated": "Placement updated",
+    "admin.placements.deleted": "Placement deleted",
+    "admin.placements.confirmDelete": "Delete placement for \"{key}\"?",
+    "admin.placements.selectSpaceError": "Select a space",
+    "admin.placements.selectServiceError": "Select a service",
+    "admin.dashboard.templates": "Dashboard templates",
+    "admin.dashboard.blocksCount": "{count} blocks",
+    "admin.dashboard.editBlocks": "Edit blocks",
+    "admin.dashboard.editor": "Dashboard editor",
+    "admin.dashboard.preview": "Preview",
+    "admin.dashboard.blocks": "Blocks",
     "admin.segment": "Segment",
     "admin.segmentSaved": "Segment updated",
     "admin.reload": "Reload config",
     "admin.reloading": "Reloading...",
+    "admin.reloadDone": "Config reloaded",
+    "admin.reloadFailed": "Config reload failed",
+    "app.saveDone": "Saved",
+    "app.saveFailed": "Save failed",
     "space.picker.title": "Spaces",
     "space.picker.subtitle": "Switch your context",
     "space.picker.results": "Results",
@@ -115,6 +297,80 @@ const MESSAGES = {
     "space.picker.all": "All spaces",
     "space.picker.pin": "Pin",
     "space.lock": "Lock space",
+    "dashboard.empty.title": "Dashboard not configured yet",
+    "dashboard.empty.body": "The v1 baseline keeps orientation and curated entry points visible even before heavy customization.",
+    "resource.noPinned": "No pinned resources",
+    "resource.noActivity": "No activity yet",
+    "resource.copied": "Copied",
+    "resource.copyFailed": "Copy failed",
+    "resource.actionInvoked": "Action invoked",
+    "resource.actionFailed": "Action failed",
+    "resource.publicReadonly": "Public spaces are read-only",
+    "resource.details.title": "Resource details",
+    "resource.details.overview": "Overview",
+    "resource.details.access": "Access",
+    "resource.details.actions": "Actions",
+    "resource.details.ownership": "Ownership",
+    "resource.details.links": "Links",
+    "resource.details.endpoints": "Endpoints",
+    "resource.details.service": "Service",
+    "resource.details.titleField": "Title",
+    "resource.details.description": "Description",
+    "resource.details.type": "Type",
+    "resource.details.tier": "Tier",
+    "resource.details.lifecycle": "Lifecycle",
+    "resource.details.primaryLink": "Primary link",
+    "resource.details.endpoint": "Endpoint",
+    "resource.details.region": "Region",
+    "resource.details.bucket": "Bucket",
+    "resource.details.console": "Console",
+    "resource.details.accessPath": "Access path",
+    "resource.details.s3": "S3 details",
+    "resource.details.openConsole": "Open console",
+    "resource.details.copyS3": "Copy s3://",
+    "resource.details.copyCli": "Copy CLI",
+    "resource.details.noActions": "No actions configured.",
+    "editor.addBlockTitle": "Add block",
+    "editor.addBlockBody": "Choose a block type to add to the dashboard.",
+    "editor.blockSettings": "Block settings",
+    "editor.advanced": "Advanced layout",
+    "editor.advancedHint": "Raw grid coordinates stay available when you need exact placement.",
+    "editor.showAdvanced": "Show advanced",
+    "editor.hideAdvanced": "Hide advanced",
+    "surface.kids.title": "Safe kids entry",
+    "surface.kids.subtitle": "Only the allowed and easy-to-understand things should be here.",
+    "surface.kids.safeTitle": "Bounded by default",
+    "surface.kids.safeBody": "Kids see a smaller, calmer surface with fewer choices and no operator-only controls.",
+    "surface.kids.allowedTitle": "Allowed now",
+    "surface.kids.allowedBody": "These entries are prepared for safe access without extra navigation.",
+    "surface.kids.helpTitle": "When something is unavailable",
+    "surface.kids.helpBody": "Messages stay gentle and human-readable. Ask an adult or operator if something important is missing.",
+    "surface.admin.title": "Operator control surface",
+    "surface.admin.subtitle": "State, risk, and next steps come before the tool list.",
+    "surface.admin.backupTitle": "Backup posture",
+    "surface.admin.backupBody": "Backup entry points should stay visible from the first screen so restore does not begin from guesswork.",
+    "surface.admin.updateTitle": "Update readiness",
+    "surface.admin.updateBody": "Before changing the contour, confirm rollback readiness and the critical services that must survive the rollout.",
+    "surface.admin.criticalTitle": "Critical signals",
+    "surface.admin.criticalBody": "Problems should rise above ordinary links. If nothing is flagged, Atrium should say so calmly.",
+    "surface.admin.recoveryTitle": "Recovery actions",
+    "surface.admin.recoveryBody": "The operator needs a next step: backup storage, observability, identity surface, and restore-oriented guidance.",
+    "surface.state.ready": "Ready",
+    "surface.state.review": "Needs review",
+    "surface.state.clear": "No critical alerts",
+    "surface.state.attention": "Needs attention",
+    "surface.state.guided": "Guided",
+    "surface.action.openResource": "Open resource",
+    "surface.action.openAdmin": "Open admin panel",
+    "surface.action.reviewServices": "Review services",
+    "block.type.announcements": "Announcements",
+    "block.type.resourcesPinned": "Pinned resources",
+    "block.type.ticketsInbox": "Tickets inbox",
+    "block.type.ticketsQueue": "Tickets queue",
+    "block.type.activityFeed": "Activity feed",
+    "block.type.quickActions": "Quick actions",
+    "block.type.text": "Text",
+    "block.emptyAnnouncements": "No announcements",
     "language.title": "Language",
     "performance.title": "Performance",
     "performance.auto": "Auto",
@@ -131,22 +387,31 @@ const MESSAGES = {
     "app.noSpaces": "Пространств пока нет.",
     "app.login": "Войти",
     "app.logout": "Выйти",
-    "app.adminPanel": "Admin Panel",
+    "app.adminPanel": "Панель администратора",
     "app.back": "Назад",
     "app.close": "Закрыть",
     "app.addBlock": "Добавить блок",
     "app.addBlockShort": "Добавить",
     "app.save": "Сохранить",
+    "app.saveDashboard": "Сохранить дашборд",
     "app.cancel": "Отмена",
+    "app.editLayout": "Редактировать раскладку",
+    "app.exit": "Выйти",
+    "app.details": "Детали",
+    "app.keyboardShortcuts": "Горячие клавиши",
+    "app.shortcutsNavigateTitle": "Навигация по пространствам",
+    "app.shortcutsNavigateBody": "Перемещение между рабочими поверхностями",
+    "app.shortcutsHelpTitle": "Помощь",
+    "app.shortcutsHelpBody": "Показать окно с клавишами",
     "app.loading": "Загрузка",
     "app.noAccessSpaces": "Для роли {role} пока нет доступных пространств.",
     "auth.title": "Вход в Atrium",
-    "auth.subtitle": "Вход доступен только когда аутентификация Atrium действительно настроена.",
+    "auth.subtitle": "Вход доступен только после настройки аутентификации Atrium.",
     "auth.email": "Email",
     "auth.password": "Пароль",
     "auth.continue": "Продолжить",
     "auth.signingIn": "Входим...",
-    "auth.devQuick": "Dev быстрый вход",
+    "auth.devQuick": "Быстрый вход для разработки",
     "auth.signInAs": "Войти как {email}",
     "auth.sso": "Войти через SSO",
     "auth.ssoHint": "Продолжить через настроенный OIDC-провайдер.",
@@ -163,7 +428,13 @@ const MESSAGES = {
     "guest.trustNote": "Приватные пространства, их названия, блоки и метаданные до входа не раскрываются.",
     "guest.loginCta": "Войти",
     "guest.contactTitle": "Контакт оператора",
-    "guest.contactBody": "Для доступа используйте заданные контакты оператора или поддержки.",
+    "guest.contactBody": "Запросите доступ у оператора или используйте контакт поддержки, указанный для этого контура.",
+    "guest.valueTitle": "Зачем здесь Atrium",
+    "guest.valueBody": "Одна точка входа в локальные сервисы, людей и повседневные процессы вместо набора разрозненных URL и закладок.",
+    "guest.controlTitle": "Локальный контроль",
+    "guest.controlBody": "Базовая модель предполагает приватный контур под контролем владельца без скрытой SaaS-зависимости для базовой работы.",
+    "guest.accessStepsTitle": "Как получить доступ",
+    "guest.accessStepsBody": "Запросите учётную запись у оператора, войдите под своей личностью, и Atrium покажет только те пространства, которые соответствуют вашей роли.",
     "guest.publicShellTitle": "Публичные пространства",
     "guest.publicShellSubtitle": "Здесь видны только пространства с режимом public_readonly.",
     "spaces.welcomeTitle": "Добро пожаловать в Atrium",
@@ -185,10 +456,178 @@ const MESSAGES = {
     "admin.subtitle.content": "Объявления и ресурсы",
     "admin.subtitle.services": "Каноника сервисов и размещение по пространствам",
     "admin.subtitle.dashboard": "Конфигурация блоков дашборда",
+    "admin.spaces.create": "Новое пространство",
+    "admin.spaces.createAction": "Создать пространство",
+    "admin.spaces.active": "Активные пространства",
+    "admin.spaces.archived": "Архивированные пространства",
+    "admin.spaces.edit": "Изменить",
+    "admin.spaces.archive": "В архив",
+    "admin.spaces.restore": "Восстановить",
+    "admin.spaces.delete": "Удалить",
+    "admin.spaces.editTitle": "Изменить пространство",
+    "admin.spaces.field.title": "Название",
+    "admin.spaces.field.description": "Описание",
+    "admin.spaces.field.slug": "Slug",
+    "admin.spaces.field.visibilityGroups": "Группы видимости",
+    "admin.spaces.field.type": "Тип",
+    "admin.spaces.field.parent": "Родитель",
+    "admin.spaces.field.dashboardTemplate": "Шаблон дашборда",
+    "admin.spaces.field.layoutMode": "Режим раскладки",
+    "admin.spaces.field.accessMode": "Видно до входа",
+    "admin.spaces.field.backgroundUrl": "Фоновый URL",
+    "admin.spaces.field.displayConfig": "Display config (JSON)",
+    "admin.spaces.field.personalizationRules": "Personalization rules (JSON)",
+    "admin.spaces.field.publicEntry": "Публичный вход",
+    "admin.spaces.field.publicEntryTitle": "Заголовок публичного входа",
+    "admin.spaces.field.publicEntrySubtitle": "Подзаголовок публичного входа",
+    "admin.spaces.field.publicEntryHelp": "Блок помощи",
+    "admin.spaces.field.publicEntryContact": "Контактный блок",
+    "admin.spaces.option.parentNone": "Нет",
+    "admin.spaces.option.templateAuto": "Авто по slug",
+    "admin.spaces.option.type.audience": "Аудитория",
+    "admin.spaces.option.type.shared": "Общее",
+    "admin.spaces.option.type.system": "Системное",
+    "admin.spaces.option.layout.grid": "Сетка",
+    "admin.spaces.option.layout.hero": "Hero",
+    "admin.spaces.option.layout.list": "Список",
+    "admin.spaces.option.access.private": "Приватное",
+    "admin.spaces.option.access.publicReadonly": "Публичное только для чтения",
+    "admin.spaces.lockable": "Можно блокировать",
+    "admin.spaces.defaultPublicEntry": "Публичный вход по умолчанию",
+    "admin.spaces.placeholder.title": "Медиа",
+    "admin.spaces.placeholder.description": "Фильмы, музыка и другие вещи, которые семья часто открывает.",
+    "admin.spaces.placeholder.slug": "media",
+    "admin.spaces.placeholder.visibilityGroups": "admin, user, guest",
+    "admin.spaces.placeholder.backgroundUrl": "https://...",
+    "admin.spaces.placeholder.publicEntryTitle": "Добро пожаловать в Atrium",
+    "admin.spaces.placeholder.publicEntrySubtitle": "Локальное приватное пространство по умолчанию.",
+    "admin.spaces.placeholder.publicEntryHelp": "Запросите доступ у оператора.",
+    "admin.spaces.placeholder.publicEntryContact": "ops@company.local",
+    "admin.spaces.confirmDelete": "Удалить пространство «{title}»?",
+    "admin.spaces.confirmArchive": "Архивировать пространство «{title}»? Оно исчезнет из активного Atrium, пока вы не вернёте его обратно.",
+    "admin.spaces.confirmRestore": "Восстановить пространство «{title}»? Оно снова появится в активном Atrium.",
+    "admin.spaces.archivedDone": "Пространство архивировано",
+    "admin.spaces.restoredDone": "Пространство восстановлено",
+    "admin.common.space": "Пространство",
+    "admin.common.selectSpace": "Выберите пространство",
+    "admin.common.email": "Email",
+    "admin.common.role": "Роль",
+    "admin.common.selectRole": "Выберите роль",
+    "admin.common.validUntil": "Действует до",
+    "admin.common.bulkImport": "Массовый импорт",
+    "admin.common.title": "Название",
+    "admin.common.description": "Описание",
+    "admin.common.body": "Текст",
+    "admin.common.priority": "Приоритет",
+    "admin.common.pinned": "Закрепить",
+    "admin.common.audienceGroups": "Группы аудитории",
+    "admin.common.type": "Тип",
+    "admin.common.url": "URL",
+    "admin.common.iconUrl": "URL иконки",
+    "admin.common.tags": "Теги",
+    "admin.common.serviceType": "Тип сервиса",
+    "admin.common.tier": "Уровень",
+    "admin.common.lifecycle": "Жизненный цикл",
+    "admin.common.classification": "Классификация",
+    "admin.common.runbookUrl": "URL runbook",
+    "admin.common.accessPath": "Путь доступа",
+    "admin.common.dependsOn": "Зависит от",
+    "admin.common.ownersJson": "Owners (JSON)",
+    "admin.common.linksJson": "Links (JSON)",
+    "admin.common.endpointsJson": "Endpoints (JSON)",
+    "admin.common.key": "Ключ",
+    "admin.common.service": "Сервис",
+    "admin.common.selectService": "Выберите сервис",
+    "admin.common.allSpaces": "Все пространства",
+    "admin.common.allServices": "Все сервисы",
+    "admin.common.label": "Подпись",
+    "admin.common.group": "Группа",
+    "admin.common.order": "Порядок",
+    "admin.common.primaryUrl": "Основной URL",
+    "admin.common.defaultEndpoint": "Endpoint по умолчанию",
+    "admin.common.allowedActions": "Разрешённые действия",
+    "admin.common.visibleLinks": "Видимые ссылки",
+    "admin.common.create": "Создать",
+    "admin.common.import": "Импортировать",
+    "admin.common.remove": "Убрать",
+    "admin.common.noItems": "Пока пусто.",
+    "admin.common.option.normal": "Обычный",
+    "admin.common.option.high": "Высокий",
+    "admin.common.option.critical": "Критичный",
+    "admin.common.option.type.resource": "Ресурс",
+    "admin.common.option.type.link": "Ссылка",
+    "admin.common.option.type.action": "Действие",
+    "admin.common.placeholder.email": "user@example.com",
+    "admin.common.placeholder.segment": "kid-girl",
+    "admin.common.placeholder.emails": "email1,email2,email3...",
+    "admin.common.placeholder.title": "Название",
+    "admin.common.placeholder.body": "Сообщение...",
+    "admin.common.placeholder.description": "Короткое описание",
+    "admin.common.placeholder.iconUrl": "printer или /icons/printer.svg",
+    "admin.common.placeholder.url": "https://...",
+    "admin.common.placeholder.tags": "tag1, tag2",
+    "admin.common.placeholder.serviceType": "http/postgres/s3",
+    "admin.common.placeholder.tier": "tier-1",
+    "admin.common.placeholder.lifecycle": "active/deprecated",
+    "admin.common.placeholder.classification": "internal/PII",
+    "admin.common.placeholder.runbookUrl": "https://runbook...",
+    "admin.common.placeholder.accessPath": "Запрос доступа / группа",
+    "admin.common.placeholder.dependsOn": "service-a, service-b",
+    "admin.common.placeholder.ownersJson": "{\"team\":\"core\",\"primary\":\"a@b.com\"}",
+    "admin.common.placeholder.linksJson": "{\"docs\":\"...\",\"repo\":\"...\"}",
+    "admin.common.placeholder.endpointsJson": "[{\"type\":\"http\",\"url\":\"https://...\"}]",
+    "admin.members.title": "Участники",
+    "admin.members.add": "Добавить участника",
+    "admin.members.none": "Участников пока нет.",
+    "admin.members.importDone": "Импортировано участников: {count}",
+    "admin.members.until": "до {date}",
+    "admin.members.selectSpaceError": "Выберите пространство",
+    "admin.content.announcements": "Объявления",
+    "admin.content.directory": "Каталог",
+    "admin.content.noneAnnouncements": "Объявлений пока нет.",
+    "admin.content.noneDirectory": "Элементов каталога пока нет.",
+    "admin.content.createdAnnouncement": "Объявление создано",
+    "admin.content.updatedAnnouncement": "Объявление обновлено",
+    "admin.content.deletedAnnouncement": "Объявление удалено",
+    "admin.content.confirmDeleteAnnouncement": "Удалить объявление «{title}»?",
+    "admin.content.createdDirectory": "Элемент каталога создан",
+    "admin.content.updatedDirectory": "Каталог обновлён",
+    "admin.content.deletedDirectory": "Элемент каталога удалён",
+    "admin.content.confirmDeleteDirectory": "Удалить элемент каталога «{title}»?",
+    "admin.services.catalog": "Каталог сервисов",
+    "admin.services.none": "Сервисов пока нет.",
+    "admin.services.create": "Создать сервис",
+    "admin.services.edit": "Изменить",
+    "admin.services.editTitle": "Изменить сервис",
+    "admin.services.created": "Сервис создан",
+    "admin.services.updated": "Сервис обновлён",
+    "admin.services.deleted": "Сервис удалён",
+    "admin.services.confirmDelete": "Удалить сервис «{title}»?",
+    "admin.placements.title": "Размещения",
+    "admin.placements.spaceFilter": "Фильтр по пространству",
+    "admin.placements.serviceFilter": "Фильтр по сервису",
+    "admin.placements.none": "Размещений пока нет.",
+    "admin.placements.create": "Создать размещение",
+    "admin.placements.created": "Размещение создано",
+    "admin.placements.updated": "Размещение обновлено",
+    "admin.placements.deleted": "Размещение удалено",
+    "admin.placements.confirmDelete": "Удалить размещение для «{key}»?",
+    "admin.placements.selectSpaceError": "Выберите пространство",
+    "admin.placements.selectServiceError": "Выберите сервис",
+    "admin.dashboard.templates": "Шаблоны дашборда",
+    "admin.dashboard.blocksCount": "Блоков: {count}",
+    "admin.dashboard.editBlocks": "Изменить блоки",
+    "admin.dashboard.editor": "Редактор дашборда",
+    "admin.dashboard.preview": "Предпросмотр",
+    "admin.dashboard.blocks": "Блоки",
     "admin.segment": "Сегмент",
     "admin.segmentSaved": "Сегмент обновлен",
     "admin.reload": "Перезагрузить конфиг",
     "admin.reloading": "Перезагрузка...",
+    "admin.reloadDone": "Конфиг перезагружен",
+    "admin.reloadFailed": "Не удалось перезагрузить конфиг",
+    "app.saveDone": "Сохранено",
+    "app.saveFailed": "Не удалось сохранить",
     "space.picker.title": "Пространства",
     "space.picker.subtitle": "Переключайте контекст",
     "space.picker.results": "Результаты",
@@ -197,6 +636,80 @@ const MESSAGES = {
     "space.picker.all": "Все пространства",
     "space.picker.pin": "Закрепить",
     "space.lock": "Блокировка пространства",
+    "dashboard.empty.title": "Дашборд пока не настроен",
+    "dashboard.empty.body": "В baseline v1 сначала должны быть видны ориентация и curated entry points, а уже потом глубокая кастомизация.",
+    "resource.noPinned": "Закрепленных ресурсов пока нет",
+    "resource.noActivity": "Активности пока нет",
+    "resource.copied": "Скопировано",
+    "resource.copyFailed": "Не удалось скопировать",
+    "resource.actionInvoked": "Действие запущено",
+    "resource.actionFailed": "Не удалось выполнить действие",
+    "resource.publicReadonly": "Публичные пространства доступны только для чтения",
+    "resource.details.title": "Детали ресурса",
+    "resource.details.overview": "Обзор",
+    "resource.details.access": "Доступ",
+    "resource.details.actions": "Действия",
+    "resource.details.ownership": "Владение",
+    "resource.details.links": "Ссылки",
+    "resource.details.endpoints": "Эндпоинты",
+    "resource.details.service": "Сервис",
+    "resource.details.titleField": "Название",
+    "resource.details.description": "Описание",
+    "resource.details.type": "Тип",
+    "resource.details.tier": "Тир",
+    "resource.details.lifecycle": "Жизненный цикл",
+    "resource.details.primaryLink": "Основная ссылка",
+    "resource.details.endpoint": "Эндпоинт",
+    "resource.details.region": "Регион",
+    "resource.details.bucket": "Бакет",
+    "resource.details.console": "Консоль",
+    "resource.details.accessPath": "Путь доступа",
+    "resource.details.s3": "S3 детали",
+    "resource.details.openConsole": "Открыть консоль",
+    "resource.details.copyS3": "Скопировать s3://",
+    "resource.details.copyCli": "Скопировать CLI",
+    "resource.details.noActions": "Действия пока не настроены.",
+    "editor.addBlockTitle": "Добавить блок",
+    "editor.addBlockBody": "Выберите тип блока, который нужно добавить в дашборд.",
+    "editor.blockSettings": "Настройки блока",
+    "editor.advanced": "Продвинутая раскладка",
+    "editor.advancedHint": "Сырые координаты сетки остаются доступны, когда нужен точный контроль.",
+    "editor.showAdvanced": "Показать расширенные настройки",
+    "editor.hideAdvanced": "Скрыть расширенные настройки",
+    "surface.kids.title": "Безопасный детский вход",
+    "surface.kids.subtitle": "Здесь должны оставаться только разрешённые и понятные вещи.",
+    "surface.kids.safeTitle": "Ограничено по умолчанию",
+    "surface.kids.safeBody": "Дети видят более спокойную поверхность с меньшим выбором и без операторских элементов управления.",
+    "surface.kids.allowedTitle": "Разрешено сейчас",
+    "surface.kids.allowedBody": "Эти входы подготовлены для безопасного использования без лишней навигации.",
+    "surface.kids.helpTitle": "Если что-то недоступно",
+    "surface.kids.helpBody": "Сообщения должны оставаться мягкими и понятными. Если чего-то важного не хватает, нужен взрослый или оператор.",
+    "surface.admin.title": "Операторская поверхность контроля",
+    "surface.admin.subtitle": "Состояние, риск и следующий шаг важнее списка инструментов.",
+    "surface.admin.backupTitle": "Состояние резервных копий",
+    "surface.admin.backupBody": "Точка входа к резервным копиям должна быть видна с первого экрана, чтобы восстановление не начиналось с догадок.",
+    "surface.admin.updateTitle": "Готовность к обновлению",
+    "surface.admin.updateBody": "Перед изменением контура проверьте готовность к откату и критичные сервисы, которые обязаны пережить обновление.",
+    "surface.admin.criticalTitle": "Критичные сигналы",
+    "surface.admin.criticalBody": "Проблемы должны подниматься выше обычных ссылок. Если ничего критичного нет, Atrium должен сказать это спокойно.",
+    "surface.admin.recoveryTitle": "Действия для восстановления",
+    "surface.admin.recoveryBody": "Оператору нужен следующий шаг: резервные копии, наблюдаемость, контур идентификации и понятный путь к восстановлению.",
+    "surface.state.ready": "Готово",
+    "surface.state.review": "Нужна проверка",
+    "surface.state.clear": "Критичных сигналов нет",
+    "surface.state.attention": "Нужно внимание",
+    "surface.state.guided": "Есть следующий шаг",
+    "surface.action.openResource": "Открыть ресурс",
+    "surface.action.openAdmin": "Открыть панель администратора",
+    "surface.action.reviewServices": "Проверить сервисы",
+    "block.type.announcements": "Объявления",
+    "block.type.resourcesPinned": "Закреплённые ресурсы",
+    "block.type.ticketsInbox": "Входящие заявки",
+    "block.type.ticketsQueue": "Очередь заявок",
+    "block.type.activityFeed": "Лента активности",
+    "block.type.quickActions": "Быстрые действия",
+    "block.type.text": "Текст",
+    "block.emptyAnnouncements": "Объявлений пока нет",
     "language.title": "Язык",
     "performance.title": "Производительность",
     "performance.auto": "Авто",
@@ -208,67 +721,20 @@ const MESSAGES = {
 };
 
 const BLOCK_TYPES = {
-  announcements: "core.announcements_list",
   resourcesPinned: "core.resources_pinned",
-  ticketsInbox: "core.tickets_inbox",
-  ticketsQueue: "core.tickets_queue",
-  activityFeed: "core.activity_feed",
-  quickActions: "core.quick_actions",
   text: "core.text"
 };
 
 const BLOCK_TYPE_OPTIONS = [
-  { value: BLOCK_TYPES.announcements, label: "Announcements" },
-  { value: BLOCK_TYPES.resourcesPinned, label: "Pinned resources" },
-  { value: BLOCK_TYPES.ticketsInbox, label: "Tickets inbox" },
-  { value: BLOCK_TYPES.ticketsQueue, label: "Tickets queue" },
-  { value: BLOCK_TYPES.activityFeed, label: "Activity feed" },
-  { value: BLOCK_TYPES.quickActions, label: "Quick actions" },
-  { value: BLOCK_TYPES.text, label: "Text" }
+  { value: BLOCK_TYPES.resourcesPinned, label: "Pinned resources" }
 ];
 
 const BLOCK_TYPE_CARDS = [
-  {
-    value: BLOCK_TYPES.announcements,
-    label: "Announcements",
-    description: "Important updates and notices for the space.",
-    icon: Megaphone
-  },
   {
     value: BLOCK_TYPES.resourcesPinned,
     label: "Pinned resources",
     description: "Quick access links and resources.",
     icon: Bookmark
-  },
-  {
-    value: BLOCK_TYPES.ticketsInbox,
-    label: "Tickets inbox",
-    description: "Your assigned requests and tasks.",
-    icon: Inbox
-  },
-  {
-    value: BLOCK_TYPES.ticketsQueue,
-    label: "Tickets queue",
-    description: "Team queue and SLA workload.",
-    icon: Users
-  },
-  {
-    value: BLOCK_TYPES.activityFeed,
-    label: "Activity feed",
-    description: "Recent updates across the space.",
-    icon: Activity
-  },
-  {
-    value: BLOCK_TYPES.quickActions,
-    label: "Quick actions",
-    description: "Buttons that trigger common actions.",
-    icon: Grid3X3
-  },
-  {
-    value: BLOCK_TYPES.text,
-    label: "Text",
-    description: "Short note or instruction block.",
-    icon: FileText
   }
 ];
 
@@ -326,6 +792,7 @@ const navigateHome = () => {
 const me = ref(null);
 const spaces = ref([]);
 const spacesAdmin = ref([]);
+const archivedSpacesAdmin = ref([]);
 const loading = ref(true);
 const error = ref("");
 const adminTab = ref("spaces");
@@ -379,14 +846,15 @@ const isMobile = ref(false);
 const dashboardEditSpaceId = ref(null);
 const dashboardEditDirty = ref(false);
 const dashboardEditSelectedId = ref(null);
+const dashboardEditAdvanced = ref(false);
 const dashboardDragging = ref(false);
 const dashboardDragGhost = ref(null);
 const dashboardAddOpen = ref(false);
 const dashboardEditPanelStyle = ref({});
-const dashboardEditNewType = ref(BLOCK_TYPES.announcements);
+const dashboardEditNewType = ref(BLOCK_TYPES.resourcesPinned);
 const dashboardEditForm = ref({
   title: "",
-  type: BLOCK_TYPES.announcements,
+  type: BLOCK_TYPES.resourcesPinned,
   x: 1,
   y: 1,
   w: 6,
@@ -403,9 +871,10 @@ const isPageVisible = ref(typeof document === "undefined" ? true : !document.hid
 // Inline block editing
 const inlineEditBlock = ref(null);      // { block, spaceId } - Block being edited
 const inlineEditPopover = ref(null);    // 'settings' | 'content' | 'add' | null
+const inlineEditAdvanced = ref(false);
 const inlineEditForm = ref({
   title: '',
-  type: BLOCK_TYPES.announcements,
+  type: BLOCK_TYPES.resourcesPinned,
   x: 1,
   y: 1,
   w: 6,
@@ -464,96 +933,11 @@ const staffMetrics = [
   { id: "sm-4", label: "Нагрузка", value: "78%" }
 ];
 
-// WebSocket for real-time updates
-const { status: wsStatus, data: wsData } = useWebSocket("/ws", {
-  autoConnect: true,
-  reconnect: true,
-  onMessage: (message) => {
-    if (message.type === "notification") {
-      handleNewNotification(message.payload);
-    }
-  }
-});
-
-const handleNewNotification = (notification) => {
-  if (notification.category === "business") {
-    // Add to business notifications list
-    businessNotifications.value = [
-      notification,
-      ...businessNotifications.value.slice(0, 19) // Keep last 20
-    ];
-    
-    // Show as Hero Toast if it has image or actions
-    if (notification.image_url || (notification.actions && notification.actions.length > 0)) {
-      showHeroToast(notification);
-    } else {
-      // Show as regular toast
-      showToast(notification.title, "info");
-    }
-  }
-};
-
-const showHeroToast = (notification) => {
-  // Clear existing timers
-  if (heroToastTimer) clearTimeout(heroToastTimer);
-  if (heroToastProgressTimer) clearInterval(heroToastProgressTimer);
-  
-  activeHeroToast.value = notification;
-  heroToastProgress.value = 100;
-  
-  // Progress bar animation
-  const startTime = Date.now();
-  const tick = () => {
-    if (!activeHeroToast.value) return;
-    if (document.hidden) {
-      heroToastProgressTimer = setTimeout(tick, 200);
-      return;
-    }
-    const elapsed = Date.now() - startTime;
-    heroToastProgress.value = Math.max(0, 100 - (elapsed / HERO_TOAST_DURATION) * 100);
-    if (elapsed < HERO_TOAST_DURATION) {
-      heroToastProgressTimer = setTimeout(tick, 100);
-    }
-  };
-  tick();
-  
-  // Auto-dismiss
-  heroToastTimer = setTimeout(() => {
-    dismissHeroToast();
-  }, HERO_TOAST_DURATION);
-};
-
-const dismissHeroToast = async (actionId = null) => {
+const dismissHeroToast = () => {
   if (heroToastTimer) clearTimeout(heroToastTimer);
   if (heroToastProgressTimer) clearTimeout(heroToastProgressTimer);
-  
-  const notification = activeHeroToast.value;
   activeHeroToast.value = null;
   heroToastProgress.value = 100;
-  
-  // If action was clicked, send to backend
-  if (notification && actionId) {
-    try {
-      await fetch(`/api/notifications/${notification.id}/action`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ action_id: actionId })
-      });
-    } catch (err) {
-      console.error("Failed to send action:", err);
-    }
-  } else if (notification) {
-    // Just dismiss
-    try {
-      await fetch(`/api/notifications/${notification.id}/dismiss`, {
-        method: "POST",
-        credentials: "include"
-      });
-    } catch (err) {
-      console.error("Failed to dismiss:", err);
-    }
-  }
 };
 
 const roleOverrideKey = "atrium:role-override";
@@ -721,13 +1105,9 @@ const currentIndex = ref(0);
 const pendingScrollIndex = ref(null);
 const pinnedSpacesKey = "atrium:pinned-spaces";
 const recentSpacesKey = "atrium:recent-spaces";
+const recentResourcesKey = "atrium:recent-resources";
 const lastSpaceSlugKey = "atrium:last-space";
 
-// Onboarding hints
-const firstVisitKey = "atrium:first-visit-done";
-const showOnboardingHint = ref(false);
-const onboardingHintTarget = ref(null); // 'admin'
-const onboardingHintDismissed = ref(false);
 const bgA = ref("");
 const bgB = ref("");
 const showA = ref(true);
@@ -738,6 +1118,7 @@ const spacePickerOpen = ref(false);
 const spaceQuery = ref("");
 const pinnedSpaceIds = ref([]);
 const recentSpaceIds = ref([]);
+const recentResourcesBySpace = ref({});
 const lastSpaceSlug = ref("");
 const backgroundTimer = ref(null);
 const backgroundRandomIndex = {};
@@ -760,7 +1141,14 @@ const fetchJSON = async (path, options = {}) => {
     throw { status: res.status, message };
   }
 
-  return res.json();
+  if (res.status === 204 || res.status === 205) {
+    return null;
+  }
+  const text = await res.text();
+  if (!text.trim()) {
+    return null;
+  }
+  return JSON.parse(text);
 };
 
 const fetchMaybeJSON = async (path) => {
@@ -773,6 +1161,45 @@ const fetchMaybeJSON = async (path) => {
     }
     if (err.status === 401 || err.status === 403) return null;
     return null;
+  }
+};
+
+const setAdminSpaces = (items) => {
+  const list = Array.isArray(items) ? items : [];
+  spacesAdmin.value = list.filter((item) => item?.is_provisioned !== false);
+  archivedSpacesAdmin.value = list.filter((item) => item?.is_provisioned === false);
+};
+
+const reloadAdminSpaces = async () => {
+  const allSpaces = await fetchJSON("/api/spaces?include_archived=1");
+  setAdminSpaces(allSpaces);
+
+  if (!membershipSpaceId.value || !spacesAdmin.value.some((item) => String(item.id) === String(membershipSpaceId.value))) {
+    membershipSpaceId.value = spacesAdmin.value[0] ? String(spacesAdmin.value[0].id) : "";
+  }
+  if (!contentSpaceId.value || !spacesAdmin.value.some((item) => String(item.id) === String(contentSpaceId.value))) {
+    contentSpaceId.value = spacesAdmin.value[0] ? String(spacesAdmin.value[0].id) : "";
+  }
+  if (!placementSpaceId.value || !spacesAdmin.value.some((item) => String(item.id) === String(placementSpaceId.value))) {
+    placementSpaceId.value = spacesAdmin.value[0] ? String(spacesAdmin.value[0].id) : "";
+  }
+};
+
+const refreshAdminDataAfterSpaceChange = async () => {
+  if (membershipSpaceId.value) {
+    await loadMemberships(membershipSpaceId.value);
+  } else {
+    memberships.value = [];
+  }
+  if (contentSpaceId.value) {
+    await onContentSpaceChange();
+  } else {
+    announcementsAdmin.value = [];
+    directoryAdmin.value = [];
+  }
+  if (adminTab.value === "services") {
+    ensurePlacementDefaults();
+    await loadPlacements();
   }
 };
 
@@ -799,9 +1226,9 @@ const reloadConfig = async () => {
   reloadConfigPending.value = true;
   try {
     await fetchJSON("/api/config/reload", { method: "POST" });
-    showToast("Config reloaded", "success");
+    showToast(t("admin.reloadDone"), "success");
   } catch (err) {
-    showToast(err.message || "Config reload failed", "error");
+    showToast(err.message || t("admin.reloadFailed"), "error");
   } finally {
     reloadConfigPending.value = false;
   }
@@ -942,17 +1369,11 @@ const loadAll = async () => {
     }
 
     if (actualIsAdmin.value) {
-      spacesAdmin.value = await fetchJSON("/api/spaces");
+      await reloadAdminSpaces();
       dashboardTemplates.value = await fetchJSON("/api/dashboard/templates");
       roles.value = await fetchJSON("/api/roles");
-      if (!membershipSpaceId.value && spacesAdmin.value.length > 0) {
-        membershipSpaceId.value = String(spacesAdmin.value[0].id);
-      }
       if (membershipSpaceId.value) {
         await loadMemberships(membershipSpaceId.value);
-      }
-      if (!contentSpaceId.value && spacesAdmin.value.length > 0) {
-        contentSpaceId.value = String(spacesAdmin.value[0].id);
       }
       if (contentSpaceId.value) {
         await onContentSpaceChange();
@@ -1089,7 +1510,7 @@ const onMembershipSpaceChange = async () => {
 
 const addMembership = async () => {
   if (!membershipSpaceId.value) {
-    error.value = "Select a space";
+    error.value = t("admin.members.selectSpaceError");
     return;
   }
   try {
@@ -1131,7 +1552,7 @@ const updateMemberSegment = async (member) => {
 
 const importMemberships = async () => {
   if (!membershipSpaceId.value) {
-    error.value = "Select a space";
+    error.value = t("admin.members.selectSpaceError");
     return;
   }
   try {
@@ -1150,7 +1571,7 @@ const importMemberships = async () => {
     });
     membershipBulk.value = { ...membershipBulk.value, emails: "" };
     await loadMemberships(membershipSpaceId.value);
-    showToast(`Imported ${result.imported} members`, "success");
+    showToast(t("admin.members.importDone", { count: result.imported }), "success");
   } catch (err) {
     error.value = err.message || "Membership import failed";
   }
@@ -1182,15 +1603,8 @@ const loadContent = async (spaceId) => {
     return;
   }
   try {
-    const [ann, dir] = await Promise.all([
-      fetchJSON(`/api/announcements?space_id=${spaceId}`),
-      fetchJSON(`/api/directory_items?space_id=${spaceId}`)
-    ]);
-    announcementsAdmin.value = ann.map((item) => ({
-      ...item,
-      audienceInput: formatGroups(item.audience_groups),
-      expiresInput: toLocalInput(item.expires_at || "")
-    }));
+    const dir = await fetchJSON(`/api/directory_items?space_id=${spaceId}`);
+    announcementsAdmin.value = [];
     directoryAdmin.value = dir.map((item) => mapDirectoryItem(item));
   } catch (err) {
     error.value = err.message || "Content load failed";
@@ -1199,10 +1613,6 @@ const loadContent = async (spaceId) => {
 
 const onContentSpaceChange = async () => {
   const defaults = defaultAudienceForSpace(contentSpaceId.value);
-  announcementForm.value = {
-    ...announcementForm.value,
-    audienceGroups: defaults
-  };
   directoryForm.value = {
     ...directoryForm.value,
     audienceGroups: defaults
@@ -1212,7 +1622,7 @@ const onContentSpaceChange = async () => {
 
 const createAnnouncement = async () => {
   if (!contentSpaceId.value) {
-    error.value = "Select a space";
+    error.value = t("admin.members.selectSpaceError");
     return;
   }
   try {
@@ -1243,7 +1653,7 @@ const createAnnouncement = async () => {
       expiresAt: "",
       audienceGroups: defaultAudienceForSpace(contentSpaceId.value)
     };
-    showToast("Announcement created", "success");
+    showToast(t("admin.content.createdAnnouncement"), "success");
   } catch (err) {
     error.value = err.message || "Announcement create failed";
   }
@@ -1268,18 +1678,18 @@ const updateAnnouncementAudience = async (item) => {
         ? { ...updated, audienceInput: formatGroups(updated.audience_groups) }
         : entry
     );
-    showToast("Announcement updated", "success");
+    showToast(t("admin.content.updatedAnnouncement"), "success");
   } catch (err) {
     error.value = err.message || "Announcement update failed";
   }
 };
 
 const deleteAnnouncement = async (item) => {
-  if (!confirm(`Delete announcement "${item.title}"?`)) return;
+  if (!confirm(t("admin.content.confirmDeleteAnnouncement", { title: item.title }))) return;
   try {
     await fetchJSON(`/api/announcements/${item.id}`, { method: "DELETE" });
     announcementsAdmin.value = announcementsAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast("Announcement deleted", "success");
+    showToast(t("admin.content.deletedAnnouncement"), "success");
   } catch (err) {
     error.value = err.message || "Announcement delete failed";
   }
@@ -1287,7 +1697,7 @@ const deleteAnnouncement = async (item) => {
 
 const createDirectoryItem = async () => {
   if (!contentSpaceId.value) {
-    error.value = "Select a space";
+    error.value = t("admin.members.selectSpaceError");
     return;
   }
   try {
@@ -1345,7 +1755,7 @@ const createDirectoryItem = async () => {
       classification: "",
       dependsOn: ""
     };
-    showToast("Directory item created", "success");
+    showToast(t("admin.content.createdDirectory"), "success");
   } catch (err) {
     error.value = err.message || "Directory create failed";
   }
@@ -1387,18 +1797,18 @@ const updateDirectoryItem = async (item) => {
         ? mapDirectoryItem(updated)
         : entry
     );
-    showToast("Directory updated", "success");
+    showToast(t("admin.content.updatedDirectory"), "success");
   } catch (err) {
     error.value = err.message || "Directory update failed";
   }
 };
 
 const deleteDirectoryItem = async (item) => {
-  if (!confirm(`Delete directory item "${item.title}"?`)) return;
+  if (!confirm(t("admin.content.confirmDeleteDirectory", { title: item.title }))) return;
   try {
     await fetchJSON(`/api/directory_items/${item.id}`, { method: "DELETE" });
     directoryAdmin.value = directoryAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast("Directory item deleted", "success");
+    showToast(t("admin.content.deletedDirectory"), "success");
   } catch (err) {
     error.value = err.message || "Directory delete failed";
   }
@@ -1459,7 +1869,7 @@ const createService = async () => {
       classification: "",
       dependsOn: ""
     };
-    showToast("Service created", "success");
+    showToast(t("admin.services.created"), "success");
   } catch (err) {
     showToast(err.message || "Service create failed", "error");
   }
@@ -1503,18 +1913,18 @@ const updateService = async (item) => {
         : entry
     );
     serviceEditItem.value = null;
-    showToast("Service updated", "success");
+    showToast(t("admin.services.updated"), "success");
   } catch (err) {
     showToast(err.message || "Service update failed", "error");
   }
 };
 
 const deleteService = async (item) => {
-  if (!confirm(`Delete service "${item.title}"?`)) return;
+  if (!confirm(t("admin.services.confirmDelete", { title: item.title }))) return;
   try {
     await fetchJSON(`/api/services/${item.id}`, { method: "DELETE" });
     servicesAdmin.value = servicesAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast("Service deleted", "success");
+    showToast(t("admin.services.deleted"), "success");
   } catch (err) {
     showToast(err.message || "Service delete failed", "error");
   }
@@ -1535,11 +1945,11 @@ const loadPlacements = async () => {
 
 const createPlacement = async () => {
   if (!placementForm.value.spaceId) {
-    showToast("Select a space", "error");
+    showToast(t("admin.placements.selectSpaceError"), "error");
     return;
   }
   if (!placementForm.value.serviceKey) {
-    showToast("Select a service", "error");
+    showToast(t("admin.placements.selectServiceError"), "error");
     return;
   }
   try {
@@ -1575,7 +1985,7 @@ const createPlacement = async () => {
       defaultEndpoint: "",
       accessPath: ""
     };
-    showToast("Placement created", "success");
+    showToast(t("admin.placements.created"), "success");
   } catch (err) {
     showToast(err.message || "Placement create failed", "error");
   }
@@ -1606,18 +2016,18 @@ const updatePlacement = async (item) => {
         ? mapPlacement(updated)
         : entry
     );
-    showToast("Placement updated", "success");
+    showToast(t("admin.placements.updated"), "success");
   } catch (err) {
     showToast(err.message || "Placement update failed", "error");
   }
 };
 
 const deletePlacement = async (item) => {
-  if (!confirm(`Delete placement for "${item.service_key}"?`)) return;
+  if (!confirm(t("admin.placements.confirmDelete", { key: item.service_key }))) return;
   try {
     await fetchJSON(`/api/service_placements/${item.id}`, { method: "DELETE" });
     placementsAdmin.value = placementsAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast("Placement deleted", "success");
+    showToast(t("admin.placements.deleted"), "success");
   } catch (err) {
     showToast(err.message || "Placement delete failed", "error");
   }
@@ -1692,11 +2102,12 @@ const createSpace = async () => {
       personalization_rules: personalizationRules,
       public_entry: buildPublicEntry(newSpace.value)
     };
-    const created = await fetchJSON("/api/spaces", {
+    await fetchJSON("/api/spaces", {
       method: "POST",
       body: JSON.stringify(payload)
     });
-    spacesAdmin.value = [...spacesAdmin.value, created];
+    await reloadAdminSpaces();
+    await refreshAdminDataAfterSpaceChange();
     newSpace.value = {
       title: "",
       slug: "",
@@ -1778,13 +2189,12 @@ const updateSpace = async () => {
       personalization_rules: personalizationRules,
       public_entry: buildPublicEntry(editSpace.value)
     };
-    const updated = await fetchJSON(`/api/spaces/${editSpace.value.id}`, {
+    await fetchJSON(`/api/spaces/${editSpace.value.id}`, {
       method: "PATCH",
       body: JSON.stringify(payload)
     });
-    spacesAdmin.value = spacesAdmin.value.map((item) =>
-      item.id === updated.id ? updated : item
-    );
+    await reloadAdminSpaces();
+    await refreshAdminDataAfterSpaceChange();
     editSpace.value = null;
     editDisplayConfig.value = "";
     editPersonalizationRules.value = "";
@@ -1794,16 +2204,49 @@ const updateSpace = async () => {
 };
 
 const deleteSpace = async (space) => {
-  if (!confirm(`Delete space "${space.title}"?`)) {
+  if (!confirm(t("admin.spaces.confirmDelete", { title: space.title }))) {
     return;
   }
   try {
     await fetchJSON(`/api/spaces/${space.id}`, {
       method: "DELETE"
     });
-    spacesAdmin.value = spacesAdmin.value.filter((entry) => entry.id !== space.id);
+    await reloadAdminSpaces();
+    await refreshAdminDataAfterSpaceChange();
   } catch (err) {
     error.value = err.message || "Space delete failed";
+  }
+};
+
+const archiveSpace = async (space) => {
+  if (!confirm(t("admin.spaces.confirmArchive", { title: space.title }))) {
+    return;
+  }
+  try {
+    await fetchJSON(`/api/spaces/${space.id}/archive`, {
+      method: "POST"
+    });
+    await reloadAdminSpaces();
+    await refreshAdminDataAfterSpaceChange();
+    showToast(t("admin.spaces.archivedDone"), "success");
+  } catch (err) {
+    error.value = err.message || "Space archive failed";
+  }
+};
+
+const restoreSpace = async (space) => {
+  if (!confirm(t("admin.spaces.confirmRestore", { title: space.title }))) {
+    return;
+  }
+  try {
+    await fetchJSON(`/api/spaces/${space.id}/restore`, {
+      method: "POST"
+    });
+    await reloadAdminSpaces();
+    await refreshAdminDataAfterSpaceChange();
+    showToast(t("admin.spaces.restoredDone"), "success");
+  } catch (err) {
+    error.value = err.message || "Space restore failed";
   }
 };
 
@@ -2258,9 +2701,9 @@ const copyText = async (value) => {
   if (!value) return;
   try {
     await navigator.clipboard.writeText(String(value));
-    showToast("Copied", "success");
+    showToast(t("resource.copied"), "success");
   } catch {
-    showToast("Copy failed", "error");
+    showToast(t("resource.copyFailed"), "error");
   }
 };
 
@@ -2278,7 +2721,7 @@ const invokeServiceAction = async (actionKey, item) => {
   if (!actionKey) return;
   const itemSpace = spaces.value.find((space) => Number(space.database_id) === Number(item?.space_id));
   if (isPublicReadonlySpace(itemSpace)) {
-    showToast("Public spaces are read-only", "error");
+    showToast(t("resource.publicReadonly"), "error");
     return;
   }
   try {
@@ -2293,9 +2736,120 @@ const invokeServiceAction = async (actionKey, item) => {
         }
       })
     });
-    showToast("Action invoked", "success");
+    showToast(t("resource.actionInvoked"), "success");
   } catch (err) {
-    showToast(err.message || "Action failed", "error");
+    showToast(err.message || t("resource.actionFailed"), "error");
+  }
+};
+
+const recentResourcesForSpace = (space) => {
+  const key = String(space?.id || "");
+  const items = recentResourcesBySpace.value[key];
+  return Array.isArray(items) ? items : [];
+};
+
+const rememberResourceVisit = (space, item) => {
+  const spaceId = String(space?.id || item?.space_id || "");
+  const title = String(item?.title || "").trim();
+  const url = String(item?.url || "").trim();
+  if (!spaceId || !title || !url) return;
+  const entry = {
+    id: String(item?.id || title),
+    title,
+    url
+  };
+  const current = Array.isArray(recentResourcesBySpace.value[spaceId])
+    ? recentResourcesBySpace.value[spaceId]
+    : [];
+  const next = [entry, ...current.filter((value) => value.id !== entry.id)].slice(0, 4);
+  recentResourcesBySpace.value = {
+    ...recentResourcesBySpace.value,
+    [spaceId]: next
+  };
+  settingsStore.setJSON(recentResourcesKey, recentResourcesBySpace.value);
+};
+
+const resourceEntriesForSpace = (space) => {
+  if (!space?.id) return [];
+  const blocks = blocksForSpace(space.id).filter((block) =>
+    blockTypeIs(block, BLOCK_TYPES.resourcesPinned)
+  );
+  const items = [];
+  for (const block of blocks) {
+    const data = blockDataFor(space.id, block.id);
+    if (Array.isArray(data)) {
+      items.push(...data);
+    }
+  }
+  return items;
+};
+
+const firstResourceForSpace = (space, matcher) =>
+  resourceEntriesForSpace(space).find((item) => matcher(String(item?.title || "").toLowerCase(), item));
+
+const adminAttentionCount = (space) =>
+  resourceEntriesForSpace(space).filter((item) => {
+    const status = String(item?.status || item?.health_status || "").toLowerCase();
+    return ["degraded", "offline", "error", "down"].some((value) => status.includes(value));
+  }).length;
+
+const surfaceCardsFor = (space) => {
+  if (!space) return [];
+  const resources = resourceEntriesForSpace(space);
+  if (isAdminSpace(space)) {
+    return [];
+  }
+  if (isKidsSpace(space)) {
+    const safeResources = resources.slice(0, 3).map((item) => item.title);
+    return [
+      {
+        id: "kids-safe",
+        eyebrow: t("surface.kids.safeTitle"),
+        title: t("surface.state.ready"),
+        body: t("surface.kids.safeBody")
+      },
+      {
+        id: "kids-allowed",
+        eyebrow: t("surface.kids.allowedTitle"),
+        title: safeResources.length ? safeResources.join(" · ") : t("surface.state.ready"),
+        body: safeResources.length ? t("surface.kids.allowedBody") : t("surface.kids.allowedBody")
+      },
+      {
+        id: "kids-help",
+        eyebrow: t("surface.kids.helpTitle"),
+        title: t("surface.state.guided"),
+        body: t("surface.kids.helpBody")
+      }
+    ];
+  }
+  return [];
+};
+
+const surfaceHeadingFor = (space) => {
+  if (!space) return { title: "", subtitle: "" };
+  if (isAdminSpace(space)) {
+    return {
+      title: t("surface.admin.title"),
+      subtitle: t("surface.admin.subtitle")
+    };
+  }
+  if (isKidsSpace(space)) {
+    return {
+      title: t("surface.kids.title"),
+      subtitle: t("surface.kids.subtitle")
+    };
+  }
+  return { title: "", subtitle: "" };
+};
+
+const runSurfaceAction = (card) => {
+  if (!card?.actionKind || !card?.actionTarget) return;
+  if (card.actionKind === "url") {
+    window.open(card.actionTarget, "_blank", "noopener,noreferrer");
+    return;
+  }
+  if (card.actionKind === "admin-tab") {
+    navigateToAdmin(card.actionTarget);
   }
 };
 
@@ -2538,15 +3092,9 @@ const updateViewport = () => {
 
 const normalizeBlockType = (value) => {
   const raw = String(value || "").trim().toLowerCase();
-  if (!raw) return BLOCK_TYPES.announcements;
-  if (raw === "announcements" || raw === "announcements_list") {
-    return BLOCK_TYPES.announcements;
-  }
-  if (raw === "tickets_inbox") return BLOCK_TYPES.ticketsInbox;
-  if (raw === "tickets_queue") return BLOCK_TYPES.ticketsQueue;
+  if (!raw) return BLOCK_TYPES.resourcesPinned;
   if (raw === "resources_pinned") return BLOCK_TYPES.resourcesPinned;
-  if (raw === "activity_feed") return BLOCK_TYPES.activityFeed;
-  if (raw === "quick_actions") return BLOCK_TYPES.quickActions;
+  if (raw === "text") return BLOCK_TYPES.text;
   if (raw === "core.text") return BLOCK_TYPES.text;
   if (raw.startsWith("core.") || raw.startsWith("plugin.")) return raw;
   return raw;
@@ -2554,17 +3102,8 @@ const normalizeBlockType = (value) => {
 
 const defaultBlockConfig = (type) => {
   switch (normalizeBlockType(type)) {
-    case BLOCK_TYPES.announcements:
-      return { limit: 8, scope: "this", filter: "priority" };
     case BLOCK_TYPES.resourcesPinned:
       return { limit: 12, scope: "this", filter: "pinned" };
-    case BLOCK_TYPES.activityFeed:
-      return { limit: 12, scope: "this", filter: "" };
-    case BLOCK_TYPES.ticketsInbox:
-    case BLOCK_TYPES.ticketsQueue:
-      return { limit: 10, scope: "this", filter: "open" };
-    case BLOCK_TYPES.quickActions:
-      return { limit: 6, scope: "this", filter: "" };
     case BLOCK_TYPES.text:
       return { text: "", scope: "this", filter: "" };
     default:
@@ -2654,9 +3193,6 @@ const findNextBlockPlacement = (blocks, width = 6, height = 2) => {
   return { x: 1, y: maxY + 1 };
 };
 
-const isAnnouncementsBlock = (block) =>
-  normalizeBlockType(block?.type) === BLOCK_TYPES.announcements;
-
 const isResourcesBlock = (block) =>
   normalizeBlockType(block?.type) === BLOCK_TYPES.resourcesPinned;
 
@@ -2664,8 +3200,14 @@ const blockTypeIs = (block, type) => normalizeBlockType(block?.type) === type;
 
 const blockTypeLabel = (block) => {
   const normalized = normalizeBlockType(block?.type);
-  const match = BLOCK_TYPE_OPTIONS.find((option) => option.value === normalized);
-  return match?.label || normalized;
+  switch (normalized) {
+    case BLOCK_TYPES.resourcesPinned:
+      return t("block.type.resourcesPinned");
+    case BLOCK_TYPES.text:
+      return t("block.type.text");
+    default:
+      return normalized;
+  }
 };
 
 const updateDashboardEditPanelPosition = (spaceId) => {
@@ -2694,7 +3236,7 @@ const buildDashboardEditForm = (block) => {
   const config = normalized.config || defaultBlockConfig(normalized.type);
   return {
     title: normalized.title || "",
-    type: normalized.type || BLOCK_TYPES.announcements,
+    type: normalized.type || BLOCK_TYPES.resourcesPinned,
     x: layout.x || 1,
     y: layout.y || 1,
     w: layout.w || 6,
@@ -2709,6 +3251,7 @@ const buildDashboardEditForm = (block) => {
 
 const setDashboardEditSelection = (spaceId, blockId) => {
   dashboardEditSelectedId.value = blockId;
+  dashboardEditAdvanced.value = false;
   const selected = blocksForSpace(spaceId).find((block) => block.id === blockId);
   if (selected) {
     dashboardEditForm.value = buildDashboardEditForm(selected);
@@ -2771,13 +3314,13 @@ const addDashboardBlockDraft = (space, overrideType = null) => {
   const newBlock = normalizeBlock(
     {
       id: `block-${Date.now()}`,
-      type: overrideType || dashboardEditNewType.value || BLOCK_TYPES.announcements,
+      type: overrideType || dashboardEditNewType.value || BLOCK_TYPES.resourcesPinned,
       title: "",
       layout: {
         lg: { x: placement.x, y: placement.y, w: 6, h: 2 },
         xs: { order: nextOrder }
       },
-      config: defaultBlockConfig(overrideType || dashboardEditNewType.value || BLOCK_TYPES.announcements)
+      config: defaultBlockConfig(overrideType || dashboardEditNewType.value || BLOCK_TYPES.resourcesPinned)
     },
     nextOrder - 1
   );
@@ -3234,9 +3777,9 @@ const saveDashboardLayout = async (space) => {
     });
     dashboards.value = { ...dashboards.value, [space.id]: updated };
     dashboardEditDirty.value = false;
-    showToast("Dashboard saved", "success");
+    showToast(t("app.saveDone"), "success");
   } catch (err) {
-    showToast(err.message || "Dashboard save failed", "error");
+    showToast(err.message || t("app.saveFailed"), "error");
   } finally {
     dashboardEditorSaving.value = false;
   }
@@ -3282,13 +3825,13 @@ const addDashboardBlock = () => {
     ...dashboardEditorBlocks.value,
     normalizeBlock({
       id: `block-${Date.now()}`,
-      type: BLOCK_TYPES.announcements,
+      type: BLOCK_TYPES.resourcesPinned,
       title: "New block",
       layout: {
         lg: { x: 1, y: 1, w: 6, h: 2 },
         xs: { order: nextOrder }
       },
-      config: defaultBlockConfig(BLOCK_TYPES.announcements)
+      config: defaultBlockConfig(BLOCK_TYPES.resourcesPinned)
     }, nextOrder - 1)
   ];
 };
@@ -3306,9 +3849,9 @@ const saveDashboardEditor = async () => {
       body: JSON.stringify(payload)
     });
     dashboards.value = { ...dashboards.value, [dashboardEditorSpace.value.id]: updated };
-    showToast("Dashboard saved", "success");
+    showToast(t("app.saveDone"), "success");
   } catch (err) {
-    showToast(err.message || "Dashboard save failed", "error");
+    showToast(err.message || t("app.saveFailed"), "error");
   } finally {
     dashboardEditorSaving.value = false;
   }
@@ -3319,10 +3862,11 @@ const openBlockSettings = (block, spaceSlug, databaseId = null) => {
   const normalized = normalizeBlock(block);
   inlineEditBlock.value = { block, spaceSlug, databaseId };
   inlineEditPopover.value = 'settings';
+  inlineEditAdvanced.value = false;
   const layout = blockLgLayout(normalized);
   inlineEditForm.value = {
     title: normalized.title || '',
-    type: normalized.type || BLOCK_TYPES.announcements,
+    type: normalized.type || BLOCK_TYPES.resourcesPinned,
     x: layout.x || 1,
     y: layout.y || 1,
     w: layout.w || 6,
@@ -3446,7 +3990,7 @@ const deleteBlockInline = async (block, spaceSlug, databaseId) => {
 const addBlockInline = async (
   databaseId,
   spaceSlug,
-  blockType = BLOCK_TYPES.announcements,
+  blockType = BLOCK_TYPES.resourcesPinned,
   blockTitle = 'New Block'
 ) => {
   // Validate databaseId - must be a positive integer
@@ -3529,21 +4073,7 @@ const saveInlineContent = async () => {
   }
   
   try {
-    if (isAnnouncementsBlock(block)) {
-      const payload = {
-        space_id: resolvedSpaceId,
-        title: inlineAddForm.value.title,
-        body: inlineAddForm.value.body,
-        priority: inlineAddForm.value.priority,
-        pinned: inlineAddForm.value.pinned,
-        audience_groups: ['user', 'admin']
-      };
-      await fetchJSON("/api/announcements", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      showToast("Announcement created", "success");
-    } else if (isResourcesBlock(block)) {
+    if (isResourcesBlock(block)) {
       const payload = {
         space_id: resolvedSpaceId,
         title: inlineAddForm.value.title,
@@ -3581,10 +4111,7 @@ const deleteInlineItem = async (item, blockType, spaceId) => {
   
   try {
     const normalizedType = normalizeBlockType(blockType);
-    if (normalizedType === BLOCK_TYPES.announcements) {
-      await fetchJSON(`/api/announcements/${item.id}`, { method: "DELETE" });
-      showToast("Announcement deleted", "success");
-    } else if (normalizedType === BLOCK_TYPES.resourcesPinned) {
+    if (normalizedType === BLOCK_TYPES.resourcesPinned) {
       await fetchJSON(`/api/directory_items/${item.id}`, { method: "DELETE" });
       showToast("Resource deleted", "success");
     }
@@ -3996,37 +4523,6 @@ const toggleShortcuts = (event) => {
   showShortcuts.value = !showShortcuts.value;
 };
 
-// Onboarding hints
-const checkFirstVisit = () => {
-  if (typeof localStorage === "undefined") return false;
-  const seen = settingsStore.getJSON(firstVisitKey, null);
-  return !seen;
-};
-
-const markFirstVisitDone = () => {
-  if (typeof localStorage !== "undefined") {
-    settingsStore.setJSON(firstVisitKey, true);
-  }
-  showOnboardingHint.value = false;
-  onboardingHintDismissed.value = true;
-};
-
-const showNextOnboardingHint = () => {
-  if (onboardingHintDismissed.value) return;
-  
-  if (isAdmin.value && !onboardingHintTarget.value) {
-    onboardingHintTarget.value = "admin";
-    showOnboardingHint.value = true;
-    return;
-  }
-  markFirstVisitDone();
-};
-
-const dismissOnboardingHint = () => {
-  showOnboardingHint.value = false;
-  showNextOnboardingHint();
-};
-
 watch(currentIndex, async (idx) => {
   await nextTick();
   setBackground(spaces.value[idx]);
@@ -4047,20 +4543,6 @@ watch(
   () => {
     todoState.value = {};
   }
-);
-
-// Trigger onboarding hints after loading completes
-watch(
-  () => ({ loading: loading.value, me: me.value }),
-  ({ loading: isLoading, me: user }) => {
-    if (!isLoading && user && checkFirstVisit()) {
-      // Delay hint display to let the UI settle
-      setTimeout(() => {
-        showNextOnboardingHint();
-      }, 1500);
-    }
-  },
-  { immediate: true }
 );
 
 watch(
@@ -4128,6 +4610,7 @@ onMounted(() => {
   isLoginPage.value = window.location.pathname === "/login";
 
   if (isLoginPage.value) {
+    syncLangFromContext();
     loadAuthModes();
     loading.value = false;
     return;
@@ -4135,6 +4618,7 @@ onMounted(() => {
 
   pinnedSpaceIds.value = settingsStore.getJSON(pinnedSpacesKey, []);
   recentSpaceIds.value = settingsStore.getJSON(recentSpacesKey, []);
+  recentResourcesBySpace.value = settingsStore.getJSON(recentResourcesKey, {});
   lastSpaceSlug.value = settingsStore.getJSON(lastSpaceSlugKey, "");
   performancePreference.value = settingsStore.getJSON(PERFORMANCE_PREF_KEY, "auto");
 
@@ -4151,7 +4635,7 @@ onMounted(() => {
     const route = parseRoute();
     if (route.view === 'admin') {
       showAdmin.value = true;
-      adminTab.value = route.tab;
+      adminTab.value = route.tab === "services" ? "dashboard" : route.tab;
     } else {
       showAdmin.value = false;
       if (route.spaceSlug) {
@@ -4543,38 +5027,6 @@ onBeforeUnmount(() => {
     </div>
 
 
-    <!-- Onboarding Hint Spotlight -->
-    <Transition name="onboarding-hint">
-      <div v-if="showOnboardingHint && onboardingHintTarget" class="onboarding-overlay" @click="dismissOnboardingHint">
-        <div 
-          class="onboarding-hint" 
-          :class="`onboarding-hint-${onboardingHintTarget}`"
-          @click.stop
-        >
-          <div class="onboarding-hint-arrow"></div>
-          <div class="onboarding-hint-content">
-            <template v-if="onboardingHintTarget === 'admin'">
-              <div class="onboarding-hint-title">
-                <Settings class="w-4 h-4 text-accent" />
-                Панель администратора
-              </div>
-              <p class="onboarding-hint-text">
-                Здесь вы можете управлять пространствами, ролями и контентом.
-              </p>
-            </template>
-            <div class="onboarding-hint-actions">
-              <button class="btn btn-primary btn-sm" @click="dismissOnboardingHint">
-                Понятно
-              </button>
-              <button class="btn btn-ghost btn-sm" @click="markFirstVisitDone">
-                Пропустить всё
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
     <div v-if="error" class="banner banner-error spaces-banner">
       <span>{{ error }}</span>
     </div>
@@ -4706,12 +5158,16 @@ onBeforeUnmount(() => {
             <div class="guest-note-body">{{ t("guest.availableNone") }}</div>
           </div>
           <div class="guest-note-card">
-            <div class="guest-note-label">{{ t("guest.contactTitle") }}</div>
-            <div class="guest-note-body">{{ t("guest.contactBody") }}</div>
+            <div class="guest-note-label">{{ t("guest.valueTitle") }}</div>
+            <div class="guest-note-body">{{ t("guest.valueBody") }}</div>
           </div>
           <div class="guest-note-card">
-            <div class="guest-note-label">{{ t("spaces.publicIntroTitle") }}</div>
-            <div class="guest-note-body">{{ t("guest.trustNote") }}</div>
+            <div class="guest-note-label">{{ t("guest.controlTitle") }}</div>
+            <div class="guest-note-body">{{ t("guest.controlBody") }}</div>
+          </div>
+          <div class="guest-note-card">
+            <div class="guest-note-label">{{ t("guest.accessStepsTitle") }}</div>
+            <div class="guest-note-body">{{ t("guest.accessStepsBody") }}</div>
           </div>
         </div>
 
@@ -4803,15 +5259,6 @@ onBeforeUnmount(() => {
           </button>
           <button 
             class="admin-nav-item" 
-            :class="{ active: adminTab === 'services' }"
-            @click="navigateToAdmin('services')"
-          >
-            <Server class="w-4 h-4" />
-            <span>{{ t("admin.title.services") }}</span>
-            <span class="admin-nav-badge muted">{{ servicesAdmin.length }}</span>
-          </button>
-          <button 
-            class="admin-nav-item" 
             :class="{ active: adminTab === 'dashboard' }"
             @click="navigateToAdmin('dashboard')"
           >
@@ -4819,8 +5266,8 @@ onBeforeUnmount(() => {
             <span>{{ t("admin.title.dashboard") }}</span>
           </button>
         </nav>
-        <div class="admin-sidebar-footer">
-          <div class="text-xs text-white/30">Atrium Admin</div>
+      <div class="admin-sidebar-footer">
+          <div class="text-xs text-white/30">{{ t("app.adminPanel") }}</div>
         </div>
       </div>
       
@@ -4831,14 +5278,12 @@ onBeforeUnmount(() => {
               <template v-if="adminTab === 'spaces'">{{ t("admin.title.spaces") }}</template>
               <template v-else-if="adminTab === 'members'">{{ t("admin.title.members") }}</template>
               <template v-else-if="adminTab === 'content'">{{ t("admin.title.content") }}</template>
-              <template v-else-if="adminTab === 'services'">{{ t("admin.title.services") }}</template>
               <template v-else-if="adminTab === 'dashboard'">{{ t("admin.title.dashboard") }}</template>
             </h1>
             <p class="admin-content-subtitle">
               <template v-if="adminTab === 'spaces'">{{ t("admin.subtitle.spaces") }}</template>
               <template v-else-if="adminTab === 'members'">{{ t("admin.subtitle.members") }}</template>
               <template v-else-if="adminTab === 'content'">{{ t("admin.subtitle.content") }}</template>
-              <template v-else-if="adminTab === 'services'">{{ t("admin.subtitle.services") }}</template>
               <template v-else-if="adminTab === 'dashboard'">{{ t("admin.subtitle.dashboard") }}</template>
             </p>
           </div>
@@ -4858,37 +5303,37 @@ onBeforeUnmount(() => {
           <template v-if="adminTab === 'spaces'">
             <div class="admin-grid-2">
               <div class="admin-card">
-                <h4 class="font-medium mb-4">Create Space</h4>
+                <h4 class="font-medium mb-4">{{ t("admin.spaces.create") }}</h4>
                 <div class="space-y-3">
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Title</label>
-                    <input v-model="newSpace.title" class="input" placeholder="Media" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.title") }}</label>
+                    <input v-model="newSpace.title" class="input" :placeholder="t('admin.spaces.placeholder.title')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Description</label>
-                    <input v-model="newSpace.description" class="input" placeholder="Фильмы, сериалы и музыка для вечера." />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.description") }}</label>
+                    <input v-model="newSpace.description" class="input" :placeholder="t('admin.spaces.placeholder.description')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Slug</label>
-                    <input v-model="newSpace.slug" class="input" placeholder="media" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.slug") }}</label>
+                    <input v-model="newSpace.slug" class="input" :placeholder="t('admin.spaces.placeholder.slug')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Visibility Groups</label>
-                    <input v-model="newSpace.visibilityGroups" class="input" placeholder="admin, user, guest" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.visibilityGroups") }}</label>
+                    <input v-model="newSpace.visibilityGroups" class="input" :placeholder="t('admin.spaces.placeholder.visibilityGroups')" />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Type</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.type") }}</label>
                       <select v-model="newSpace.type" class="select w-full text-sm">
-                        <option value="audience">audience</option>
-                        <option value="shared">shared</option>
-                        <option value="system">system</option>
+                        <option value="audience">{{ t("admin.spaces.option.type.audience") }}</option>
+                        <option value="shared">{{ t("admin.spaces.option.type.shared") }}</option>
+                        <option value="system">{{ t("admin.spaces.option.type.system") }}</option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Parent</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.parent") }}</label>
                       <select v-model="newSpace.parentId" class="select w-full text-sm">
-                        <option value="">None</option>
+                        <option value="">{{ t("admin.spaces.option.parentNone") }}</option>
                         <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
                           {{ space.title }}
                         </option>
@@ -4896,9 +5341,9 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Dashboard Template</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.dashboardTemplate") }}</label>
                     <select v-model="newSpace.dashboardTemplateId" class="select w-full text-sm">
-                      <option value="">Auto by slug</option>
+                      <option value="">{{ t("admin.spaces.option.templateAuto") }}</option>
                       <option v-for="tmpl in dashboardTemplates" :key="tmpl.id" :value="tmpl.id">
                         {{ tmpl.key }} (v{{ tmpl.version }})
                       </option>
@@ -4906,26 +5351,26 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Layout Mode</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.layoutMode") }}</label>
                       <select v-model="newSpace.layoutMode" class="select w-full text-sm">
-                        <option value="grid">grid</option>
-                        <option value="hero">hero</option>
-                        <option value="list">list</option>
+                        <option value="grid">{{ t("admin.spaces.option.layout.grid") }}</option>
+                        <option value="hero">{{ t("admin.spaces.option.layout.hero") }}</option>
+                        <option value="list">{{ t("admin.spaces.option.layout.list") }}</option>
                       </select>
                     </div>
                     <div class="flex items-end">
                       <label class="flex items-center gap-2 text-xs text-white/60">
                         <input v-model="newSpace.isLockable" type="checkbox" class="accent-white/70" />
-                        Lockable
+                        {{ t("admin.spaces.lockable") }}
                       </label>
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Visible before login</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.accessMode") }}</label>
                       <select v-model="newSpace.accessMode" class="select w-full text-sm">
-                        <option value="private">private</option>
-                        <option value="public_readonly">public_readonly</option>
+                        <option value="private">{{ t("admin.spaces.option.access.private") }}</option>
+                        <option value="public_readonly">{{ t("admin.spaces.option.access.publicReadonly") }}</option>
                       </select>
                     </div>
                     <div class="flex items-end">
@@ -4936,49 +5381,49 @@ onBeforeUnmount(() => {
                           type="checkbox"
                           class="accent-white/70 disabled:opacity-40"
                         />
-                        Default public entry
+                        {{ t("admin.spaces.defaultPublicEntry") }}
                       </label>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Background URL</label>
-                    <input v-model="newSpace.backgroundUrl" class="input" placeholder="https://..." />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.backgroundUrl") }}</label>
+                    <input v-model="newSpace.backgroundUrl" class="input" :placeholder="t('admin.spaces.placeholder.backgroundUrl')" />
                   </div>
                   <div class="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                    <div class="text-[11px] uppercase tracking-wider text-white/40">Public entry</div>
+                    <div class="text-[11px] uppercase tracking-wider text-white/40">{{ t("admin.spaces.field.publicEntry") }}</div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public intro title</label>
-                      <input v-model="newSpace.publicEntryTitle" class="input" placeholder="Welcome to Atrium" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryTitle") }}</label>
+                      <input v-model="newSpace.publicEntryTitle" class="input" :placeholder="t('admin.spaces.placeholder.publicEntryTitle')" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public intro subtitle</label>
-                      <textarea v-model="newSpace.publicEntrySubtitle" class="input font-mono text-xs" rows="2" placeholder="Local private-by-default workspace."></textarea>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntrySubtitle") }}</label>
+                      <textarea v-model="newSpace.publicEntrySubtitle" class="input font-mono text-xs" rows="2" :placeholder="t('admin.spaces.placeholder.publicEntrySubtitle')"></textarea>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public help block</label>
-                      <textarea v-model="newSpace.publicEntryHelp" class="input font-mono text-xs" rows="2" placeholder="Ask your operator for access."></textarea>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryHelp") }}</label>
+                      <textarea v-model="newSpace.publicEntryHelp" class="input font-mono text-xs" rows="2" :placeholder="t('admin.spaces.placeholder.publicEntryHelp')"></textarea>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public contact block</label>
-                      <textarea v-model="newSpace.publicEntryContact" class="input font-mono text-xs" rows="2" placeholder="ops@company.local"></textarea>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryContact") }}</label>
+                      <textarea v-model="newSpace.publicEntryContact" class="input font-mono text-xs" rows="2" :placeholder="t('admin.spaces.placeholder.publicEntryContact')"></textarea>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Display Config (JSON)</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.displayConfig") }}</label>
                     <textarea v-model="newSpace.displayConfig" class="input font-mono text-xs" rows="2"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Personalization Rules (JSON)</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.personalizationRules") }}</label>
                     <textarea v-model="newSpace.personalizationRules" class="input font-mono text-xs" rows="2"></textarea>
                   </div>
-                  <button class="btn btn-primary w-full" @click="createSpace">Create</button>
+                  <button class="btn btn-primary w-full" @click="createSpace">{{ t("admin.spaces.createAction") }}</button>
                 </div>
               </div>
 
               <div class="admin-card">
-                <h4 class="font-medium mb-4">Existing Spaces</h4>
+                <h4 class="font-medium mb-4">{{ t("admin.spaces.active") }}</h4>
                 <div v-if="spacesAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  No spaces yet.
+                  {{ t("app.noSpaces") }}
                 </div>
                 <div v-else class="space-y-1">
                   <div
@@ -4992,10 +5437,37 @@ onBeforeUnmount(() => {
                     </div>
                     <div class="flex items-center gap-1">
                       <button class="btn btn-ghost text-xs" @click="startEditSpace(space)">
-                        Edit
+                        {{ t("admin.spaces.edit") }}
+                      </button>
+                      <button class="btn btn-ghost text-xs" @click="archiveSpace(space)">
+                        {{ t("admin.spaces.archive") }}
                       </button>
                       <button class="btn btn-ghost btn-danger text-xs" @click="deleteSpace(space)">
-                        Delete
+                        {{ t("admin.spaces.delete") }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="archivedSpacesAdmin.length > 0" class="admin-card">
+                <h4 class="font-medium mb-4">{{ t("admin.spaces.archived") }}</h4>
+                <div class="space-y-1">
+                  <div
+                    v-for="space in archivedSpacesAdmin"
+                    :key="space.id"
+                    class="admin-list-item"
+                  >
+                    <div>
+                      <div class="font-medium text-sm">{{ space.title }}</div>
+                      <div class="text-[11px] text-white/30">{{ space.slug }}</div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <button class="btn btn-ghost text-xs" @click="restoreSpace(space)">
+                        {{ t("admin.spaces.restore") }}
+                      </button>
+                      <button class="btn btn-ghost btn-danger text-xs" @click="deleteSpace(space)">
+                        {{ t("admin.spaces.delete") }}
                       </button>
                     </div>
                   </div>
@@ -5006,37 +5478,37 @@ onBeforeUnmount(() => {
             <!-- Edit Space Modal (nested) -->
             <div v-if="editSpace" class="modal-backdrop" @click.self="editSpace = null">
               <div class="modal-content">
-                <h4 class="font-medium mb-4">Edit Space</h4>
+                <h4 class="font-medium mb-4">{{ t("admin.spaces.editTitle") }}</h4>
                 <div class="space-y-3">
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Title</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.title") }}</label>
                     <input v-model="editSpace.title" class="input" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Description</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.description") }}</label>
                     <input v-model="editSpace.description" class="input" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Slug</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.slug") }}</label>
                     <input v-model="editSpace.slug" class="input" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Visibility Groups</label>
-                    <input v-model="editSpace.visibilityGroups" class="input" placeholder="admin, user, guest" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.visibilityGroups") }}</label>
+                    <input v-model="editSpace.visibilityGroups" class="input" :placeholder="t('admin.spaces.placeholder.visibilityGroups')" />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Type</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.type") }}</label>
                       <select v-model="editSpace.type" class="select w-full text-sm">
-                        <option value="audience">audience</option>
-                        <option value="shared">shared</option>
-                        <option value="system">system</option>
+                        <option value="audience">{{ t("admin.spaces.option.type.audience") }}</option>
+                        <option value="shared">{{ t("admin.spaces.option.type.shared") }}</option>
+                        <option value="system">{{ t("admin.spaces.option.type.system") }}</option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Parent</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.parent") }}</label>
                       <select v-model="editSpace.parentId" class="select w-full text-sm">
-                        <option value="">None</option>
+                        <option value="">{{ t("admin.spaces.option.parentNone") }}</option>
                         <option v-for="space in spacesAdmin" :key="space.id" :value="space.id" :disabled="space.id === editSpace.id">
                           {{ space.title }}
                         </option>
@@ -5044,9 +5516,9 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Dashboard Template</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.dashboardTemplate") }}</label>
                     <select v-model="editSpace.dashboardTemplateId" class="select w-full text-sm">
-                      <option value="">Auto by slug</option>
+                      <option value="">{{ t("admin.spaces.option.templateAuto") }}</option>
                       <option v-for="tmpl in dashboardTemplates" :key="tmpl.id" :value="tmpl.id">
                         {{ tmpl.key }} (v{{ tmpl.version }})
                       </option>
@@ -5054,26 +5526,26 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Layout Mode</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.layoutMode") }}</label>
                       <select v-model="editSpace.layoutMode" class="select w-full text-sm">
-                        <option value="grid">grid</option>
-                        <option value="hero">hero</option>
-                        <option value="list">list</option>
+                        <option value="grid">{{ t("admin.spaces.option.layout.grid") }}</option>
+                        <option value="hero">{{ t("admin.spaces.option.layout.hero") }}</option>
+                        <option value="list">{{ t("admin.spaces.option.layout.list") }}</option>
                       </select>
                     </div>
                     <div class="flex items-end">
                       <label class="flex items-center gap-2 text-xs text-white/60">
                         <input v-model="editSpace.isLockable" type="checkbox" class="accent-white/70" />
-                        Lockable
+                        {{ t("admin.spaces.lockable") }}
                       </label>
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Visible before login</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.accessMode") }}</label>
                       <select v-model="editSpace.accessMode" class="select w-full text-sm">
-                        <option value="private">private</option>
-                        <option value="public_readonly">public_readonly</option>
+                        <option value="private">{{ t("admin.spaces.option.access.private") }}</option>
+                        <option value="public_readonly">{{ t("admin.spaces.option.access.publicReadonly") }}</option>
                       </select>
                     </div>
                     <div class="flex items-end">
@@ -5084,44 +5556,44 @@ onBeforeUnmount(() => {
                           type="checkbox"
                           class="accent-white/70 disabled:opacity-40"
                         />
-                        Default public entry
+                        {{ t("admin.spaces.defaultPublicEntry") }}
                       </label>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Background URL</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.backgroundUrl") }}</label>
                     <input v-model="editSpace.backgroundUrl" class="input" />
                   </div>
                   <div class="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                    <div class="text-[11px] uppercase tracking-wider text-white/40">Public entry</div>
+                    <div class="text-[11px] uppercase tracking-wider text-white/40">{{ t("admin.spaces.field.publicEntry") }}</div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public intro title</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryTitle") }}</label>
                       <input v-model="editSpace.publicEntryTitle" class="input" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public intro subtitle</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntrySubtitle") }}</label>
                       <textarea v-model="editSpace.publicEntrySubtitle" class="input font-mono text-xs" rows="2"></textarea>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public help block</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryHelp") }}</label>
                       <textarea v-model="editSpace.publicEntryHelp" class="input font-mono text-xs" rows="2"></textarea>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Public contact block</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryContact") }}</label>
                       <textarea v-model="editSpace.publicEntryContact" class="input font-mono text-xs" rows="2"></textarea>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Display Config (JSON)</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.displayConfig") }}</label>
                     <textarea v-model="editDisplayConfig" class="input font-mono text-xs" rows="4"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Personalization Rules (JSON)</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.personalizationRules") }}</label>
                     <textarea v-model="editPersonalizationRules" class="input font-mono text-xs" rows="4"></textarea>
                   </div>
                   <div class="flex items-center gap-2 pt-2">
-                    <button class="btn btn-primary flex-1" @click="updateSpace">Save</button>
-                    <button class="btn btn-ghost" @click="editSpace = null">Cancel</button>
+                    <button class="btn btn-primary flex-1" @click="updateSpace">{{ t("app.save") }}</button>
+                    <button class="btn btn-ghost" @click="editSpace = null">{{ t("app.cancel") }}</button>
                   </div>
                 </div>
               </div>
@@ -5131,26 +5603,26 @@ onBeforeUnmount(() => {
           <!-- Members Tab -->
           <template v-else-if="adminTab === 'members'">
             <div class="admin-card">
-              <h4 class="font-medium mb-4">Memberships</h4>
+              <h4 class="font-medium mb-4">{{ t("admin.members.title") }}</h4>
               <div class="admin-grid-2 mb-6">
                 <div class="space-y-3">
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Space</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.space") }}</label>
                     <select v-model="membershipSpaceId" class="select w-full text-sm" @change="onMembershipSpaceChange">
-                      <option value="">Select space</option>
+                      <option value="">{{ t("admin.common.selectSpace") }}</option>
                       <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
                         {{ space.title }}
                       </option>
                     </select>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Email</label>
-                    <input v-model="membershipForm.email" class="input" placeholder="user@example.com" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.email") }}</label>
+                    <input v-model="membershipForm.email" class="input" :placeholder="t('admin.common.placeholder.email')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Role</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.role") }}</label>
                     <select v-model="membershipForm.roleId" class="select w-full text-sm">
-                      <option value="">Select role</option>
+                      <option value="">{{ t("admin.common.selectRole") }}</option>
                       <option v-for="role in roles" :key="role.id" :value="role.id">
                         {{ role.name }} ({{ role.key }})
                       </option>
@@ -5161,39 +5633,39 @@ onBeforeUnmount(() => {
                     <input
                       v-model="membershipForm.userSegment"
                       class="input"
-                      placeholder="kid-girl"
+                      :placeholder="t('admin.common.placeholder.segment')"
                       list="membership-segments"
                     />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Valid until</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.validUntil") }}</label>
                     <input v-model="membershipForm.validTo" type="datetime-local" class="input" />
                   </div>
-                  <button class="btn btn-primary w-full" @click="addMembership">Add member</button>
+                  <button class="btn btn-primary w-full" @click="addMembership">{{ t("admin.members.add") }}</button>
                 </div>
                 <div class="space-y-3">
-                  <div class="text-[11px] text-white/40 uppercase tracking-wider">Bulk Import</div>
-                  <textarea v-model="membershipBulk.csv" class="input font-mono text-xs" rows="4" placeholder="email1,email2,email3..."></textarea>
+                  <div class="text-[11px] text-white/40 uppercase tracking-wider">{{ t("admin.common.bulkImport") }}</div>
+                  <textarea v-model="membershipBulk.emails" class="input font-mono text-xs" rows="4" :placeholder="t('admin.common.placeholder.emails')"></textarea>
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Role</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.role") }}</label>
                       <select v-model="membershipBulk.roleId" class="select w-full text-sm">
-                        <option value="">Select role</option>
+                        <option value="">{{ t("admin.common.selectRole") }}</option>
                         <option v-for="role in roles" :key="role.id" :value="role.id">
                           {{ role.name }} ({{ role.key }})
                         </option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Valid until</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.validUntil") }}</label>
                       <input v-model="membershipBulk.validTo" type="datetime-local" class="input" />
                     </div>
-                    <button class="btn btn-ghost w-full col-span-2" @click="importMemberships">Import</button>
+                    <button class="btn btn-ghost w-full col-span-2" @click="importMemberships">{{ t("admin.common.import") }}</button>
                   </div>
                 </div>
               </div>
               <div v-if="memberships.length === 0" class="text-white/30 text-sm py-4">
-                No members yet.
+                {{ t("admin.members.none") }}
               </div>
               <div v-else class="space-y-2">
                 <datalist id="membership-segments">
@@ -5209,7 +5681,7 @@ onBeforeUnmount(() => {
                     <div class="text-[11px] text-white/40">
                       {{ member.role_name }} · {{ member.role_key }}
                       <span v-if="member.user_segment"> · {{ member.user_segment }}</span>
-                      <span v-if="member.valid_to"> · until {{ new Date(member.valid_to).toLocaleString() }}</span>
+                      <span v-if="member.valid_to"> · {{ t("admin.members.until", { date: new Date(member.valid_to).toLocaleString() }) }}</span>
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
@@ -5219,8 +5691,8 @@ onBeforeUnmount(() => {
                       :placeholder="t('admin.segment')"
                       list="membership-segments"
                     />
-                    <button class="btn btn-ghost text-xs" @click="updateMemberSegment(member)">Save</button>
-                    <button class="btn btn-ghost text-xs" @click="removeMembership(member)">Remove</button>
+                    <button class="btn btn-ghost text-xs" @click="updateMemberSegment(member)">{{ t("app.save") }}</button>
+                    <button class="btn btn-ghost text-xs" @click="removeMembership(member)">{{ t("admin.common.remove") }}</button>
                   </div>
                 </div>
               </div>
@@ -5231,176 +5703,110 @@ onBeforeUnmount(() => {
           <template v-else-if="adminTab === 'content'">
             <div class="admin-grid-2">
               <div class="admin-card">
-                <h4 class="font-medium mb-4">Announcements</h4>
+                <h4 class="font-medium mb-4">{{ t("admin.content.directory") }}</h4>
                 <div class="space-y-3 mb-6">
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Space</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.space") }}</label>
                     <select v-model="contentSpaceId" class="select w-full text-sm" @change="onContentSpaceChange">
-                      <option value="">Select space</option>
+                      <option value="">{{ t("admin.common.selectSpace") }}</option>
                       <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
                         {{ space.title }}
                       </option>
                     </select>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Title</label>
-                    <input v-model="announcementForm.title" class="input" placeholder="Title" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.title") }}</label>
+                    <input v-model="directoryForm.title" class="input" :placeholder="t('admin.common.placeholder.title')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Body</label>
-                    <textarea v-model="announcementForm.body" class="input" rows="3" placeholder="Message..."></textarea>
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Priority</label>
-                      <select v-model="announcementForm.priority" class="select w-full text-sm">
-                        <option value="normal">Normal</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical</option>
-                      </select>
-                    </div>
-                    <div class="flex items-end">
-                      <label class="flex items-center gap-2 text-xs text-white/60">
-                        <input v-model="announcementForm.pinned" type="checkbox" class="accent-white/70" />
-                        Pinned
-                      </label>
-                    </div>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.description") }}</label>
+                    <input v-model="directoryForm.description" class="input" :placeholder="t('admin.common.placeholder.description')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Audience Groups</label>
-                    <input v-model="announcementForm.audienceInput" class="input text-xs" placeholder="admin, user, guest" />
-                  </div>
-                  <button class="btn btn-primary w-full" @click="createAnnouncement">Create</button>
-                </div>
-                <div v-if="announcementsAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  No announcements yet.
-                </div>
-                <div v-else class="space-y-2">
-                  <div
-                    v-for="item in announcementsAdmin"
-                    :key="item.id"
-                    class="admin-list-item flex-col items-start"
-                  >
-                    <div class="flex items-center justify-between w-full">
-                      <div class="font-medium text-sm truncate">{{ item.title }}</div>
-                      <button class="btn btn-ghost text-xs" @click="deleteAnnouncement(item)">Delete</button>
-                    </div>
-                    <div class="text-[11px] text-white/40 mt-1 line-clamp-2">{{ item.body }}</div>
-                    <div class="flex items-center gap-2 mt-2">
-                      <span class="chip chip-muted">{{ item.priority }}</span>
-                      <span v-if="item.pinned" class="chip">pinned</span>
-                      <input v-model="item.audienceInput" class="input text-xs flex-1" placeholder="audience groups" />
-                      <button class="btn btn-ghost text-xs" @click="updateAnnouncementAudience(item)">Save</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="admin-card">
-                <h4 class="font-medium mb-4">Directory</h4>
-                <div class="space-y-3 mb-6">
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Space</label>
-                    <select v-model="contentSpaceId" class="select w-full text-sm" @change="onContentSpaceChange">
-                      <option value="">Select space</option>
-                      <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
-                        {{ space.title }}
-                      </option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Title</label>
-                    <input v-model="directoryForm.title" class="input" placeholder="Title" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Description</label>
-                    <input v-model="directoryForm.description" class="input" placeholder="Short description" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Icon URL</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.iconUrl") }}</label>
                     <input
                       v-model="directoryForm.iconUrl"
                       class="input"
-                      placeholder="printer or /icons/printer.svg"
+                      :placeholder="t('admin.common.placeholder.iconUrl')"
                       @blur="directoryForm.iconUrl = normalizeIconUrl(directoryForm.iconUrl)"
                     />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">URL</label>
-                    <input v-model="directoryForm.url" class="input" placeholder="https://..." />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.url") }}</label>
+                    <input v-model="directoryForm.url" class="input" :placeholder="t('admin.common.placeholder.url')" />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Type</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.type") }}</label>
                       <select v-model="directoryForm.type" class="select w-full text-sm">
-                        <option value="resource">Resource</option>
-                        <option value="link">Link</option>
-                        <option value="action">Action</option>
+                        <option value="resource">{{ t("admin.common.option.type.resource") }}</option>
+                        <option value="link">{{ t("admin.common.option.type.link") }}</option>
+                        <option value="action">{{ t("admin.common.option.type.action") }}</option>
                       </select>
                     </div>
                     <div class="flex items-end">
                       <label class="flex items-center gap-2 text-xs text-white/60">
                         <input v-model="directoryForm.pinned" type="checkbox" class="accent-white/70" />
-                        Pinned
+                        {{ t("admin.common.pinned") }}
                       </label>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tags</label>
-                    <input v-model="directoryForm.tags" class="input text-xs" placeholder="tag1, tag2" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tags") }}</label>
+                    <input v-model="directoryForm.tags" class="input text-xs" :placeholder="t('admin.common.placeholder.tags')" />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Service Type</label>
-                      <input v-model="directoryForm.serviceType" class="input text-xs" placeholder="http/postgres/s3" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.serviceType") }}</label>
+                      <input v-model="directoryForm.serviceType" class="input text-xs" :placeholder="t('admin.common.placeholder.serviceType')" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tier</label>
-                      <input v-model="directoryForm.tier" class="input text-xs" placeholder="tier-1" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tier") }}</label>
+                      <input v-model="directoryForm.tier" class="input text-xs" :placeholder="t('admin.common.placeholder.tier')" />
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Lifecycle</label>
-                      <input v-model="directoryForm.lifecycle" class="input text-xs" placeholder="active/deprecated" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.lifecycle") }}</label>
+                      <input v-model="directoryForm.lifecycle" class="input text-xs" :placeholder="t('admin.common.placeholder.lifecycle')" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Classification</label>
-                      <input v-model="directoryForm.classification" class="input text-xs" placeholder="internal/PII" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.classification") }}</label>
+                      <input v-model="directoryForm.classification" class="input text-xs" :placeholder="t('admin.common.placeholder.classification')" />
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Runbook URL</label>
-                    <input v-model="directoryForm.runbookUrl" class="input text-xs" placeholder="https://runbook..." />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.runbookUrl") }}</label>
+                    <input v-model="directoryForm.runbookUrl" class="input text-xs" :placeholder="t('admin.common.placeholder.runbookUrl')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Access Path</label>
-                    <input v-model="directoryForm.accessPath" class="input text-xs" placeholder="Access request / group" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.accessPath") }}</label>
+                    <input v-model="directoryForm.accessPath" class="input text-xs" :placeholder="t('admin.common.placeholder.accessPath')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Depends On</label>
-                    <input v-model="directoryForm.dependsOn" class="input text-xs" placeholder="service-a, service-b" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.dependsOn") }}</label>
+                    <input v-model="directoryForm.dependsOn" class="input text-xs" :placeholder="t('admin.common.placeholder.dependsOn')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Owners (JSON)</label>
-                    <textarea v-model="directoryForm.owners" class="input text-xs" rows="3" placeholder='{"team":"core","primary":"a@b.com"}'></textarea>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.ownersJson") }}</label>
+                    <textarea v-model="directoryForm.owners" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.ownersJson')"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Links (JSON)</label>
-                    <textarea v-model="directoryForm.links" class="input text-xs" rows="3" placeholder='{"docs":"...","repo":"...","dashboards":["..."]}'></textarea>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.linksJson") }}</label>
+                    <textarea v-model="directoryForm.links" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.linksJson')"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Endpoints (JSON)</label>
-                    <textarea v-model="directoryForm.endpoints" class="input text-xs" rows="3" placeholder='[{"type":"http","url":"https://..."}]'></textarea>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.endpointsJson") }}</label>
+                    <textarea v-model="directoryForm.endpoints" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.endpointsJson')"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Audience Groups</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.audienceGroups") }}</label>
                     <input v-model="directoryForm.audienceGroups" class="input text-xs" placeholder="admin, user, guest" />
                   </div>
-                  <button class="btn btn-primary w-full" @click="createDirectoryItem">Create</button>
+                  <button class="btn btn-primary w-full" @click="createDirectoryItem">{{ t("admin.common.create") }}</button>
                 </div>
                 <div v-if="directoryAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  No directory items yet.
+                  {{ t("admin.content.noneDirectory") }}
                 </div>
                 <div v-else class="space-y-2">
                   <div
@@ -5411,8 +5817,8 @@ onBeforeUnmount(() => {
                     <div class="flex items-center justify-between w-full">
                       <div class="font-medium text-sm truncate">{{ item.title }}</div>
                       <div class="flex items-center gap-2">
-                        <button class="btn btn-ghost text-xs" @click="openServiceDetails(item)">Details</button>
-                        <button class="btn btn-ghost text-xs" @click="deleteDirectoryItem(item)">Delete</button>
+                        <button class="btn btn-ghost text-xs" @click="openServiceDetails(item)">{{ t("app.details") }}</button>
+                        <button class="btn btn-ghost text-xs" @click="deleteDirectoryItem(item)">{{ t("admin.spaces.delete") }}</button>
                       </div>
                     </div>
                     <div class="text-[11px] text-white/40 mt-1 truncate">{{ item.url }}</div>
@@ -5422,7 +5828,7 @@ onBeforeUnmount(() => {
                       <span v-if="item.tier" class="chip chip-muted">{{ item.tier }}</span>
                       <label class="flex items-center gap-2 text-[11px] text-white/50">
                         <input v-model="item.pinned" type="checkbox" class="accent-white/70" />
-                        Pinned
+                        {{ t("admin.common.pinned") }}
                       </label>
                       <input v-model="item.description" class="input text-xs mt-2" placeholder="description" />
                       <input
@@ -5434,7 +5840,7 @@ onBeforeUnmount(() => {
                       <input v-model="item.tagsInput" class="input text-xs mt-2" placeholder="tags" />
                       <input v-model="item.actionKeysInput" class="input text-xs mt-2" placeholder="action keys" />
                       <input v-model="item.audienceInput" class="input text-xs mt-2" placeholder="audience groups" />
-                      <button class="btn btn-ghost text-xs mt-2" @click="updateDirectoryItem(item)">Save</button>
+                      <button class="btn btn-ghost text-xs mt-2" @click="updateDirectoryItem(item)">{{ t("app.save") }}</button>
                     </div>
                   </div>
                 </div>
@@ -5446,73 +5852,73 @@ onBeforeUnmount(() => {
           <template v-else-if="adminTab === 'services'">
             <div class="admin-grid-2">
               <div class="admin-card">
-                <h4 class="font-medium mb-4">Service catalog</h4>
+                <h4 class="font-medium mb-4">{{ t("admin.services.catalog") }}</h4>
                 <div class="space-y-3 mb-6">
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Key</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.key") }}</label>
                     <input v-model="serviceForm.key" class="input" placeholder="billing-api" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Title</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.title") }}</label>
                     <input v-model="serviceForm.title" class="input" placeholder="Billing API" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Description</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.description") }}</label>
                     <input v-model="serviceForm.description" class="input" placeholder="What this service does" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Icon URL</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.iconUrl") }}</label>
                     <input
                       v-model="serviceForm.iconUrl"
                       class="input"
-                      placeholder="printer or /icons/printer.svg"
+                      :placeholder="t('admin.common.placeholder.iconUrl')"
                       @blur="serviceForm.iconUrl = normalizeIconUrl(serviceForm.iconUrl)"
                     />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Service Type</label>
-                      <input v-model="serviceForm.serviceType" class="input text-xs" placeholder="http/postgres/s3" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.serviceType") }}</label>
+                      <input v-model="serviceForm.serviceType" class="input text-xs" :placeholder="t('admin.common.placeholder.serviceType')" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tier</label>
-                      <input v-model="serviceForm.tier" class="input text-xs" placeholder="tier-1" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tier") }}</label>
+                      <input v-model="serviceForm.tier" class="input text-xs" :placeholder="t('admin.common.placeholder.tier')" />
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Lifecycle</label>
-                      <input v-model="serviceForm.lifecycle" class="input text-xs" placeholder="active/deprecated" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.lifecycle") }}</label>
+                      <input v-model="serviceForm.lifecycle" class="input text-xs" :placeholder="t('admin.common.placeholder.lifecycle')" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Classification</label>
-                      <input v-model="serviceForm.classification" class="input text-xs" placeholder="internal/PII" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.classification") }}</label>
+                      <input v-model="serviceForm.classification" class="input text-xs" :placeholder="t('admin.common.placeholder.classification')" />
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tags</label>
-                    <input v-model="serviceForm.tags" class="input text-xs" placeholder="payments, api" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tags") }}</label>
+                    <input v-model="serviceForm.tags" class="input text-xs" :placeholder="t('admin.common.placeholder.tags')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Depends On</label>
-                    <input v-model="serviceForm.dependsOn" class="input text-xs" placeholder="service-a, service-b" />
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.dependsOn") }}</label>
+                    <input v-model="serviceForm.dependsOn" class="input text-xs" :placeholder="t('admin.common.placeholder.dependsOn')" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Owners (JSON)</label>
-                    <textarea v-model="serviceForm.owners" class="input text-xs" rows="3" placeholder='{"team":"core"}'></textarea>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.ownersJson") }}</label>
+                    <textarea v-model="serviceForm.owners" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.ownersJson')"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Links (JSON)</label>
-                    <textarea v-model="serviceForm.links" class="input text-xs" rows="3" placeholder='{"docs":"...","repo":"..."}'></textarea>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.linksJson") }}</label>
+                    <textarea v-model="serviceForm.links" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.linksJson')"></textarea>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Endpoints (JSON)</label>
-                    <textarea v-model="serviceForm.endpoints" class="input text-xs" rows="3" placeholder='[{"type":"http","url":"https://..."}]'></textarea>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.endpointsJson") }}</label>
+                    <textarea v-model="serviceForm.endpoints" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.endpointsJson')"></textarea>
                   </div>
-                  <button class="btn btn-primary w-full" @click="createService">Create service</button>
+                  <button class="btn btn-primary w-full" @click="createService">{{ t("admin.services.create") }}</button>
                 </div>
                 <div v-if="servicesAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  No services yet.
+                  {{ t("admin.services.none") }}
                 </div>
                 <div v-else class="space-y-2">
                   <div
@@ -5529,30 +5935,30 @@ onBeforeUnmount(() => {
                       </div>
                     </div>
                     <div class="flex items-center gap-1">
-                      <button class="btn btn-ghost text-xs" @click="openServiceEdit(item)">Edit</button>
-                      <button class="btn btn-ghost btn-danger text-xs" @click="deleteService(item)">Delete</button>
+                      <button class="btn btn-ghost text-xs" @click="openServiceEdit(item)">{{ t("admin.services.edit") }}</button>
+                      <button class="btn btn-ghost btn-danger text-xs" @click="deleteService(item)">{{ t("admin.spaces.delete") }}</button>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div class="admin-card">
-                <h4 class="font-medium mb-4">Placements</h4>
+                <h4 class="font-medium mb-4">{{ t("admin.placements.title") }}</h4>
                 <div class="space-y-3 mb-6">
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Space filter</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.placements.spaceFilter") }}</label>
                       <select v-model="placementSpaceId" class="select w-full text-sm">
-                        <option value="">All spaces</option>
+                        <option value="">{{ t("admin.common.allSpaces") }}</option>
                         <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
                           {{ space.title }}
                         </option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Service filter</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.placements.serviceFilter") }}</label>
                       <select v-model="placementServiceKey" class="select w-full text-sm">
-                        <option value="">All services</option>
+                        <option value="">{{ t("admin.common.allServices") }}</option>
                         <option v-for="service in servicesAdmin" :key="service.id" :value="service.key">
                           {{ service.title }}
                         </option>
@@ -5561,18 +5967,18 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Space</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.space") }}</label>
                       <select v-model="placementForm.spaceId" class="select w-full text-sm">
-                        <option value="">Select space</option>
+                        <option value="">{{ t("admin.common.selectSpace") }}</option>
                         <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
                           {{ space.title }}
                         </option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Service</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.service") }}</label>
                       <select v-model="placementForm.serviceKey" class="select w-full text-sm">
-                        <option value="">Select service</option>
+                        <option value="">{{ t("admin.common.selectService") }}</option>
                         <option v-for="service in servicesAdmin" :key="service.id" :value="service.key">
                           {{ service.title }}
                         </option>
@@ -5580,53 +5986,53 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Label</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.label") }}</label>
                     <input v-model="placementForm.label" class="input text-xs" placeholder="Billing (primary)" />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Group</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.group") }}</label>
                       <input v-model="placementForm.group" class="input text-xs" placeholder="Payments" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Order</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.order") }}</label>
                       <input v-model.number="placementForm.order" type="number" min="0" class="input text-xs" />
                     </div>
                   </div>
                   <div class="flex items-center gap-2 text-xs text-white/60">
                     <input v-model="placementForm.pinned" type="checkbox" class="accent-white/70" />
-                    Pinned
+                    {{ t("admin.common.pinned") }}
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Primary URL</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.primaryUrl") }}</label>
                     <input v-model="placementForm.primaryUrl" class="input text-xs" placeholder="https://..." />
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Default Endpoint</label>
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.defaultEndpoint") }}</label>
                       <input v-model="placementForm.defaultEndpoint" class="input text-xs" placeholder="public" />
                     </div>
                     <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Access Path</label>
-                      <input v-model="placementForm.accessPath" class="input text-xs" placeholder="Access request / group" />
+                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.accessPath") }}</label>
+                      <input v-model="placementForm.accessPath" class="input text-xs" :placeholder="t('admin.common.placeholder.accessPath')" />
                     </div>
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Audience Groups</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.audienceGroups") }}</label>
                     <input v-model="placementForm.audienceGroups" class="input text-xs" placeholder="admin, user, guest" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Allowed Actions</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.allowedActions") }}</label>
                     <input v-model="placementForm.allowedActions" class="input text-xs" placeholder="open, request_access" />
                   </div>
                   <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Visible Links</label>
+                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.visibleLinks") }}</label>
                     <input v-model="placementForm.visibleLinks" class="input text-xs" placeholder="docs, runbook, repo" />
                   </div>
-                  <button class="btn btn-primary w-full" @click="createPlacement">Create placement</button>
+                  <button class="btn btn-primary w-full" @click="createPlacement">{{ t("admin.placements.create") }}</button>
                 </div>
                 <div v-if="placementsAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  No placements yet.
+                  {{ t("admin.placements.none") }}
                 </div>
                 <div v-else class="space-y-2">
                   <div
@@ -5642,8 +6048,8 @@ onBeforeUnmount(() => {
                         </div>
                       </div>
                       <div class="flex items-center gap-2">
-                        <button class="btn btn-ghost text-xs" @click="updatePlacement(item)">Save</button>
-                        <button class="btn btn-ghost btn-danger text-xs" @click="deletePlacement(item)">Delete</button>
+                        <button class="btn btn-ghost text-xs" @click="updatePlacement(item)">{{ t("app.save") }}</button>
+                        <button class="btn btn-ghost btn-danger text-xs" @click="deletePlacement(item)">{{ t("admin.spaces.delete") }}</button>
                       </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 w-full mt-2">
@@ -5652,7 +6058,7 @@ onBeforeUnmount(() => {
                       <input v-model.number="item.order" type="number" min="0" class="input text-xs" />
                       <label class="flex items-center gap-2 text-xs text-white/60">
                         <input v-model="item.pinned" type="checkbox" class="accent-white/70" />
-                        Pinned
+                        {{ t("admin.common.pinned") }}
                       </label>
                     </div>
                     <div class="grid grid-cols-2 gap-2 w-full mt-2">
@@ -5678,9 +6084,9 @@ onBeforeUnmount(() => {
           <!-- Dashboard Tab -->
           <template v-else-if="adminTab === 'dashboard'">
             <div class="admin-card">
-              <h4 class="font-medium mb-4">Dashboard Templates</h4>
+              <h4 class="font-medium mb-4">{{ t("admin.dashboard.templates") }}</h4>
               <div v-if="spacesAdmin.length === 0" class="text-white/30 text-sm py-4">
-                No spaces yet.
+                {{ t("app.noSpaces") }}
               </div>
               <div v-else class="space-y-2">
                 <div
@@ -5691,14 +6097,14 @@ onBeforeUnmount(() => {
                   <div>
                     <div class="font-medium text-sm">{{ space.title }}</div>
                     <div class="text-[11px] text-white/30">
-                      {{ blocksForSpace(space.id).length }} blocks
+                      {{ t("admin.dashboard.blocksCount", { count: blocksForSpace(space.id).length }) }}
                     </div>
                   </div>
                   <button
                     class="btn btn-ghost text-xs"
                     @click="openDashboardEditor(space)"
                   >
-                    Edit blocks
+                    {{ t("admin.dashboard.editBlocks") }}
                   </button>
                 </div>
               </div>
@@ -5734,6 +6140,20 @@ onBeforeUnmount(() => {
               <p class="mt-3 text-xs text-white/45 leading-5">
                 {{ t("guest.trustNote") }}
               </p>
+              <div class="guest-notes mt-4">
+                <div class="guest-note-card">
+                  <div class="guest-note-label">{{ t("guest.valueTitle") }}</div>
+                  <div class="guest-note-body">{{ t("guest.valueBody") }}</div>
+                </div>
+                <div class="guest-note-card">
+                  <div class="guest-note-label">{{ t("guest.controlTitle") }}</div>
+                  <div class="guest-note-body">{{ t("guest.controlBody") }}</div>
+                </div>
+                <div class="guest-note-card">
+                  <div class="guest-note-label">{{ t("guest.accessStepsTitle") }}</div>
+                  <div class="guest-note-body">{{ t("guest.accessStepsBody") }}</div>
+                </div>
+              </div>
             </div>
             <div class="flex flex-col gap-3 sm:items-end">
               <div class="chip chip-muted">{{ spaces.length }} {{ t("app.spaces") }}</div>
@@ -5761,7 +6181,7 @@ onBeforeUnmount(() => {
               class="btn btn-ghost"
               @click="toggleDashboardEdit(space)"
             >
-              Edit layout
+              {{ t("app.editLayout") }}
             </button>
             <button v-if="space.is_lockable && !isPublicReadonlySpace(space)" class="btn btn-ghost btn-icon">
               <Tooltip
@@ -5776,6 +6196,34 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="grid" :class="gridClass(space)">
+          <div v-if="me && surfaceCardsFor(space).length" class="col-span-full">
+            <div class="surface-brief">
+              <div class="surface-brief-header">
+                <div>
+                  <div class="surface-brief-title">{{ surfaceHeadingFor(space).title }}</div>
+                  <div class="surface-brief-subtitle">{{ surfaceHeadingFor(space).subtitle }}</div>
+                </div>
+              </div>
+              <div class="surface-brief-grid">
+                <article
+                  v-for="card in surfaceCardsFor(space)"
+                  :key="`${space.id}-${card.id}`"
+                  class="surface-brief-card"
+                >
+                  <div class="surface-brief-eyebrow">{{ card.eyebrow }}</div>
+                  <div class="surface-brief-card-title">{{ card.title }}</div>
+                  <p class="surface-brief-card-body">{{ card.body }}</p>
+                  <button
+                    v-if="card.actionLabel && card.actionTarget"
+                    class="btn btn-ghost text-xs self-start"
+                    @click="runSurfaceAction(card)"
+                  >
+                    {{ card.actionLabel }}
+                  </button>
+                </article>
+              </div>
+            </div>
+          </div>
           <div v-if="!me && !isPublicReadonlySpace(space)" class="col-span-full">
             <div class="card-glass core-card">
               <div class="section-title">Доступ</div>
@@ -5797,21 +6245,21 @@ onBeforeUnmount(() => {
                   :disabled="dashboardEditorSaving || !dashboardEditDirty"
                   @click="saveDashboardLayout(space)"
                 >
-                  {{ dashboardEditorSaving ? "Saving..." : "Save" }}
+                  {{ dashboardEditorSaving ? `${t("app.save")}...` : t("app.save") }}
                 </button>
                 <button
                   v-if="canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
                   class="btn btn-ghost"
                   @click="openAddBlockPicker"
                 >
-                  Add block
+                  {{ t("app.addBlock") }}
                 </button>
                 <button
                   v-if="canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
                   class="btn btn-ghost"
                   @click="stopDashboardEdit"
                 >
-                  Exit
+                  {{ t("app.exit") }}
                 </button>
               </div>
             </div>
@@ -5838,10 +6286,10 @@ onBeforeUnmount(() => {
                     v-if="blocksForSpace(space.id).length === 0 && !isDashboardEditing(space)"
                     class="col-span-full card-glass dashboard-empty"
                   >
-                    <div class="section-title">Dashboard</div>
-                    <div class="core-card-title">Еще не настроен</div>
+                    <div class="section-title">{{ t("app.spaces") }}</div>
+                    <div class="core-card-title">{{ t("dashboard.empty.title") }}</div>
                     <div class="text-white/50 text-sm mt-2">
-                      Включите режим редактирования, чтобы добавить блоки.
+                      {{ t("dashboard.empty.body") }}
                     </div>
                   </div>
                   <div
@@ -5863,28 +6311,7 @@ onBeforeUnmount(() => {
                       <span class="chip chip-muted">{{ blockTypeLabel(block) }}</span>
                     </div>
                     <div class="dashboard-block-body">
-                      <div v-if="blockTypeIs(block, BLOCK_TYPES.announcements)" class="dashboard-list">
-                        <div
-                          v-for="item in blockDataFor(space.id, block.id)"
-                          :key="item.id"
-                          class="dashboard-row"
-                        >
-                          <span class="dashboard-row-title">{{ item.title }}</span>
-                          <span class="chip" :class="priorityChipClass(item.priority)">{{ priorityLabel(item.priority) }}</span>
-                        </div>
-                        <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">No announcements</div>
-                      </div>
-                      <div
-                        v-else-if="blockTypeIs(block, BLOCK_TYPES.ticketsInbox) || blockTypeIs(block, BLOCK_TYPES.ticketsQueue)"
-                        class="dashboard-list"
-                      >
-                        <div v-for="item in blockDataFor(space.id, block.id)" :key="item.id" class="dashboard-row">
-                          <span class="dashboard-row-title">Ticket {{ item.id }}</span>
-                          <span class="chip" :class="requestStatusChipClass(item.status)">{{ item.status }}</span>
-                        </div>
-                        <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">No tickets</div>
-                      </div>
-                      <div v-else-if="blockTypeIs(block, BLOCK_TYPES.resourcesPinned)" class="dashboard-list">
+                      <div v-if="blockTypeIs(block, BLOCK_TYPES.resourcesPinned)" class="dashboard-list">
                         <div class="dashboard-resources">
                           <div
                             v-for="item in blockDataFor(space.id, block.id)"
@@ -5908,7 +6335,7 @@ onBeforeUnmount(() => {
                                   target="_blank"
                                   rel="noreferrer"
                                   class="resource-title-link"
-                                  @click.stop
+                                  @click.stop="rememberResourceVisit(space, item)"
                                 >
                                   {{ item.title }}
                                 </a>
@@ -5942,7 +6369,7 @@ onBeforeUnmount(() => {
                               :class="{ active: resourcePopoverOpen && resourcePopoverItem?.id === item.id }"
                               @click.stop="toggleResourcePopover($event, item)"
                             >
-                              <span class="resource-detail-toggle-label">Details</span>
+                              <span class="resource-detail-toggle-label">{{ t("app.details") }}</span>
                               <ChevronDown class="resource-detail-toggle-icon" />
                             </button>
 
@@ -5958,7 +6385,7 @@ onBeforeUnmount(() => {
                             >
                               <div class="resource-popover-header">
                                 <div class="min-w-0">
-                                  <div class="text-xs text-white/50 uppercase tracking-wider">Resource details</div>
+                                  <div class="text-xs text-white/50 uppercase tracking-wider">{{ t("resource.details.title") }}</div>
                                   <div class="text-lg font-semibold truncate">{{ resourcePopoverItem.title }}</div>
                                 </div>
                                 <button class="btn btn-ghost btn-icon" @click="closeResourcePopover">
@@ -5974,25 +6401,25 @@ onBeforeUnmount(() => {
 
                               <div v-if="resourcePopoverViewer === 'service.s3'" class="resource-popover-body">
                                 <div class="drawer-section">
-                                  <div class="drawer-section-title">Overview</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.overview") }}</div>
                                   <div class="drawer-section-body">
                                     <div class="drawer-row">
-                                      <span class="drawer-label">Service</span>
+                                      <span class="drawer-label">{{ t("resource.details.service") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.title }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.description" class="drawer-row">
-                                      <span class="drawer-label">Description</span>
+                                      <span class="drawer-label">{{ t("resource.details.description") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.description }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.tier" class="drawer-row">
-                                      <span class="drawer-label">Tier</span>
+                                      <span class="drawer-label">{{ t("resource.details.tier") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.tier }}</span>
                                     </div>
                                   </div>
                                 </div>
 
                                 <div class="drawer-section">
-                                  <div class="drawer-section-title">S3 Details</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.s3") }}</div>
                                   <div class="drawer-section-body">
                                     <div
                                       v-for="(endpoint, idx) in s3EndpointsFor(resourcePopoverItem)"
@@ -6000,45 +6427,45 @@ onBeforeUnmount(() => {
                                       class="drawer-card"
                                     >
                                       <div class="drawer-row">
-                                        <span class="drawer-label">Bucket</span>
+                                        <span class="drawer-label">{{ t("resource.details.bucket") }}</span>
                                         <span class="drawer-value">{{ endpoint.bucket || "—" }}</span>
                                       </div>
                                       <div class="drawer-row">
-                                        <span class="drawer-label">Endpoint</span>
+                                        <span class="drawer-label">{{ t("resource.details.endpoint") }}</span>
                                         <span class="drawer-value">{{ endpoint.endpoint || endpoint.url || "—" }}</span>
                                       </div>
                                       <div class="drawer-row">
-                                        <span class="drawer-label">Region</span>
+                                        <span class="drawer-label">{{ t("resource.details.region") }}</span>
                                         <span class="drawer-value">{{ endpoint.region || "—" }}</span>
                                       </div>
                                       <div class="drawer-row">
-                                        <span class="drawer-label">Console</span>
+                                        <span class="drawer-label">{{ t("resource.details.console") }}</span>
                                         <span class="drawer-value">
-                                          <a v-if="resourcePopoverItem.url" :href="resourcePopoverItem.url" target="_blank" rel="noreferrer" class="resource-title-link">
-                                            Open console
+                                          <a v-if="resourcePopoverItem.url" :href="resourcePopoverItem.url" target="_blank" rel="noreferrer" class="resource-title-link" @click="rememberResourceVisit(space, resourcePopoverItem)">
+                                            {{ t("resource.details.openConsole") }}
                                           </a>
                                         </span>
                                       </div>
                                       <div v-if="endpoint.bucket" class="drawer-actions">
-                                        <button class="btn btn-ghost text-xs" @click="copyText(`s3://${endpoint.bucket}`)">Copy s3://</button>
-                                        <button class="btn btn-ghost text-xs" @click="copyText(`aws s3 ls s3://${endpoint.bucket}`)">Copy CLI</button>
+                                        <button class="btn btn-ghost text-xs" @click="copyText(`s3://${endpoint.bucket}`)">{{ t("resource.details.copyS3") }}</button>
+                                        <button class="btn btn-ghost text-xs" @click="copyText(`aws s3 ls s3://${endpoint.bucket}`)">{{ t("resource.details.copyCli") }}</button>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
 
                                 <div v-if="resourcePopoverItem.access_path" class="drawer-section">
-                                  <div class="drawer-section-title">Access</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.access") }}</div>
                                   <div class="drawer-section-body">
                                     <div class="drawer-row">
-                                      <span class="drawer-label">Access path</span>
+                                      <span class="drawer-label">{{ t("resource.details.accessPath") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.access_path }}</span>
                                     </div>
                                   </div>
                                 </div>
 
                                 <div class="drawer-section">
-                                  <div class="drawer-section-title">Actions</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.actions") }}</div>
                                   <div class="drawer-section-body">
                                     <div v-if="normalizeActionKeys(resourcePopoverItem.action_keys).length" class="drawer-actions">
                                       <button
@@ -6050,39 +6477,39 @@ onBeforeUnmount(() => {
                                         {{ actionLabel(actionKey) || actionKey }}
                                       </button>
                                     </div>
-                                    <div v-else class="text-xs text-white/50">No actions configured.</div>
+                                    <div v-else class="text-xs text-white/50">{{ t("resource.details.noActions") }}</div>
                                   </div>
                                 </div>
                               </div>
 
                               <div v-else class="resource-popover-body">
                                 <div class="drawer-section">
-                                  <div class="drawer-section-title">Overview</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.overview") }}</div>
                                   <div class="drawer-section-body">
                                     <div class="drawer-row">
-                                      <span class="drawer-label">Title</span>
+                                      <span class="drawer-label">{{ t("resource.details.titleField") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.title }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.description" class="drawer-row">
-                                      <span class="drawer-label">Description</span>
+                                      <span class="drawer-label">{{ t("resource.details.description") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.description }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.service_type" class="drawer-row">
-                                      <span class="drawer-label">Type</span>
+                                      <span class="drawer-label">{{ t("resource.details.type") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.service_type }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.tier" class="drawer-row">
-                                      <span class="drawer-label">Tier</span>
+                                      <span class="drawer-label">{{ t("resource.details.tier") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.tier }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.lifecycle" class="drawer-row">
-                                      <span class="drawer-label">Lifecycle</span>
+                                      <span class="drawer-label">{{ t("resource.details.lifecycle") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.lifecycle }}</span>
                                     </div>
                                     <div v-if="resourcePopoverItem.url" class="drawer-row">
-                                      <span class="drawer-label">Primary link</span>
+                                      <span class="drawer-label">{{ t("resource.details.primaryLink") }}</span>
                                       <span class="drawer-value">
-                                        <a :href="resourcePopoverItem.url" target="_blank" rel="noreferrer" class="resource-title-link">Open</a>
+                                        <a :href="resourcePopoverItem.url" target="_blank" rel="noreferrer" class="resource-title-link" @click="rememberResourceVisit(space, resourcePopoverItem)">{{ t("surface.action.openResource") }}</a>
                                       </span>
                                     </div>
                                   </div>
@@ -6092,7 +6519,7 @@ onBeforeUnmount(() => {
                                   class="drawer-section"
                                   v-if="resourcePopoverItem.owners && typeof resourcePopoverItem.owners === 'object' && Object.keys(resourcePopoverItem.owners).length"
                                 >
-                                  <div class="drawer-section-title">Ownership</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.ownership") }}</div>
                                   <div class="drawer-section-body">
                                     <div class="drawer-row" v-for="(value, key) in resourcePopoverItem.owners" :key="`owner-${key}`">
                                       <span class="drawer-label">{{ key }}</span>
@@ -6102,19 +6529,19 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <div class="drawer-section" v-if="normalizeLinks(resourcePopoverItem.links).length">
-                                  <div class="drawer-section-title">Links</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.links") }}</div>
                                   <div class="drawer-section-body">
                                     <div v-for="(link, idx) in normalizeLinks(resourcePopoverItem.links)" :key="`link-${idx}`" class="drawer-row">
                                       <span class="drawer-label">{{ link.label }}</span>
                                       <span class="drawer-value">
-                                        <a :href="link.url" target="_blank" rel="noreferrer" class="resource-title-link">Open</a>
+                                        <a :href="link.url" target="_blank" rel="noreferrer" class="resource-title-link">{{ t("surface.action.openResource") }}</a>
                                       </span>
                                     </div>
                                   </div>
                                 </div>
 
                                 <div class="drawer-section" v-if="Array.isArray(resourcePopoverItem.endpoints) && resourcePopoverItem.endpoints.length">
-                                  <div class="drawer-section-title">Endpoints</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.endpoints") }}</div>
                                   <div class="drawer-section-body">
                                     <div
                                       v-for="(endpoint, idx) in resourcePopoverItem.endpoints"
@@ -6128,17 +6555,17 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <div class="drawer-section" v-if="resourcePopoverItem.access_path">
-                                  <div class="drawer-section-title">Access</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.access") }}</div>
                                   <div class="drawer-section-body">
                                     <div class="drawer-row">
-                                      <span class="drawer-label">Access path</span>
+                                      <span class="drawer-label">{{ t("resource.details.accessPath") }}</span>
                                       <span class="drawer-value">{{ resourcePopoverItem.access_path }}</span>
                                     </div>
                                   </div>
                                 </div>
 
                                 <div class="drawer-section">
-                                  <div class="drawer-section-title">Actions</div>
+                                  <div class="drawer-section-title">{{ t("resource.details.actions") }}</div>
                                   <div class="drawer-section-body">
                                     <div v-if="normalizeActionKeys(resourcePopoverItem.action_keys).length" class="drawer-actions">
                                       <button
@@ -6150,32 +6577,22 @@ onBeforeUnmount(() => {
                                         {{ actionLabel(actionKey) || actionKey }}
                                       </button>
                                     </div>
-                                    <div v-else class="text-xs text-white/50">No actions configured.</div>
+                                    <div v-else class="text-xs text-white/50">{{ t("resource.details.noActions") }}</div>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                        <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">No pinned resources</div>
-                      </div>
-                      <div v-else-if="blockTypeIs(block, BLOCK_TYPES.activityFeed)" class="dashboard-list">
-                        <div v-for="item in blockDataFor(space.id, block.id)" :key="item.id" class="dashboard-row">
-                          <span class="dashboard-row-title">{{ item.type }}</span>
-                          <span class="chip chip-muted">{{ item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "" }}</span>
-                        </div>
-                        <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">No activity yet</div>
-                      </div>
-                      <div v-else-if="blockTypeIs(block, BLOCK_TYPES.quickActions)" class="dashboard-actions">
-                        <div class="core-empty">No actions configured</div>
+                        <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">{{ t("resource.noPinned") }}</div>
                       </div>
                       <div v-else-if="blockTypeIs(block, BLOCK_TYPES.text)" class="dashboard-text">
                         <div v-if="block.config?.text" class="text-white/80 whitespace-pre-wrap">
                           {{ block.config.text }}
                         </div>
-                        <div v-else class="core-empty">No text configured</div>
+                        <div v-else class="core-empty">{{ t("dashboard.empty.body") }}</div>
                       </div>
-                      <div v-else class="core-empty">Block data not configured</div>
+                      <div v-else class="core-empty">{{ t("dashboard.empty.body") }}</div>
                     </div>
                     <div v-if="isDashboardEditing(space)" class="dashboard-resize-handle"></div>
                   </div>
@@ -6185,7 +6602,7 @@ onBeforeUnmount(() => {
                     :style="dashboardEditPanelStyle"
                   >
                     <div class="dashboard-editor-header">
-                      <div class="text-xs uppercase tracking-widest text-white/50">Edit block</div>
+                      <div class="text-xs uppercase tracking-widest text-white/50">{{ t("editor.blockSettings") }}</div>
                       <button class="btn btn-ghost btn-icon" @click="dashboardEditSelectedId = null">
                         <Tooltip
                           :content="t('app.close')"
@@ -6209,7 +6626,13 @@ onBeforeUnmount(() => {
                           </option>
                         </select>
                       </label>
-                      <div class="grid grid-cols-4 gap-2">
+                      <button class="btn btn-ghost text-xs self-start" @click="dashboardEditAdvanced = !dashboardEditAdvanced">
+                        {{ dashboardEditAdvanced ? t("editor.hideAdvanced") : t("editor.showAdvanced") }}
+                      </button>
+                      <p class="text-[11px] text-white/45 leading-5">
+                        {{ t("editor.advancedHint") }}
+                      </p>
+                      <div class="grid grid-cols-4 gap-2" v-if="dashboardEditAdvanced">
                         <label class="dashboard-field">
                           <span>X</span>
                           <input v-model.number="dashboardEditForm.x" type="number" min="1" max="12" class="input text-xs" @input="applyDashboardEditForm(space.id)" />
@@ -6241,7 +6664,7 @@ onBeforeUnmount(() => {
                           <input v-model="dashboardEditForm.scope" class="input text-xs" @input="applyDashboardEditForm(space.id)" />
                         </label>
                       </div>
-                      <label class="dashboard-field">
+                      <label class="dashboard-field" v-if="dashboardEditAdvanced">
                         <span>Filter</span>
                         <input v-model="dashboardEditForm.filter" class="input text-xs" @input="applyDashboardEditForm(space.id)" />
                       </label>
@@ -6438,7 +6861,7 @@ onBeforeUnmount(() => {
     <div v-if="dashboardAddOpen" class="modal-backdrop" @click.self="closeAddBlockPicker">
       <div class="modal-content block-picker-modal">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Add block</h3>
+          <h3 class="text-lg font-semibold">{{ t("editor.addBlockTitle") }}</h3>
           <button class="btn btn-ghost btn-icon" @click="closeAddBlockPicker">
             <Tooltip
               :content="t('app.close')"
@@ -6450,7 +6873,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div class="text-sm text-white/50 mb-4">
-          Choose a block type to add to the dashboard.
+          {{ t("editor.addBlockBody") }}
         </div>
         <div class="block-picker-grid">
           <button
@@ -6475,7 +6898,7 @@ onBeforeUnmount(() => {
     <div v-if="showShortcuts" class="modal-backdrop" @click.self="showShortcuts = false">
       <div class="modal-content admin-modal">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Keyboard Shortcuts</h3>
+          <h3 class="text-lg font-semibold">{{ t("app.keyboardShortcuts") }}</h3>
           <button class="btn btn-ghost btn-icon" @click="showShortcuts = false">
             <Tooltip
               :content="t('app.close')"
@@ -6488,16 +6911,16 @@ onBeforeUnmount(() => {
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="card-glass">
-            <div class="text-sm font-semibold">Navigate Spaces</div>
-            <div class="text-white/50 text-xs mt-1">Move between workspaces</div>
+            <div class="text-sm font-semibold">{{ t("app.shortcutsNavigateTitle") }}</div>
+            <div class="text-white/50 text-xs mt-1">{{ t("app.shortcutsNavigateBody") }}</div>
             <div class="mt-3 flex gap-2 flex-wrap">
               <span class="chip">{{ HOTKEYS.prev }}</span>
               <span class="chip">{{ HOTKEYS.next }}</span>
             </div>
           </div>
           <div class="card-glass">
-            <div class="text-sm font-semibold">Help</div>
-            <div class="text-white/50 text-xs mt-1">Show shortcuts overlay</div>
+            <div class="text-sm font-semibold">{{ t("app.shortcutsHelpTitle") }}</div>
+            <div class="text-white/50 text-xs mt-1">{{ t("app.shortcutsHelpBody") }}</div>
             <div class="mt-3">
               <span class="chip">{{ HOTKEYS.help }}</span>
             </div>
@@ -6511,18 +6934,18 @@ onBeforeUnmount(() => {
       <div class="modal-content dashboard-editor-modal">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <div class="text-lg font-semibold">Dashboard Editor</div>
+            <div class="text-lg font-semibold">{{ t("admin.dashboard.editor") }}</div>
             <div class="text-xs text-white/40">{{ dashboardEditorSpace.title }}</div>
           </div>
           <div class="flex items-center gap-2">
-            <label class="text-[11px] text-white/40 uppercase tracking-wider">Preview</label>
+            <label class="text-[11px] text-white/40 uppercase tracking-wider">{{ t("admin.dashboard.preview") }}</label>
             <select v-model="dashboardPreviewRole" class="select text-xs" @change="onPreviewRoleChange">
               <option value="guest">guest</option>
               <option value="user">user</option>
               <option value="staff">staff</option>
               <option value="admin">admin</option>
             </select>
-            <button class="btn btn-ghost" @click="showDashboardEditor = false">Close</button>
+            <button class="btn btn-ghost" @click="showDashboardEditor = false">{{ t("app.close") }}</button>
           </div>
         </div>
         <div class="dashboard-editor">
@@ -6548,9 +6971,9 @@ onBeforeUnmount(() => {
           </div>
           <div class="dashboard-editor-controls">
             <div class="flex items-center justify-between mb-3">
-              <div class="text-sm font-semibold">Blocks</div>
+              <div class="text-sm font-semibold">{{ t("admin.dashboard.blocks") }}</div>
               <button class="btn btn-ghost text-xs" @click="addDashboardBlock">
-                Add block
+                {{ t("app.addBlock") }}
               </button>
             </div>
             <div class="space-y-3">
@@ -6592,9 +7015,9 @@ onBeforeUnmount(() => {
             </div>
             <div class="flex items-center gap-2 mt-4">
               <button class="btn btn-primary flex-1" :disabled="dashboardEditorSaving" @click="saveDashboardEditor">
-                {{ dashboardEditorSaving ? "Saving..." : "Save dashboard" }}
+                {{ dashboardEditorSaving ? `${t("app.save")}...` : t("app.saveDashboard") }}
               </button>
-              <button class="btn btn-ghost" @click="showDashboardEditor = false">Cancel</button>
+              <button class="btn btn-ghost" @click="showDashboardEditor = false">{{ t("app.cancel") }}</button>
             </div>
           </div>
         </div>
@@ -6605,7 +7028,7 @@ onBeforeUnmount(() => {
     <div v-if="serviceDetailsOpen && serviceDetailsItem" class="modal-backdrop" @click.self="closeServiceDetails">
       <div class="modal-content admin-modal">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Service Details</h3>
+          <h3 class="text-lg font-semibold">{{ t("resource.details.title") }}</h3>
           <button class="btn btn-ghost btn-icon" @click="closeServiceDetails">
             <Tooltip
               :content="t('app.close')"
@@ -6619,51 +7042,51 @@ onBeforeUnmount(() => {
         <div class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Service Type</label>
-              <input v-model="serviceDetailsItem.serviceType" class="input text-xs" placeholder="http/postgres/s3" />
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.serviceType") }}</label>
+              <input v-model="serviceDetailsItem.serviceType" class="input text-xs" :placeholder="t('admin.common.placeholder.serviceType')" />
             </div>
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tier</label>
-              <input v-model="serviceDetailsItem.tier" class="input text-xs" placeholder="tier-1" />
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tier") }}</label>
+              <input v-model="serviceDetailsItem.tier" class="input text-xs" :placeholder="t('admin.common.placeholder.tier')" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Lifecycle</label>
-              <input v-model="serviceDetailsItem.lifecycle" class="input text-xs" placeholder="active/deprecated" />
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.lifecycle") }}</label>
+              <input v-model="serviceDetailsItem.lifecycle" class="input text-xs" :placeholder="t('admin.common.placeholder.lifecycle')" />
             </div>
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Classification</label>
-              <input v-model="serviceDetailsItem.classification" class="input text-xs" placeholder="internal/PII" />
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.classification") }}</label>
+              <input v-model="serviceDetailsItem.classification" class="input text-xs" :placeholder="t('admin.common.placeholder.classification')" />
             </div>
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Runbook URL</label>
-            <input v-model="serviceDetailsItem.runbookUrl" class="input text-xs" placeholder="https://runbook..." />
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.runbookUrl") }}</label>
+            <input v-model="serviceDetailsItem.runbookUrl" class="input text-xs" :placeholder="t('admin.common.placeholder.runbookUrl')" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Access Path</label>
-            <input v-model="serviceDetailsItem.accessPath" class="input text-xs" placeholder="Access request / group" />
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.accessPath") }}</label>
+            <input v-model="serviceDetailsItem.accessPath" class="input text-xs" :placeholder="t('admin.common.placeholder.accessPath')" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Depends On</label>
-            <input v-model="serviceDetailsItem.dependsOnInput" class="input text-xs" placeholder="service-a, service-b" />
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.dependsOn") }}</label>
+            <input v-model="serviceDetailsItem.dependsOnInput" class="input text-xs" :placeholder="t('admin.common.placeholder.dependsOn')" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Owners (JSON)</label>
-            <textarea v-model="serviceDetailsItem.ownersInput" class="input text-xs" rows="4" placeholder='{"team":"core"}'></textarea>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.ownersJson") }}</label>
+            <textarea v-model="serviceDetailsItem.ownersInput" class="input text-xs" rows="4" :placeholder="t('admin.common.placeholder.ownersJson')"></textarea>
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Links (JSON)</label>
-            <textarea v-model="serviceDetailsItem.linksInput" class="input text-xs" rows="4" placeholder='{"docs":"...","repo":"..."}'></textarea>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.linksJson") }}</label>
+            <textarea v-model="serviceDetailsItem.linksInput" class="input text-xs" rows="4" :placeholder="t('admin.common.placeholder.linksJson')"></textarea>
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Endpoints (JSON)</label>
-            <textarea v-model="serviceDetailsItem.endpointsInput" class="input text-xs" rows="4" placeholder='[{"type":"http","url":"https://..."}]'></textarea>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.endpointsJson") }}</label>
+            <textarea v-model="serviceDetailsItem.endpointsInput" class="input text-xs" rows="4" :placeholder="t('admin.common.placeholder.endpointsJson')"></textarea>
           </div>
           <div class="flex items-center gap-2 pt-2">
-            <button class="btn btn-primary flex-1" @click="updateDirectoryItem(serviceDetailsItem)">Save</button>
-            <button class="btn btn-ghost" @click="closeServiceDetails">Close</button>
+            <button class="btn btn-primary flex-1" @click="updateDirectoryItem(serviceDetailsItem)">{{ t("app.save") }}</button>
+            <button class="btn btn-ghost" @click="closeServiceDetails">{{ t("app.close") }}</button>
           </div>
         </div>
       </div>
@@ -6672,7 +7095,7 @@ onBeforeUnmount(() => {
     <div v-if="serviceEditItem" class="modal-backdrop" @click.self="closeServiceEdit">
       <div class="modal-content admin-modal">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Edit Service</h3>
+          <h3 class="text-lg font-semibold">{{ t("admin.services.editTitle") }}</h3>
           <button class="btn btn-ghost btn-icon" @click="closeServiceEdit">
             <Tooltip
               :content="t('app.close')"
@@ -6685,69 +7108,69 @@ onBeforeUnmount(() => {
         </div>
         <div class="space-y-3">
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Key</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.key") }}</label>
             <input v-model="serviceEditItem.key" class="input text-xs" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Title</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.title") }}</label>
             <input v-model="serviceEditItem.title" class="input text-xs" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Description</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.description") }}</label>
             <input v-model="serviceEditItem.description" class="input text-xs" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Icon URL</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.iconUrl") }}</label>
             <input
               v-model="serviceEditItem.iconUrl"
               class="input text-xs"
-              placeholder="printer or /icons/printer.svg"
+              :placeholder="t('admin.common.placeholder.iconUrl')"
               @blur="serviceEditItem.iconUrl = normalizeIconUrl(serviceEditItem.iconUrl)"
             />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Service Type</label>
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.serviceType") }}</label>
               <input v-model="serviceEditItem.serviceType" class="input text-xs" />
             </div>
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tier</label>
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tier") }}</label>
               <input v-model="serviceEditItem.tier" class="input text-xs" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Lifecycle</label>
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.lifecycle") }}</label>
               <input v-model="serviceEditItem.lifecycle" class="input text-xs" />
             </div>
             <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Classification</label>
+              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.classification") }}</label>
               <input v-model="serviceEditItem.classification" class="input text-xs" />
             </div>
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Tags</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tags") }}</label>
             <input v-model="serviceEditItem.tagsInput" class="input text-xs" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Depends On</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.dependsOn") }}</label>
             <input v-model="serviceEditItem.dependsOnInput" class="input text-xs" />
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Owners (JSON)</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.ownersJson") }}</label>
             <textarea v-model="serviceEditItem.ownersInput" class="input text-xs" rows="3"></textarea>
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Links (JSON)</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.linksJson") }}</label>
             <textarea v-model="serviceEditItem.linksInput" class="input text-xs" rows="3"></textarea>
           </div>
           <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Endpoints (JSON)</label>
+            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.endpointsJson") }}</label>
             <textarea v-model="serviceEditItem.endpointsInput" class="input text-xs" rows="3"></textarea>
           </div>
           <div class="flex items-center gap-2 pt-2">
-            <button class="btn btn-primary flex-1" @click="updateService(serviceEditItem)">Save</button>
-            <button class="btn btn-ghost" @click="closeServiceEdit">Cancel</button>
+            <button class="btn btn-primary flex-1" @click="updateService(serviceEditItem)">{{ t("app.save") }}</button>
+            <button class="btn btn-ghost" @click="closeServiceEdit">{{ t("app.cancel") }}</button>
           </div>
         </div>
       </div>
@@ -6756,7 +7179,7 @@ onBeforeUnmount(() => {
     <div v-if="inlineEditPopover === 'settings' && inlineEditBlock" class="modal-backdrop" @click.self="closeInlineEdit">
       <div class="inline-popover">
         <div class="inline-popover-header">
-          <h3 class="text-lg font-semibold">Block Settings</h3>
+          <h3 class="text-lg font-semibold">{{ t("editor.blockSettings") }}</h3>
           <button class="btn btn-ghost btn-icon" @click="closeInlineEdit">
             <Tooltip
               :content="t('app.close')"
@@ -6780,7 +7203,13 @@ onBeforeUnmount(() => {
               </option>
             </select>
           </div>
-          <div class="grid grid-cols-4 gap-2">
+          <button class="btn btn-ghost text-xs self-start" @click="inlineEditAdvanced = !inlineEditAdvanced">
+            {{ inlineEditAdvanced ? t("editor.hideAdvanced") : t("editor.showAdvanced") }}
+          </button>
+          <p class="text-[11px] text-white/45 leading-5">
+            {{ t("editor.advancedHint") }}
+          </p>
+          <div v-if="inlineEditAdvanced" class="grid grid-cols-4 gap-2">
             <div>
               <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">X</label>
               <input v-model.number="inlineEditForm.x" type="number" min="1" max="12" class="input text-center" />
@@ -6812,7 +7241,7 @@ onBeforeUnmount(() => {
               <input v-model="inlineEditForm.scope" type="text" class="input text-center" />
             </div>
           </div>
-          <div>
+          <div v-if="inlineEditAdvanced">
             <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Filter</label>
             <input v-model="inlineEditForm.filter" type="text" class="input" />
           </div>
@@ -6833,7 +7262,7 @@ onBeforeUnmount(() => {
       <div class="inline-popover">
         <div class="inline-popover-header">
           <h3 class="text-lg font-semibold">
-            {{ isAnnouncementsBlock(inlineEditBlock.block) ? 'Add Announcement' : 'Add Resource' }}
+            Add Resource
           </h3>
           <button class="btn btn-ghost btn-icon" @click="closeInlineEdit">
             <Tooltip
@@ -6851,32 +7280,7 @@ onBeforeUnmount(() => {
             <input v-model="inlineAddForm.title" class="input" placeholder="Title" />
           </div>
           
-          <!-- Announcement specific fields -->
-          <template v-if="isAnnouncementsBlock(inlineEditBlock.block)">
-            <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Body</label>
-              <textarea v-model="inlineAddForm.body" class="input" rows="3" placeholder="Message..."></textarea>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Priority</label>
-                <select v-model="inlineAddForm.priority" class="select w-full">
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </div>
-              <div class="flex items-end">
-                <label class="flex items-center gap-2 text-xs text-white/60">
-                  <input v-model="inlineAddForm.pinned" type="checkbox" class="accent-white/70" />
-                  Pinned
-                </label>
-              </div>
-            </div>
-          </template>
-          
-          <!-- Resource specific fields -->
-          <template v-else-if="isResourcesBlock(inlineEditBlock.block)">
+          <template v-if="isResourcesBlock(inlineEditBlock.block)">
             <div>
               <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">URL</label>
               <input v-model="inlineAddForm.url" class="input" placeholder="https://..." />
@@ -6885,7 +7289,7 @@ onBeforeUnmount(() => {
           
           <div class="flex items-center gap-2 pt-2">
             <button class="btn btn-primary flex-1" @click="saveInlineContent">
-              {{ isAnnouncementsBlock(inlineEditBlock.block) ? 'Create Announcement' : 'Create Resource' }}
+              Create Resource
             </button>
             <button class="btn btn-ghost" @click="closeInlineEdit">Cancel</button>
           </div>

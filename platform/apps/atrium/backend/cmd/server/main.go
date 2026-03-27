@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"atrium/internal/announcements"
 	"atrium/internal/auth"
 	"atrium/internal/configstore"
 	"atrium/internal/directory"
@@ -18,15 +17,12 @@ import (
 	"atrium/internal/httpapi"
 	"atrium/internal/memberships"
 	"atrium/internal/migrate"
-	"atrium/internal/notifications"
 	"atrium/internal/portal"
 	"atrium/internal/provisioning"
 	"atrium/internal/roles"
-	"atrium/internal/services"
 	"atrium/internal/spaces"
 	"atrium/internal/users"
 	"atrium/internal/workspace"
-	"atrium/internal/ws"
 
 	"github.com/fsnotify/fsnotify"
 
@@ -63,11 +59,9 @@ func main() {
 	reloadMode := configstore.ReloadModeFromEnv()
 
 	reloadOptions := provisioning.Options{
-		ArchiveMissing:  provisioning.ParseArchiveFlag(os.Getenv("PROVISIONING_ARCHIVE_MISSING")),
-		PruneTemplates:  configFirst,
-		PruneDirectory:  configFirst,
-		PruneServices:   configFirst,
-		PrunePlacements: configFirst,
+		ArchiveMissing: provisioning.ParseArchiveFlag(os.Getenv("PROVISIONING_ARCHIVE_MISSING")),
+		PruneTemplates: configFirst,
+		PruneDirectory: configFirst,
 	}
 	reloadProvisioning := func(ctx context.Context) error {
 		return provisioning.Load(ctx, db, provisioningPath, reloadOptions)
@@ -90,13 +84,6 @@ func main() {
 			}
 		}
 	}
-
-	// Initialize WebSocket hub
-	wsHub := ws.NewHub()
-	go wsHub.Run()
-
-	// Initialize notification store
-	notifStore := notifications.NewStore(db)
 
 	var authManager *auth.Manager
 	if !isAuthDisabled() {
@@ -129,6 +116,13 @@ func main() {
 					log.Fatalf("init local admin: %v", err)
 				}
 			}
+			devLocalEmails := append(
+				splitCSV(os.Getenv("AUTH_ALLOWED_EMAILS")),
+				splitCSV(os.Getenv("AUTH_ADMIN_EMAILS"))...,
+			)
+			if err := authManager.EnsureLocalUsers(ctx, devLocalEmails, adminPassword); err != nil {
+				log.Fatalf("init local users: %v", err)
+			}
 		}
 	}
 
@@ -138,6 +132,9 @@ func main() {
 		},
 		ListCategories: func(ctx context.Context) ([]spaces.Space, error) {
 			return spaces.List(ctx, db)
+		},
+		ListCategoriesAll: func(ctx context.Context) ([]spaces.Space, error) {
+			return spaces.ListAll(ctx, db)
 		},
 		CreateCategory: func(ctx context.Context, input spaces.Input) (spaces.Space, error) {
 			return spaces.Create(ctx, db, input)
@@ -187,18 +184,6 @@ func main() {
 		UpdateUserSegment: func(ctx context.Context, userID string, segment string) error {
 			return users.UpdateSegment(ctx, db, userID, segment)
 		},
-		ListAnnouncements: func(ctx context.Context, spaceID int) ([]announcements.Announcement, error) {
-			return announcements.List(ctx, db, spaceID)
-		},
-		CreateAnnouncement: func(ctx context.Context, input announcements.CreateInput) (announcements.Announcement, error) {
-			return announcements.Create(ctx, db, input)
-		},
-		UpdateAnnouncement: func(ctx context.Context, id string, input announcements.UpdateInput) (announcements.Announcement, error) {
-			return announcements.Update(ctx, db, id, input)
-		},
-		DeleteAnnouncement: func(ctx context.Context, id string) error {
-			return announcements.Delete(ctx, db, id)
-		},
 		ListDirectory: func(ctx context.Context, spaceID int) ([]directory.Item, error) {
 			return directory.List(ctx, db, spaceID)
 		},
@@ -211,34 +196,8 @@ func main() {
 		DeleteDirectory: func(ctx context.Context, id string) error {
 			return directory.Delete(ctx, db, id)
 		},
-		ListServices: func(ctx context.Context) ([]services.Service, error) {
-			return services.ListServices(ctx, db)
-		},
-		CreateService: func(ctx context.Context, input services.ServiceInput) (services.Service, error) {
-			return services.CreateService(ctx, db, input)
-		},
-		UpdateService: func(ctx context.Context, id int, input services.ServiceInput) (services.Service, error) {
-			return services.UpdateService(ctx, db, id, input)
-		},
-		DeleteService: func(ctx context.Context, id int) error {
-			return services.DeleteService(ctx, db, id)
-		},
-		ListPlacements: func(ctx context.Context, spaceID *int, serviceKey *string) ([]services.Placement, error) {
-			return services.ListPlacements(ctx, db, spaceID, serviceKey)
-		},
-		CreatePlacement: func(ctx context.Context, input services.PlacementInput) (services.Placement, error) {
-			return services.CreatePlacement(ctx, db, input)
-		},
-		UpdatePlacement: func(ctx context.Context, id int, input services.PlacementInput) (services.Placement, error) {
-			return services.UpdatePlacement(ctx, db, id, input)
-		},
-		DeletePlacement: func(ctx context.Context, id int) error {
-			return services.DeletePlacement(ctx, db, id)
-		},
-		Auth:              authManager,
-		NotificationStore: notifStore,
-		Broadcast:         wsHub.Broadcast,
-		ReloadConfig:      nil,
+		Auth:         authManager,
+		ReloadConfig: nil,
 	}
 
 	if configFirst {
@@ -251,17 +210,13 @@ func main() {
 		}
 		deps.CreateCategory = configDeps.CreateCategory
 		deps.UpdateCategory = configDeps.UpdateCategory
+		deps.ArchiveCategory = configDeps.ArchiveCategory
+		deps.RestoreCategory = configDeps.RestoreCategory
 		deps.DeleteCategory = configDeps.DeleteCategory
 		deps.SaveDashboard = configDeps.SaveDashboard
 		deps.CreateDirectory = configDeps.CreateDirectory
 		deps.UpdateDirectory = configDeps.UpdateDirectory
 		deps.DeleteDirectory = configDeps.DeleteDirectory
-		deps.CreateService = configDeps.CreateService
-		deps.UpdateService = configDeps.UpdateService
-		deps.DeleteService = configDeps.DeleteService
-		deps.CreatePlacement = configDeps.CreatePlacement
-		deps.UpdatePlacement = configDeps.UpdatePlacement
-		deps.DeletePlacement = configDeps.DeletePlacement
 	}
 
 	if reloadMode.Manual {
@@ -278,14 +233,9 @@ func main() {
 
 	handler := httpapi.Handler(deps)
 
-	// Add WebSocket handler
-	mux := http.NewServeMux()
-	mux.Handle("/ws", wsHub.Handler())
-	mux.Handle("/", handler)
-
 	addr := ":8080"
 	log.Printf("atrium server starting on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatalf("server stopped: %v", err)
 	}
 }
