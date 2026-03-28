@@ -119,12 +119,10 @@ const MESSAGES = {
     "admin.title.spaces": "Spaces",
     "admin.title.members": "Members",
     "admin.title.content": "Content",
-    "admin.title.services": "Service Catalog",
     "admin.title.dashboard": "Dashboard",
     "admin.subtitle.spaces": "Manage spaces and their settings",
     "admin.subtitle.members": "Users and access rights",
-    "admin.subtitle.content": "Announcements and resources",
-    "admin.subtitle.services": "Service canon and placement across spaces",
+    "admin.subtitle.content": "Directory resources and entry points",
     "admin.subtitle.dashboard": "Dashboard block configuration",
     "admin.spaces.create": "New space",
     "admin.spaces.createAction": "Create space",
@@ -207,9 +205,7 @@ const MESSAGES = {
     "admin.common.endpointsJson": "Endpoints (JSON)",
     "admin.common.key": "Key",
     "admin.common.service": "Service",
-    "admin.common.selectService": "Select service",
     "admin.common.allSpaces": "All spaces",
-    "admin.common.allServices": "All services",
     "admin.common.label": "Label",
     "admin.common.group": "Group",
     "admin.common.order": "Order",
@@ -252,38 +248,12 @@ const MESSAGES = {
     "admin.members.importDone": "Imported {count} members",
     "admin.members.until": "until {date}",
     "admin.members.selectSpaceError": "Select a space",
-    "admin.content.announcements": "Announcements",
     "admin.content.directory": "Directory",
-    "admin.content.noneAnnouncements": "No announcements yet.",
     "admin.content.noneDirectory": "No directory items yet.",
-    "admin.content.createdAnnouncement": "Announcement created",
-    "admin.content.updatedAnnouncement": "Announcement updated",
-    "admin.content.deletedAnnouncement": "Announcement deleted",
-    "admin.content.confirmDeleteAnnouncement": "Delete announcement \"{title}\"?",
     "admin.content.createdDirectory": "Directory item created",
     "admin.content.updatedDirectory": "Directory updated",
     "admin.content.deletedDirectory": "Directory item deleted",
     "admin.content.confirmDeleteDirectory": "Delete directory item \"{title}\"?",
-    "admin.services.catalog": "Service catalog",
-    "admin.services.none": "No services yet.",
-    "admin.services.create": "Create service",
-    "admin.services.edit": "Edit",
-    "admin.services.editTitle": "Edit service",
-    "admin.services.created": "Service created",
-    "admin.services.updated": "Service updated",
-    "admin.services.deleted": "Service deleted",
-    "admin.services.confirmDelete": "Delete service \"{title}\"?",
-    "admin.placements.title": "Placements",
-    "admin.placements.spaceFilter": "Space filter",
-    "admin.placements.serviceFilter": "Service filter",
-    "admin.placements.none": "No placements yet.",
-    "admin.placements.create": "Create placement",
-    "admin.placements.created": "Placement created",
-    "admin.placements.updated": "Placement updated",
-    "admin.placements.deleted": "Placement deleted",
-    "admin.placements.confirmDelete": "Delete placement for \"{key}\"?",
-    "admin.placements.selectSpaceError": "Select a space",
-    "admin.placements.selectServiceError": "Select a service",
     "admin.dashboard.templates": "Dashboard templates",
     "admin.dashboard.blocksCount": "{count} blocks",
     "admin.dashboard.editBlocks": "Edit blocks",
@@ -371,15 +341,8 @@ const MESSAGES = {
     "surface.state.guided": "Guided",
     "surface.action.openResource": "Open resource",
     "surface.action.openAdmin": "Open admin panel",
-    "surface.action.reviewServices": "Review services",
-    "block.type.announcements": "Announcements",
     "block.type.resourcesPinned": "Pinned resources",
-    "block.type.ticketsInbox": "Tickets inbox",
-    "block.type.ticketsQueue": "Tickets queue",
-    "block.type.activityFeed": "Activity feed",
-    "block.type.quickActions": "Quick actions",
     "block.type.text": "Text",
-    "block.emptyAnnouncements": "No announcements",
     "language.title": "Language",
     "performance.title": "Performance",
     "performance.auto": "Auto",
@@ -464,12 +427,10 @@ const MESSAGES = {
     "admin.title.spaces": "Пространства",
     "admin.title.members": "Участники",
     "admin.title.content": "Контент",
-    "admin.title.services": "Каталог сервисов",
     "admin.title.dashboard": "Дашборд",
     "admin.subtitle.spaces": "Управление пространствами и их настройками",
     "admin.subtitle.members": "Пользователи и права доступа",
-    "admin.subtitle.content": "Объявления и ресурсы",
-    "admin.subtitle.services": "Каноника сервисов и размещение по пространствам",
+    "admin.subtitle.content": "Ресурсы каталога и точки входа",
     "admin.subtitle.dashboard": "Конфигурация блоков дашборда",
     "admin.spaces.create": "Новое пространство",
     "admin.spaces.createAction": "Создать пространство",
@@ -552,9 +513,7 @@ const MESSAGES = {
     "admin.common.endpointsJson": "Endpoints (JSON)",
     "admin.common.key": "Ключ",
     "admin.common.service": "Сервис",
-    "admin.common.selectService": "Выберите сервис",
     "admin.common.allSpaces": "Все пространства",
-    "admin.common.allServices": "Все сервисы",
     "admin.common.label": "Подпись",
     "admin.common.group": "Группа",
     "admin.common.order": "Порядок",
@@ -597,38 +556,12 @@ const MESSAGES = {
     "admin.members.importDone": "Импортировано участников: {count}",
     "admin.members.until": "до {date}",
     "admin.members.selectSpaceError": "Выберите пространство",
-    "admin.content.announcements": "Объявления",
     "admin.content.directory": "Каталог",
-    "admin.content.noneAnnouncements": "Объявлений пока нет.",
     "admin.content.noneDirectory": "Элементов каталога пока нет.",
-    "admin.content.createdAnnouncement": "Объявление создано",
-    "admin.content.updatedAnnouncement": "Объявление обновлено",
-    "admin.content.deletedAnnouncement": "Объявление удалено",
-    "admin.content.confirmDeleteAnnouncement": "Удалить объявление «{title}»?",
     "admin.content.createdDirectory": "Элемент каталога создан",
     "admin.content.updatedDirectory": "Каталог обновлён",
     "admin.content.deletedDirectory": "Элемент каталога удалён",
     "admin.content.confirmDeleteDirectory": "Удалить элемент каталога «{title}»?",
-    "admin.services.catalog": "Каталог сервисов",
-    "admin.services.none": "Сервисов пока нет.",
-    "admin.services.create": "Создать сервис",
-    "admin.services.edit": "Изменить",
-    "admin.services.editTitle": "Изменить сервис",
-    "admin.services.created": "Сервис создан",
-    "admin.services.updated": "Сервис обновлён",
-    "admin.services.deleted": "Сервис удалён",
-    "admin.services.confirmDelete": "Удалить сервис «{title}»?",
-    "admin.placements.title": "Размещения",
-    "admin.placements.spaceFilter": "Фильтр по пространству",
-    "admin.placements.serviceFilter": "Фильтр по сервису",
-    "admin.placements.none": "Размещений пока нет.",
-    "admin.placements.create": "Создать размещение",
-    "admin.placements.created": "Размещение создано",
-    "admin.placements.updated": "Размещение обновлено",
-    "admin.placements.deleted": "Размещение удалено",
-    "admin.placements.confirmDelete": "Удалить размещение для «{key}»?",
-    "admin.placements.selectSpaceError": "Выберите пространство",
-    "admin.placements.selectServiceError": "Выберите сервис",
     "admin.dashboard.templates": "Шаблоны дашборда",
     "admin.dashboard.blocksCount": "Блоков: {count}",
     "admin.dashboard.editBlocks": "Изменить блоки",
@@ -716,15 +649,8 @@ const MESSAGES = {
     "surface.state.guided": "Есть следующий шаг",
     "surface.action.openResource": "Открыть ресурс",
     "surface.action.openAdmin": "Открыть панель администратора",
-    "surface.action.reviewServices": "Проверить сервисы",
-    "block.type.announcements": "Объявления",
     "block.type.resourcesPinned": "Закреплённые ресурсы",
-    "block.type.ticketsInbox": "Входящие заявки",
-    "block.type.ticketsQueue": "Очередь заявок",
-    "block.type.activityFeed": "Лента активности",
-    "block.type.quickActions": "Быстрые действия",
     "block.type.text": "Текст",
-    "block.emptyAnnouncements": "Объявлений пока нет",
     "language.title": "Язык",
     "performance.title": "Производительность",
     "performance.auto": "Авто",
@@ -1044,18 +970,7 @@ const membershipBulk = ref({
   validTo: ""
 });
 const contentSpaceId = ref("");
-const announcementsAdmin = ref([]);
 const directoryAdmin = ref([]);
-const servicesAdmin = ref([]);
-const placementsAdmin = ref([]);
-const announcementForm = ref({
-  title: "",
-  body: "",
-  priority: "normal",
-  pinned: false,
-  expiresAt: "",
-  audienceGroups: ""
-});
 const directoryForm = ref({
   title: "",
   description: "",
@@ -1076,38 +991,6 @@ const directoryForm = ref({
   runbookUrl: "",
   classification: "",
   dependsOn: ""
-});
-const serviceForm = ref({
-  key: "",
-  title: "",
-  description: "",
-  iconUrl: "",
-  serviceType: "",
-  tags: "",
-  owners: "",
-  links: "",
-  endpoints: "",
-  tier: "",
-  lifecycle: "",
-  classification: "",
-  dependsOn: ""
-});
-const serviceEditItem = ref(null);
-const placementSpaceId = ref("");
-const placementServiceKey = ref("");
-const placementForm = ref({
-  serviceKey: "",
-  spaceId: "",
-  label: "",
-  pinned: false,
-  order: 0,
-  group: "",
-  audienceGroups: "",
-  allowedActions: "",
-  visibleLinks: "",
-  primaryUrl: "",
-  defaultEndpoint: "",
-  accessPath: ""
 });
 const dashboardPreviewRole = ref("admin");
 const reloadConfigPending = ref(false);
@@ -1195,9 +1078,6 @@ const reloadAdminSpaces = async () => {
   if (!contentSpaceId.value || !spacesAdmin.value.some((item) => String(item.id) === String(contentSpaceId.value))) {
     contentSpaceId.value = spacesAdmin.value[0] ? String(spacesAdmin.value[0].id) : "";
   }
-  if (!placementSpaceId.value || !spacesAdmin.value.some((item) => String(item.id) === String(placementSpaceId.value))) {
-    placementSpaceId.value = spacesAdmin.value[0] ? String(spacesAdmin.value[0].id) : "";
-  }
 };
 
 const refreshAdminDataAfterSpaceChange = async () => {
@@ -1209,12 +1089,7 @@ const refreshAdminDataAfterSpaceChange = async () => {
   if (contentSpaceId.value) {
     await onContentSpaceChange();
   } else {
-    announcementsAdmin.value = [];
     directoryAdmin.value = [];
-  }
-  if (adminTab.value === "services") {
-    ensurePlacementDefaults();
-    await loadPlacements();
   }
 };
 
@@ -1470,32 +1345,6 @@ const mapDirectoryItem = (item) => ({
   classification: item.classification || ""
 });
 
-const mapService = (item) => ({
-  ...item,
-  tagsInput: formatGroups(item.tags),
-  ownersInput: formatJSON(item.owners, "{}"),
-  linksInput: formatJSON(item.links, "{}"),
-  endpointsInput: formatJSON(item.endpoints, "[]"),
-  dependsOnInput: formatGroups(item.depends_on),
-  serviceType: item.service_type || "",
-  iconUrl: item.icon_url || ""
-});
-
-const mapPlacement = (item) => ({
-  ...item,
-  audienceInput: formatGroups(item.audience_groups),
-  allowedActionsInput: formatGroups(item.allowed_actions),
-  visibleLinksInput: formatGroups(item.visible_links)
-});
-
-const toLocalInput = (value) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (num) => String(num).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
 const parseBulkEmails = (value) =>
   value
     .split(/[\n,;]+/)
@@ -1613,13 +1462,11 @@ const defaultAudienceForSpace = (spaceId) => {
 
 const loadContent = async (spaceId) => {
   if (!spaceId) {
-    announcementsAdmin.value = [];
     directoryAdmin.value = [];
     return;
   }
   try {
     const dir = await fetchJSON(`/api/directory_items?space_id=${spaceId}`);
-    announcementsAdmin.value = [];
     directoryAdmin.value = dir.map((item) => mapDirectoryItem(item));
   } catch (err) {
     error.value = err.message || "Content load failed";
@@ -1633,81 +1480,6 @@ const onContentSpaceChange = async () => {
     audienceGroups: defaults
   };
   await loadContent(contentSpaceId.value);
-};
-
-const createAnnouncement = async () => {
-  if (!contentSpaceId.value) {
-    error.value = t("admin.members.selectSpaceError");
-    return;
-  }
-  try {
-    const payload = {
-      space_id: Number(contentSpaceId.value),
-      title: announcementForm.value.title,
-      body: announcementForm.value.body,
-      priority: announcementForm.value.priority,
-      pinned: announcementForm.value.pinned,
-      expires_at: announcementForm.value.expiresAt
-        ? new Date(announcementForm.value.expiresAt).toISOString()
-        : null,
-      audience_groups: parseVisibilityGroups(announcementForm.value.audienceGroups || "")
-    };
-    const created = await fetchJSON("/api/announcements", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    announcementsAdmin.value = [
-      { ...created, audienceInput: formatGroups(created.audience_groups) },
-      ...announcementsAdmin.value
-    ];
-    announcementForm.value = {
-      title: "",
-      body: "",
-      priority: "normal",
-      pinned: false,
-      expiresAt: "",
-      audienceGroups: defaultAudienceForSpace(contentSpaceId.value)
-    };
-    showToast(t("admin.content.createdAnnouncement"), "success");
-  } catch (err) {
-    error.value = err.message || "Announcement create failed";
-  }
-};
-
-const updateAnnouncementAudience = async (item) => {
-  try {
-    const payload = {
-      title: item.title,
-      body: item.body,
-      priority: item.priority,
-      pinned: item.pinned,
-      expires_at: item.expiresInput ? new Date(item.expiresInput).toISOString() : null,
-      audience_groups: parseVisibilityGroups(item.audienceInput || "")
-    };
-    const updated = await fetchJSON(`/api/announcements/${item.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-    announcementsAdmin.value = announcementsAdmin.value.map((entry) =>
-      entry.id === updated.id
-        ? { ...updated, audienceInput: formatGroups(updated.audience_groups) }
-        : entry
-    );
-    showToast(t("admin.content.updatedAnnouncement"), "success");
-  } catch (err) {
-    error.value = err.message || "Announcement update failed";
-  }
-};
-
-const deleteAnnouncement = async (item) => {
-  if (!confirm(t("admin.content.confirmDeleteAnnouncement", { title: item.title }))) return;
-  try {
-    await fetchJSON(`/api/announcements/${item.id}`, { method: "DELETE" });
-    announcementsAdmin.value = announcementsAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast(t("admin.content.deletedAnnouncement"), "success");
-  } catch (err) {
-    error.value = err.message || "Announcement delete failed";
-  }
 };
 
 const createDirectoryItem = async () => {
@@ -1828,238 +1600,6 @@ const deleteDirectoryItem = async (item) => {
     error.value = err.message || "Directory delete failed";
   }
 };
-
-const loadServices = async () => {
-  try {
-    const items = await fetchJSON("/api/services");
-    servicesAdmin.value = items.map((item) => mapService(item));
-    if (!placementForm.value.serviceKey && servicesAdmin.value.length > 0) {
-      placementForm.value = {
-        ...placementForm.value,
-        serviceKey: servicesAdmin.value[0].key
-      };
-    }
-  } catch (err) {
-    error.value = err.message || "Services load failed";
-  }
-};
-
-const createService = async () => {
-  try {
-    const owners = parseJSONInputSafe(serviceForm.value.owners, {}, "Owners");
-    const links = parseJSONInputSafe(serviceForm.value.links, {}, "Links");
-    const endpoints = parseJSONInputSafe(serviceForm.value.endpoints, [], "Endpoints");
-    const payload = {
-      key: serviceForm.value.key,
-      title: serviceForm.value.title,
-      description: serviceForm.value.description,
-      icon_url: normalizeIconUrl(serviceForm.value.iconUrl),
-      service_type: serviceForm.value.serviceType,
-      tags: parseCommaList(serviceForm.value.tags || ""),
-      owners,
-      links,
-      endpoints,
-      tier: serviceForm.value.tier,
-      lifecycle: serviceForm.value.lifecycle,
-      classification: serviceForm.value.classification,
-      depends_on: parseCommaList(serviceForm.value.dependsOn || "")
-    };
-    const created = await fetchJSON("/api/services", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    servicesAdmin.value = [mapService(created), ...servicesAdmin.value];
-    serviceForm.value = {
-      key: "",
-      title: "",
-      description: "",
-      iconUrl: "",
-      serviceType: "",
-      tags: "",
-      owners: "",
-      links: "",
-      endpoints: "",
-      tier: "",
-      lifecycle: "",
-      classification: "",
-      dependsOn: ""
-    };
-    showToast(t("admin.services.created"), "success");
-  } catch (err) {
-    showToast(err.message || "Service create failed", "error");
-  }
-};
-
-const openServiceEdit = (item) => {
-  serviceEditItem.value = { ...item };
-};
-
-const closeServiceEdit = () => {
-  serviceEditItem.value = null;
-};
-
-const updateService = async (item) => {
-  try {
-    const owners = parseJSONInputSafe(item.ownersInput || "", {}, "Owners");
-    const links = parseJSONInputSafe(item.linksInput || "", {}, "Links");
-    const endpoints = parseJSONInputSafe(item.endpointsInput || "", [], "Endpoints");
-    const payload = {
-      key: item.key,
-      title: item.title,
-      description: item.description,
-      icon_url: normalizeIconUrl(item.iconUrl),
-      service_type: item.serviceType || "",
-      tags: parseCommaList(item.tagsInput || ""),
-      owners,
-      links,
-      endpoints,
-      tier: item.tier || "",
-      lifecycle: item.lifecycle || "",
-      classification: item.classification || "",
-      depends_on: parseCommaList(item.dependsOnInput || "")
-    };
-    const updated = await fetchJSON(`/api/services/${item.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-    servicesAdmin.value = servicesAdmin.value.map((entry) =>
-      entry.id === updated.id
-        ? mapService(updated)
-        : entry
-    );
-    serviceEditItem.value = null;
-    showToast(t("admin.services.updated"), "success");
-  } catch (err) {
-    showToast(err.message || "Service update failed", "error");
-  }
-};
-
-const deleteService = async (item) => {
-  if (!confirm(t("admin.services.confirmDelete", { title: item.title }))) return;
-  try {
-    await fetchJSON(`/api/services/${item.id}`, { method: "DELETE" });
-    servicesAdmin.value = servicesAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast(t("admin.services.deleted"), "success");
-  } catch (err) {
-    showToast(err.message || "Service delete failed", "error");
-  }
-};
-
-const loadPlacements = async () => {
-  try {
-    const params = new URLSearchParams();
-    if (placementSpaceId.value) params.set("space_id", placementSpaceId.value);
-    if (placementServiceKey.value) params.set("service_key", placementServiceKey.value);
-    const query = params.toString();
-    const items = await fetchJSON(`/api/service_placements${query ? `?${query}` : ""}`);
-    placementsAdmin.value = items.map((item) => mapPlacement(item));
-  } catch (err) {
-    error.value = err.message || "Placements load failed";
-  }
-};
-
-const createPlacement = async () => {
-  if (!placementForm.value.spaceId) {
-    showToast(t("admin.placements.selectSpaceError"), "error");
-    return;
-  }
-  if (!placementForm.value.serviceKey) {
-    showToast(t("admin.placements.selectServiceError"), "error");
-    return;
-  }
-  try {
-    const payload = {
-      service_key: placementForm.value.serviceKey,
-      space_id: Number(placementForm.value.spaceId),
-      label: placementForm.value.label,
-      pinned: placementForm.value.pinned,
-      order: Number(placementForm.value.order) || 0,
-      group: placementForm.value.group,
-      audience_groups: parseCommaList(placementForm.value.audienceGroups || ""),
-      allowed_actions: parseCommaList(placementForm.value.allowedActions || ""),
-      visible_links: parseCommaList(placementForm.value.visibleLinks || ""),
-      primary_url: placementForm.value.primaryUrl,
-      default_endpoint: placementForm.value.defaultEndpoint,
-      access_path: placementForm.value.accessPath
-    };
-    const created = await fetchJSON("/api/service_placements", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    placementsAdmin.value = [mapPlacement(created), ...placementsAdmin.value];
-    placementForm.value = {
-      ...placementForm.value,
-      label: "",
-      pinned: false,
-      order: 0,
-      group: "",
-      audienceGroups: "",
-      allowedActions: "",
-      visibleLinks: "",
-      primaryUrl: "",
-      defaultEndpoint: "",
-      accessPath: ""
-    };
-    showToast(t("admin.placements.created"), "success");
-  } catch (err) {
-    showToast(err.message || "Placement create failed", "error");
-  }
-};
-
-const updatePlacement = async (item) => {
-  try {
-    const payload = {
-      service_key: item.service_key,
-      space_id: Number(item.space_id),
-      label: item.label,
-      pinned: item.pinned,
-      order: Number(item.order) || 0,
-      group: item.group || "",
-      audience_groups: parseCommaList(item.audienceInput || ""),
-      allowed_actions: parseCommaList(item.allowedActionsInput || ""),
-      visible_links: parseCommaList(item.visibleLinksInput || ""),
-      primary_url: item.primary_url,
-      default_endpoint: item.default_endpoint,
-      access_path: item.access_path
-    };
-    const updated = await fetchJSON(`/api/service_placements/${item.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-    placementsAdmin.value = placementsAdmin.value.map((entry) =>
-      entry.id === updated.id
-        ? mapPlacement(updated)
-        : entry
-    );
-    showToast(t("admin.placements.updated"), "success");
-  } catch (err) {
-    showToast(err.message || "Placement update failed", "error");
-  }
-};
-
-const deletePlacement = async (item) => {
-  if (!confirm(t("admin.placements.confirmDelete", { key: item.service_key }))) return;
-  try {
-    await fetchJSON(`/api/service_placements/${item.id}`, { method: "DELETE" });
-    placementsAdmin.value = placementsAdmin.value.filter((entry) => entry.id !== item.id);
-    showToast(t("admin.placements.deleted"), "success");
-  } catch (err) {
-    showToast(err.message || "Placement delete failed", "error");
-  }
-};
-
-const ensurePlacementDefaults = () => {
-  if (!placementSpaceId.value && spacesAdmin.value.length > 0) {
-    placementSpaceId.value = String(spacesAdmin.value[0].id);
-  }
-  if (!placementForm.value.spaceId && placementSpaceId.value) {
-    placementForm.value = { ...placementForm.value, spaceId: placementSpaceId.value };
-  }
-  if (!placementForm.value.serviceKey && servicesAdmin.value.length > 0) {
-    placementForm.value = { ...placementForm.value, serviceKey: servicesAdmin.value[0].key };
-  }
-};
-
 
 const loadDashboardPreview = async (space, roleOverride) => {
   if (!space?.id || !hasDashboard(space)) return;
@@ -4559,45 +4099,6 @@ watch(
 );
 
 watch(
-  () => adminTab.value,
-  async (tab) => {
-    if (tab !== "services") return;
-    await loadServices();
-    ensurePlacementDefaults();
-    await loadPlacements();
-  }
-);
-
-watch(
-  () => placementSpaceId.value,
-  async (value) => {
-    if (adminTab.value !== "services") return;
-    if (value) {
-      placementForm.value = { ...placementForm.value, spaceId: String(value) };
-    }
-    await loadPlacements();
-  }
-);
-
-watch(
-  () => placementServiceKey.value,
-  async () => {
-    if (adminTab.value !== "services") return;
-    await loadPlacements();
-  }
-);
-
-watch(
-  () => spacesAdmin.value.length,
-  async (length) => {
-    if (adminTab.value !== "services") return;
-    if (!length) return;
-    ensurePlacementDefaults();
-    await loadPlacements();
-  }
-);
-
-watch(
   () => isKioskMode.value,
   (value) => {
     if (!value) return;
@@ -4648,7 +4149,7 @@ onMounted(() => {
     const route = parseRoute();
     if (route.view === 'admin') {
       showAdmin.value = true;
-      adminTab.value = route.tab === "services" ? "dashboard" : route.tab;
+      adminTab.value = route.tab;
     } else {
       showAdmin.value = false;
       if (route.spaceSlug) {
@@ -5874,239 +5375,6 @@ onBeforeUnmount(() => {
             </div>
           </template>
 
-          <!-- Services Tab -->
-          <template v-else-if="adminTab === 'services'">
-            <div class="admin-grid-2">
-              <div class="admin-card">
-                <h4 class="font-medium mb-4">{{ t("admin.services.catalog") }}</h4>
-                <div class="space-y-3 mb-6">
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.key") }}</label>
-                    <input v-model="serviceForm.key" class="input" placeholder="billing-api" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.title") }}</label>
-                    <input v-model="serviceForm.title" class="input" placeholder="Billing API" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.description") }}</label>
-                    <input v-model="serviceForm.description" class="input" placeholder="What this service does" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.iconUrl") }}</label>
-                    <input
-                      v-model="serviceForm.iconUrl"
-                      class="input"
-                      :placeholder="t('admin.common.placeholder.iconUrl')"
-                      @blur="serviceForm.iconUrl = normalizeIconUrl(serviceForm.iconUrl)"
-                    />
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.serviceType") }}</label>
-                      <input v-model="serviceForm.serviceType" class="input text-xs" :placeholder="t('admin.common.placeholder.serviceType')" />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tier") }}</label>
-                      <input v-model="serviceForm.tier" class="input text-xs" :placeholder="t('admin.common.placeholder.tier')" />
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.lifecycle") }}</label>
-                      <input v-model="serviceForm.lifecycle" class="input text-xs" :placeholder="t('admin.common.placeholder.lifecycle')" />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.classification") }}</label>
-                      <input v-model="serviceForm.classification" class="input text-xs" :placeholder="t('admin.common.placeholder.classification')" />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tags") }}</label>
-                    <input v-model="serviceForm.tags" class="input text-xs" :placeholder="t('admin.common.placeholder.tags')" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.dependsOn") }}</label>
-                    <input v-model="serviceForm.dependsOn" class="input text-xs" :placeholder="t('admin.common.placeholder.dependsOn')" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.ownersJson") }}</label>
-                    <textarea v-model="serviceForm.owners" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.ownersJson')"></textarea>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.linksJson") }}</label>
-                    <textarea v-model="serviceForm.links" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.linksJson')"></textarea>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.endpointsJson") }}</label>
-                    <textarea v-model="serviceForm.endpoints" class="input text-xs" rows="3" :placeholder="t('admin.common.placeholder.endpointsJson')"></textarea>
-                  </div>
-                  <button class="btn btn-primary w-full" @click="createService">{{ t("admin.services.create") }}</button>
-                </div>
-                <div v-if="servicesAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  {{ t("admin.services.none") }}
-                </div>
-                <div v-else class="space-y-2">
-                  <div
-                    v-for="item in servicesAdmin"
-                    :key="item.id"
-                    class="admin-list-item"
-                  >
-                    <div>
-                      <div class="font-medium text-sm">{{ item.title }}</div>
-                      <div class="text-[11px] text-white/30">{{ item.key }}</div>
-                      <div class="text-[11px] text-white/40 mt-1">
-                        <span v-if="item.serviceType">{{ item.serviceType }}</span>
-                        <span v-if="item.tier"> · {{ item.tier }}</span>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <button class="btn btn-ghost text-xs" @click="openServiceEdit(item)">{{ t("admin.services.edit") }}</button>
-                      <button class="btn btn-ghost btn-danger text-xs" @click="deleteService(item)">{{ t("admin.spaces.delete") }}</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="admin-card">
-                <h4 class="font-medium mb-4">{{ t("admin.placements.title") }}</h4>
-                <div class="space-y-3 mb-6">
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.placements.spaceFilter") }}</label>
-                      <select v-model="placementSpaceId" class="select w-full text-sm">
-                        <option value="">{{ t("admin.common.allSpaces") }}</option>
-                        <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
-                          {{ space.title }}
-                        </option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.placements.serviceFilter") }}</label>
-                      <select v-model="placementServiceKey" class="select w-full text-sm">
-                        <option value="">{{ t("admin.common.allServices") }}</option>
-                        <option v-for="service in servicesAdmin" :key="service.id" :value="service.key">
-                          {{ service.title }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.space") }}</label>
-                      <select v-model="placementForm.spaceId" class="select w-full text-sm">
-                        <option value="">{{ t("admin.common.selectSpace") }}</option>
-                        <option v-for="space in spacesAdmin" :key="space.id" :value="space.id">
-                          {{ space.title }}
-                        </option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.service") }}</label>
-                      <select v-model="placementForm.serviceKey" class="select w-full text-sm">
-                        <option value="">{{ t("admin.common.selectService") }}</option>
-                        <option v-for="service in servicesAdmin" :key="service.id" :value="service.key">
-                          {{ service.title }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.label") }}</label>
-                    <input v-model="placementForm.label" class="input text-xs" placeholder="Billing (primary)" />
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.group") }}</label>
-                      <input v-model="placementForm.group" class="input text-xs" placeholder="Payments" />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.order") }}</label>
-                      <input v-model.number="placementForm.order" type="number" min="0" class="input text-xs" />
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2 text-xs text-white/60">
-                    <input v-model="placementForm.pinned" type="checkbox" class="accent-white/70" />
-                    {{ t("admin.common.pinned") }}
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.primaryUrl") }}</label>
-                    <input v-model="placementForm.primaryUrl" class="input text-xs" placeholder="https://..." />
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.defaultEndpoint") }}</label>
-                      <input v-model="placementForm.defaultEndpoint" class="input text-xs" placeholder="public" />
-                    </div>
-                    <div>
-                      <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.accessPath") }}</label>
-                      <input v-model="placementForm.accessPath" class="input text-xs" :placeholder="t('admin.common.placeholder.accessPath')" />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.audienceGroups") }}</label>
-                    <input v-model="placementForm.audienceGroups" class="input text-xs" placeholder="admin, user, guest" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.allowedActions") }}</label>
-                    <input v-model="placementForm.allowedActions" class="input text-xs" placeholder="open, request_access" />
-                  </div>
-                  <div>
-                    <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.visibleLinks") }}</label>
-                    <input v-model="placementForm.visibleLinks" class="input text-xs" placeholder="docs, runbook, repo" />
-                  </div>
-                  <button class="btn btn-primary w-full" @click="createPlacement">{{ t("admin.placements.create") }}</button>
-                </div>
-                <div v-if="placementsAdmin.length === 0" class="text-white/30 text-sm py-4">
-                  {{ t("admin.placements.none") }}
-                </div>
-                <div v-else class="space-y-2">
-                  <div
-                    v-for="item in placementsAdmin"
-                    :key="item.id"
-                    class="admin-list-item flex-col items-start"
-                  >
-                    <div class="flex items-center justify-between w-full">
-                      <div>
-                        <div class="font-medium text-sm">{{ item.service_key }}</div>
-                        <div class="text-[11px] text-white/40">
-                          {{ item.space_slug || `space:${item.space_id}` }}
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <button class="btn btn-ghost text-xs" @click="updatePlacement(item)">{{ t("app.save") }}</button>
-                        <button class="btn btn-ghost btn-danger text-xs" @click="deletePlacement(item)">{{ t("admin.spaces.delete") }}</button>
-                      </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 w-full mt-2">
-                      <input v-model="item.label" class="input text-xs" placeholder="label" />
-                      <input v-model="item.group" class="input text-xs" placeholder="group" />
-                      <input v-model.number="item.order" type="number" min="0" class="input text-xs" />
-                      <label class="flex items-center gap-2 text-xs text-white/60">
-                        <input v-model="item.pinned" type="checkbox" class="accent-white/70" />
-                        {{ t("admin.common.pinned") }}
-                      </label>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 w-full mt-2">
-                      <input v-model="item.primary_url" class="input text-xs" placeholder="primary url" />
-                      <input v-model="item.default_endpoint" class="input text-xs" placeholder="default endpoint" />
-                    </div>
-                    <div class="mt-2 w-full">
-                      <input v-model="item.access_path" class="input text-xs" placeholder="access path" />
-                    </div>
-                    <div class="mt-2 w-full">
-                      <input v-model="item.audienceInput" class="input text-xs" placeholder="audience groups" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 w-full mt-2">
-                      <input v-model="item.allowedActionsInput" class="input text-xs" placeholder="allowed actions" />
-                      <input v-model="item.visibleLinksInput" class="input text-xs" placeholder="visible links" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-
           <!-- Dashboard Tab -->
           <template v-else-if="adminTab === 'dashboard'">
             <div class="admin-card">
@@ -7104,90 +6372,6 @@ onBeforeUnmount(() => {
           <div class="flex items-center gap-2 pt-2">
             <button class="btn btn-primary flex-1" @click="updateDirectoryItem(serviceDetailsItem)">{{ t("app.save") }}</button>
             <button class="btn btn-ghost" @click="closeServiceDetails">{{ t("app.close") }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="serviceEditItem" class="modal-backdrop" @click.self="closeServiceEdit">
-      <div class="modal-content admin-modal">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">{{ t("admin.services.editTitle") }}</h3>
-          <button class="btn btn-ghost btn-icon" @click="closeServiceEdit">
-            <Tooltip
-              :content="t('app.close')"
-              :disabled="tooltipsDisabled"
-              :delay="tooltipDelay"
-            >
-              <X class="w-4 h-4" />
-            </Tooltip>
-          </button>
-        </div>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.key") }}</label>
-            <input v-model="serviceEditItem.key" class="input text-xs" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.title") }}</label>
-            <input v-model="serviceEditItem.title" class="input text-xs" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.description") }}</label>
-            <input v-model="serviceEditItem.description" class="input text-xs" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.iconUrl") }}</label>
-            <input
-              v-model="serviceEditItem.iconUrl"
-              class="input text-xs"
-              :placeholder="t('admin.common.placeholder.iconUrl')"
-              @blur="serviceEditItem.iconUrl = normalizeIconUrl(serviceEditItem.iconUrl)"
-            />
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.serviceType") }}</label>
-              <input v-model="serviceEditItem.serviceType" class="input text-xs" />
-            </div>
-            <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tier") }}</label>
-              <input v-model="serviceEditItem.tier" class="input text-xs" />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.lifecycle") }}</label>
-              <input v-model="serviceEditItem.lifecycle" class="input text-xs" />
-            </div>
-            <div>
-              <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.classification") }}</label>
-              <input v-model="serviceEditItem.classification" class="input text-xs" />
-            </div>
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.tags") }}</label>
-            <input v-model="serviceEditItem.tagsInput" class="input text-xs" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.dependsOn") }}</label>
-            <input v-model="serviceEditItem.dependsOnInput" class="input text-xs" />
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.ownersJson") }}</label>
-            <textarea v-model="serviceEditItem.ownersInput" class="input text-xs" rows="3"></textarea>
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.linksJson") }}</label>
-            <textarea v-model="serviceEditItem.linksInput" class="input text-xs" rows="3"></textarea>
-          </div>
-          <div>
-            <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.endpointsJson") }}</label>
-            <textarea v-model="serviceEditItem.endpointsInput" class="input text-xs" rows="3"></textarea>
-          </div>
-          <div class="flex items-center gap-2 pt-2">
-            <button class="btn btn-primary flex-1" @click="updateService(serviceEditItem)">{{ t("app.save") }}</button>
-            <button class="btn btn-ghost" @click="closeServiceEdit">{{ t("app.cancel") }}</button>
           </div>
         </div>
       </div>

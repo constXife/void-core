@@ -231,19 +231,9 @@ func InvokeAction(ctx context.Context, db *sql.DB, input ActionInvokeInput, sess
 		spaceIDValue = sql.NullInt64{Int64: int64(*input.SpaceID), Valid: true}
 	}
 
-	var unitID *int
-	if session.StayID != "" {
-		if value, err := unitIDByStay(ctx, db, session.StayID); err == nil && value != 0 {
-			unitID = &value
-		}
-	}
-
 	payload := map[string]any{
 		"action_key": input.ActionKey,
 		"params":     input.Params,
-	}
-	if unitID != nil {
-		payload["unit_id"] = *unitID
 	}
 	if session.StayID != "" {
 		payload["stay_id"] = session.StayID
@@ -605,19 +595,6 @@ func userIDByEmail(ctx context.Context, db *sql.DB, email string) (string, error
 		return "", err
 	}
 	return id, nil
-}
-
-func unitIDByStay(ctx context.Context, db *sql.DB, stayID string) (int, error) {
-	var unitID int
-	err := db.QueryRowContext(ctx, `
-		SELECT unit_id
-		FROM stays
-		WHERE id = $1
-	`, stayID).Scan(&unitID)
-	if err != nil {
-		return 0, err
-	}
-	return unitID, nil
 }
 
 func loadPinnedDirectory(ctx context.Context, db *sql.DB, spaceIDs []int, limit int, role string, isAdmin bool, publicLayer bool) ([]map[string]any, error) {

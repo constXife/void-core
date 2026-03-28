@@ -8,15 +8,6 @@ import (
 	"strings"
 )
 
-type AnnouncementInput struct {
-	SpaceSlug      string
-	Title          string
-	Body           string
-	Priority       string
-	Pinned         bool
-	AudienceGroups []string
-}
-
 type DirectoryInput struct {
 	SpaceSlug      string
 	Title          string
@@ -70,18 +61,6 @@ func seedFamily(ctx context.Context, db *sql.DB) error {
 		},
 	}
 
-	// Sample announcements for Home space
-	announcements := []AnnouncementInput{
-		{
-			SpaceSlug:      "home",
-			Title:          "Добро пожаловать!",
-			Body:           "Это ваш семейный портал. Добавляйте сервисы и настраивайте под себя.",
-			Priority:       "normal",
-			Pinned:         true,
-			AudienceGroups: []string{"user", "admin"},
-		},
-	}
-
 	// Sample directory items
 	directory := []DirectoryInput{
 		// Home resources
@@ -124,7 +103,7 @@ func seedFamily(ctx context.Context, db *sql.DB) error {
 		},
 	}
 
-	return seedData(ctx, db, spaces, announcements, directory)
+	return seedData(ctx, db, spaces, directory)
 }
 
 func seedHotel(ctx context.Context, db *sql.DB) error {
@@ -146,9 +125,8 @@ func seedHotel(ctx context.Context, db *sql.DB) error {
 			Description:   "Управление светом, климатом и сервисами номера.",
 		},
 	}
-	announcements := []AnnouncementInput{}
 	directory := []DirectoryInput{}
-	return seedData(ctx, db, spaces, announcements, directory)
+	return seedData(ctx, db, spaces, directory)
 }
 
 func seedStress(ctx context.Context, db *sql.DB) error {
@@ -179,22 +157,22 @@ func seedStress(ctx context.Context, db *sql.DB) error {
 		},
 	}
 
-	return seedData(ctx, db, spaces, nil, nil)
+	return seedData(ctx, db, spaces, nil)
 }
 
 type spaceInput struct {
-	Slug          string
-	Title         string
-	AccessMode    string
+	Slug                 string
+	Title                string
+	AccessMode           string
 	IsDefaultPublicEntry bool
-	LayoutMode    string
-	BackgroundURL string
-	IsLockable    bool
-	Description   string
-	PublicEntry   any
+	LayoutMode           string
+	BackgroundURL        string
+	IsLockable           bool
+	Description          string
+	PublicEntry          any
 }
 
-func seedData(ctx context.Context, db *sql.DB, spaces []spaceInput, announcements []AnnouncementInput, directory []DirectoryInput) error {
+func seedData(ctx context.Context, db *sql.DB, spaces []spaceInput, directory []DirectoryInput) error {
 	spaceIDs := make(map[string]int, len(spaces))
 	for _, space := range spaces {
 		id, err := upsertSpace(ctx, db, space)
@@ -202,9 +180,6 @@ func seedData(ctx context.Context, db *sql.DB, spaces []spaceInput, announcement
 			return err
 		}
 		spaceIDs[space.Slug] = id
-	}
-	if err := seedAnnouncements(ctx, db, spaceIDs, announcements); err != nil {
-		return err
 	}
 	if err := seedDirectory(ctx, db, spaceIDs, directory); err != nil {
 		return err
@@ -254,33 +229,6 @@ func upsertSpace(ctx context.Context, db *sql.DB, space spaceInput) (int, error)
 		return 0, fmt.Errorf("upsert space %s: %w", space.Slug, err)
 	}
 	return id, nil
-}
-
-func seedAnnouncements(ctx context.Context, db *sql.DB, spaceIDs map[string]int, items []AnnouncementInput) error {
-	for _, item := range items {
-		spaceID, ok := spaceIDs[item.SpaceSlug]
-		if !ok {
-			return fmt.Errorf("unknown space %s for announcement", item.SpaceSlug)
-		}
-		if item.Priority == "" {
-			item.Priority = "normal"
-		}
-		if len(item.AudienceGroups) == 0 {
-			item.AudienceGroups = []string{"user"}
-		}
-		audienceJSON, err := json.Marshal(item.AudienceGroups)
-		if err != nil {
-			return fmt.Errorf("encode announcement audience: %w", err)
-		}
-		_, err = db.ExecContext(ctx, `
-			INSERT INTO announcements (space_id, priority, title, body, pinned, audience_groups)
-			VALUES ($1, $2, $3, $4, $5, $6)
-		`, spaceID, item.Priority, item.Title, item.Body, item.Pinned, audienceJSON)
-		if err != nil {
-			return fmt.Errorf("insert announcement: %w", err)
-		}
-	}
-	return nil
 }
 
 func seedDirectory(ctx context.Context, db *sql.DB, spaceIDs map[string]int, items []DirectoryInput) error {
