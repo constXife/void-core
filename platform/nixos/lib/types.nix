@@ -1,5 +1,5 @@
 {lib}: rec {
-  absolutePath = lib.types.strMatching "^/";
+  absolutePath = lib.types.strMatching "^/.*$";
 
   absoluteRuntimePath = absolutePath;
 

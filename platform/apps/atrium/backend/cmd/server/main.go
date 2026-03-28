@@ -233,7 +233,13 @@ func main() {
 
 	handler := httpapi.Handler(deps)
 
-	addr := ":8080"
+	addr := strings.TrimSpace(os.Getenv("LISTEN_ADDR"))
+	if addr == "" {
+		addr = strings.TrimSpace(os.Getenv("ATRIUM_LISTEN_ADDR"))
+	}
+	if addr == "" {
+		addr = ":8080"
+	}
 	log.Printf("atrium server starting on %s", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatalf("server stopped: %v", err)

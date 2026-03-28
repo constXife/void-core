@@ -24,7 +24,7 @@ pkgs.buildGoModule {
     "-s"
     "-w"
   ];
-  CGO_ENABLED = 0;
+  env.CGO_ENABLED = 0;
 
   postInstall = ''
     mkdir -p "$out/share/atrium"
