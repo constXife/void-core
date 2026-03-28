@@ -559,10 +559,16 @@
 
     formatter = forAllSystems (pkgs: pkgs.alejandra);
 
-    packages = forAllSystems (pkgs: {
+    packages = forAllSystems (pkgs: let
+      atrium = import ./platform/packages/atrium {inherit pkgs;};
+    in {
       governance-lint = mkGovernanceLint pkgs;
       lint = mkLintApp pkgs;
       foundation-options-doc = (mkFoundationOptionsDoc pkgs).optionsCommonMark;
+      atrium-source = atrium.source;
+      atrium-frontend-dist = atrium.frontendDist;
+      atrium-server = atrium.server;
+      atrium = atrium.default;
     });
 
     apps = forAllSystems (pkgs: {

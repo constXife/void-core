@@ -62,3 +62,9 @@ The current packaging model is:
 
 This keeps the source, packaging, and deployment integration separate while preserving
 the public foundation boundary.
+
+Current flake package outputs are expected to expose:
+- `atrium-source` for the app source tree;
+- `atrium-frontend-dist` for the compiled embedded frontend assets;
+- `atrium-server` for the backend binary with embedded frontend assets;
+- `atrium` as the default shipping server package.
