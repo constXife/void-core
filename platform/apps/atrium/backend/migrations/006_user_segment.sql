@@ -1,2 +1,0 @@
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS user_segment TEXT;
