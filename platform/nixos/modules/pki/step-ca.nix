@@ -78,6 +78,9 @@ in {
         };
 
       networking.firewall.allowedTCPPorts = [cfg.port];
+
+      # step-ca keeps persistent CA state under /var/lib/step-ca; use the stable system user.
+      systemd.services.step-ca.serviceConfig.DynamicUser = lib.mkDefault false;
     }
 
     (lib.mkIf (cfg.runtimeConfigFile != null) {
