@@ -12,6 +12,7 @@ type Space struct {
 	Title                string          `json:"title"`
 	Slug                 string          `json:"slug"`
 	Type                 string          `json:"type"`
+	ProvisioningState    string          `json:"provisioning_state"`
 	ParentID             *int            `json:"parent_id,omitempty"`
 	DashboardTemplateID  *int            `json:"dashboard_template_id,omitempty"`
 	AccessMode           string          `json:"access_mode"`
@@ -44,13 +45,25 @@ type Input struct {
 }
 
 func List(ctx context.Context, db *sql.DB) ([]Space, error) {
-	rows, err := db.QueryContext(ctx, `
-		SELECT id, title, slug, space_type, parent_id, dashboard_template_id,
+	return listByProvisioning(ctx, db, true)
+}
+
+func ListAll(ctx context.Context, db *sql.DB) ([]Space, error) {
+	return listByProvisioning(ctx, db, false)
+}
+
+func listByProvisioning(ctx context.Context, db *sql.DB, activeOnly bool) ([]Space, error) {
+	query := `
+		SELECT id, title, slug, space_type, provisioning_state, parent_id, dashboard_template_id,
 		       access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
 		       visibility_groups, display_config, personalization_rules, public_entry, is_provisioned
 		FROM spaces
-		ORDER BY is_default_public_entry DESC, id
-	`)
+	`
+	if activeOnly {
+		query += " WHERE is_provisioned = true"
+	}
+	query += " ORDER BY is_provisioned DESC, is_default_public_entry DESC, id"
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("list spaces: %w", err)
 	}
@@ -71,6 +84,7 @@ func List(ctx context.Context, db *sql.DB) ([]Space, error) {
 			&item.Title,
 			&item.Slug,
 			&item.Type,
+			&item.ProvisioningState,
 			&parentID,
 			&templateID,
 			&item.AccessMode,
@@ -112,30 +126,54 @@ func List(ctx context.Context, db *sql.DB) ([]Space, error) {
 }
 
 func Get(ctx context.Context, db *sql.DB, id int) (Space, error) {
+	return getByID(ctx, db, id, true)
+}
+
+func GetAny(ctx context.Context, db *sql.DB, id int) (Space, error) {
+	return getByID(ctx, db, id, false)
+}
+
+func getByID(ctx context.Context, db *sql.DB, id int, activeOnly bool) (Space, error) {
 	if id == 0 {
 		return Space{}, fmt.Errorf("id is required")
 	}
-	row := db.QueryRowContext(ctx, `
-		SELECT id, title, slug, space_type, parent_id, dashboard_template_id,
+	query := `
+		SELECT id, title, slug, space_type, provisioning_state, parent_id, dashboard_template_id,
 		       access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
 		       visibility_groups, display_config, personalization_rules, public_entry, is_provisioned
 		FROM spaces
 		WHERE id = $1
-	`, id)
+	`
+	if activeOnly {
+		query += " AND is_provisioned = true"
+	}
+	row := db.QueryRowContext(ctx, query, id)
 	return scanSpace(row)
 }
 
 func GetBySlug(ctx context.Context, db *sql.DB, slug string) (Space, error) {
+	return getBySlug(ctx, db, slug, true)
+}
+
+func GetBySlugAny(ctx context.Context, db *sql.DB, slug string) (Space, error) {
+	return getBySlug(ctx, db, slug, false)
+}
+
+func getBySlug(ctx context.Context, db *sql.DB, slug string, activeOnly bool) (Space, error) {
 	if slug == "" {
 		return Space{}, fmt.Errorf("slug is required")
 	}
-	row := db.QueryRowContext(ctx, `
-		SELECT id, title, slug, space_type, parent_id, dashboard_template_id,
+	query := `
+		SELECT id, title, slug, space_type, provisioning_state, parent_id, dashboard_template_id,
 		       access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
 		       visibility_groups, display_config, personalization_rules, public_entry, is_provisioned
 		FROM spaces
 		WHERE slug = $1
-	`, slug)
+	`
+	if activeOnly {
+		query += " AND is_provisioned = true"
+	}
+	row := db.QueryRowContext(ctx, query, slug)
 	return scanSpace(row)
 }
 
@@ -157,6 +195,7 @@ func scanSpace(row spaceScanner) (Space, error) {
 		&item.Title,
 		&item.Slug,
 		&item.Type,
+		&item.ProvisioningState,
 		&parentID,
 		&templateID,
 		&item.AccessMode,
@@ -245,7 +284,7 @@ func Create(ctx context.Context, db *sql.DB, input Input) (Space, error) {
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id, title, slug, space_type, parent_id, dashboard_template_id,
-		          access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
+		          access_mode, is_default_public_entry, layout_mode, background_url, is_lockable, provisioning_state,
 		          visibility_groups, display_config, personalization_rules, public_entry, is_provisioned
 	`, input.Title, input.Slug, input.Type, toNullInt(input.ParentID), toNullInt(input.DashboardTemplateID),
 		input.AccessMode, isDefaultPublicEntry, input.LayoutMode, input.BackgroundURL, isLockable, input.VisibilityGroups, input.DisplayConfig,
@@ -261,6 +300,7 @@ func Create(ctx context.Context, db *sql.DB, input Input) (Space, error) {
 		&item.LayoutMode,
 		&item.BackgroundURL,
 		&item.IsLockable,
+		&item.ProvisioningState,
 		&item.VisibilityGroups,
 		&item.DisplayConfig,
 		&item.PersonalizationRules,
@@ -340,7 +380,7 @@ func Update(ctx context.Context, db *sql.DB, id int, input Input) (Space, error)
 		    public_entry = $14
 		WHERE id = $15
 		RETURNING id, title, slug, space_type, parent_id, dashboard_template_id,
-		          access_mode, is_default_public_entry, layout_mode, background_url, is_lockable,
+		          access_mode, is_default_public_entry, layout_mode, background_url, is_lockable, provisioning_state,
 		          visibility_groups, display_config, personalization_rules, public_entry, is_provisioned
 	`, input.Title, input.Slug, input.Type, toNullInt(input.ParentID), toNullInt(input.DashboardTemplateID),
 		input.AccessMode, isDefaultPublicEntry, input.LayoutMode, input.BackgroundURL, isLockable, input.VisibilityGroups, input.DisplayConfig,
@@ -356,6 +396,7 @@ func Update(ctx context.Context, db *sql.DB, id int, input Input) (Space, error)
 		&item.LayoutMode,
 		&item.BackgroundURL,
 		&item.IsLockable,
+		&item.ProvisioningState,
 		&item.VisibilityGroups,
 		&item.DisplayConfig,
 		&item.PersonalizationRules,

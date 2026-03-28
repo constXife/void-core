@@ -104,3 +104,28 @@ func (m *Manager) EnsureLocalAdmin(ctx context.Context, email, password string) 
 	}
 	return upsertLocalUser(ctx, m.db, email, "admin", string(hash))
 }
+
+func (m *Manager) EnsureLocalUsers(ctx context.Context, emails []string, password string) error {
+	if strings.TrimSpace(password) == "" {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(emails))
+	for _, raw := range emails {
+		email := strings.ToLower(strings.TrimSpace(raw))
+		if email == "" {
+			continue
+		}
+		if _, ok := seen[email]; ok {
+			continue
+		}
+		seen[email] = struct{}{}
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		if err := upsertLocalUser(ctx, m.db, email, m.roleForEmail(email), string(hash)); err != nil {
+			return err
+		}
+	}
+	return nil
+}

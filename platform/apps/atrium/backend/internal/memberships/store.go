@@ -45,7 +45,7 @@ func List(ctx context.Context, db *sql.DB, spaceID *int) ([]Membership, error) {
 		SELECT m.principal_id, u.email, u.user_segment, m.space_id, s.title, r.id, r.key, r.name, m.valid_from, m.valid_to
 		FROM memberships m
 		JOIN users u ON u.id = m.principal_id
-		JOIN spaces s ON s.id = m.space_id
+		JOIN spaces s ON s.id = m.space_id AND s.is_provisioned = true
 		JOIN roles r ON r.id = m.role_id
 	`
 	args := []any{}
@@ -249,7 +249,7 @@ func loadOne(ctx context.Context, db *sql.DB, principalID string, spaceID int) (
 		SELECT m.principal_id, u.email, u.user_segment, m.space_id, s.title, r.id, r.key, r.name, m.valid_from, m.valid_to
 		FROM memberships m
 		JOIN users u ON u.id = m.principal_id
-		JOIN spaces s ON s.id = m.space_id
+		JOIN spaces s ON s.id = m.space_id AND s.is_provisioned = true
 		JOIN roles r ON r.id = m.role_id
 		WHERE m.principal_id = $1 AND m.space_id = $2
 	`, principalID, spaceID).Scan(

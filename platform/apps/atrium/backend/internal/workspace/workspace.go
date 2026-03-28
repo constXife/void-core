@@ -33,6 +33,7 @@ func loadCategories(ctx context.Context, db *sql.DB) ([]Category, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT id, title, slug, display_config
 		FROM spaces
+		WHERE is_provisioned = true
 		ORDER BY id
 	`)
 	if err != nil {

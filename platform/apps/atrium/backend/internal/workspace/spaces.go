@@ -98,7 +98,7 @@ func loadPublicSpaceRows(ctx context.Context, db *sql.DB) ([]spaceRow, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT id, slug, title, access_mode, is_default_public_entry, layout_mode, background_url, is_lockable, display_config, public_entry
 		FROM spaces
-		WHERE access_mode = 'public_readonly'
+		WHERE is_provisioned = true AND access_mode = 'public_readonly'
 		ORDER BY is_default_public_entry DESC, id
 	`)
 	if err != nil {
@@ -124,6 +124,7 @@ func loadSpaceRows(ctx context.Context, db *sql.DB) ([]spaceRow, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT id, slug, title, access_mode, is_default_public_entry, layout_mode, background_url, is_lockable, display_config, public_entry
 		FROM spaces
+		WHERE is_provisioned = true
 		ORDER BY is_default_public_entry DESC, id
 	`)
 	if err != nil {
@@ -172,7 +173,7 @@ func loadSpaceRowsFiltered(ctx context.Context, db *sql.DB, email string, role s
 		FROM spaces s
 		LEFT JOIN memberships m ON m.space_id = s.id AND m.principal_id = $1
 		LEFT JOIN member_counts mc ON mc.space_id = s.id
-		WHERE (
+		WHERE s.is_provisioned = true AND (
 			s.access_mode = 'public_readonly'
 			OR (
 				(

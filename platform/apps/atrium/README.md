@@ -40,7 +40,7 @@ On startup Atrium reads a provisioning file and reconciles DB state.
 Default path: `/etc/atrium/provisioning.yaml` (overridable via `PROVISIONING_PATH`).
 Widgets path: `/etc/atrium/widgets.yaml` (overridable via `WIDGETS_CONFIG_PATH`).
 
-For shipped `v0`, the canonical product path is:
+For the current public `v0`, the minimal foundation example is:
 - one provisioned `Admin` space;
 - one dashboard template with `core.resources_pinned`;
 - one resource catalog backed by `directory_items`.
@@ -79,32 +79,18 @@ dashboard_templates:
           filter: "pinned"
 
 directory_items:
-  - key: "grafana.arkham.void"
-    title: "Grafana"
-    description: "Metrics and observability"
-    icon_url: "https://raw.githubusercontent.com/lllllllillllllillll/Dashboard-Icons/main/png/grafana.png"
-    url: "https://grafana.arkham.void"
-    type: "resource"
-    space: "admin"
-    pinned: true
-    audience_groups: ["admin"]
-  - key: "id.arkham.void"
+  - key: "id.example.local"
     title: "Rauthy"
     description: "OIDC identity provider"
-    url: "https://id.arkham.void"
-    type: "resource"
-    space: "admin"
-    pinned: true
-    audience_groups: ["admin"]
-  - key: "mail.arkham.void"
-    title: "Mailpit"
-    description: "Local mail catcher"
-    url: "https://mail.arkham.void"
+    url: "https://id.example.local"
     type: "resource"
     space: "admin"
     pinned: true
     audience_groups: ["admin"]
 ```
+
+Local development in this repository no longer ships a bundled provisioning fixture.
+Without an explicit `PROVISIONING_PATH` or `CONFIG_DIR`, Atrium starts without preloaded provisioned state.
 
 ## Space display_config (UI behavior)
 Supported keys (frontend):

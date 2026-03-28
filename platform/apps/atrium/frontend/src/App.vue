@@ -36,8 +36,11 @@ const HOTKEYS = {
   help: "?"
 };
 
-const FALLBACK_LANG = "en";
+const FALLBACK_LANG = "ru";
 const LANG_STORAGE_KEY = "atrium:lang";
+const ENABLE_V0_EDITOR = false;
+const ENABLE_V0_DEV_ADMIN_SEAMS = false;
+const ENABLE_V0_RESOURCE_DETAILS = false;
 
 const MESSAGES = {
   en: {
@@ -66,6 +69,12 @@ const MESSAGES = {
     "app.shortcutsHelpBody": "Show shortcuts overlay",
     "app.loading": "Loading",
     "app.noAccessSpaces": "No spaces available for {role}.",
+    "app.noAccessTitle": "No spaces have been published for your role yet.",
+    "app.noAccessBody": "Atrium is active, but the operator has not assigned a shared or personal space for this account yet.",
+    "app.noAccessRoleTitle": "Current role",
+    "app.noAccessHelpTitle": "What to do next",
+    "app.noAccessHelpBody": "If you should already have access, contact the operator or sign out and try another account.",
+    "app.noAccessTrustTitle": "Why the screen stays empty",
     "auth.title": "Sign in to Atrium",
     "auth.subtitle": "Sign-in is available only when Atrium authentication is configured.",
     "auth.email": "Email",
@@ -405,6 +414,12 @@ const MESSAGES = {
     "app.shortcutsHelpBody": "Показать окно с клавишами",
     "app.loading": "Загрузка",
     "app.noAccessSpaces": "Для роли {role} пока нет доступных пространств.",
+    "app.noAccessTitle": "Для вашей роли пространства ещё не опубликованы.",
+    "app.noAccessBody": "Atrium уже работает, но оператор пока не назначил для этой учётной записи ни одного общего или персонального пространства.",
+    "app.noAccessRoleTitle": "Текущая роль",
+    "app.noAccessHelpTitle": "Что делать дальше",
+    "app.noAccessHelpBody": "Если доступ уже должен быть, свяжитесь с оператором или выйдите и войдите под другой учётной записью.",
+    "app.noAccessTrustTitle": "Почему экран остаётся пустым",
     "auth.title": "Вход в Atrium",
     "auth.subtitle": "Вход доступен только после настройки аутентификации Atrium.",
     "auth.email": "Email",
@@ -1368,7 +1383,7 @@ const loadAll = async () => {
       widgets.value = [];
     }
 
-    if (actualIsAdmin.value) {
+    if (actualIsAdmin.value && ENABLE_V0_DEV_ADMIN_SEAMS) {
       await reloadAdminSpaces();
       dashboardTemplates.value = await fetchJSON("/api/dashboard/templates");
       roles.value = await fetchJSON("/api/roles");
@@ -2356,15 +2371,13 @@ const currentLang = ref(FALLBACK_LANG);
 const getLangFromUrl = () => normalizeLang(new URLSearchParams(window.location.search).get("lang"));
 const getStoredLang = () => normalizeLang(settingsStore.getJSON(LANG_STORAGE_KEY, ""));
 const getSpaceDefaultLang = () => normalizeLang(parseDisplayConfig(currentSpace.value).default_lang);
-const getBrowserLang = () => normalizeLang(navigator.language || "");
 const resolveLang = () => {
   const supported = supportedLangs.value;
   const isSupported = (value) => value && supported.includes(value);
   const candidates = [
     getLangFromUrl(),
     getStoredLang(),
-    getSpaceDefaultLang(),
-    getBrowserLang()
+    getSpaceDefaultLang()
   ];
   for (const candidate of candidates) {
     if (isSupported(candidate)) return candidate;
@@ -4794,15 +4807,6 @@ onBeforeUnmount(() => {
 
       <div class="header-actions">
         <div class="header-tools">
-          <button class="btn btn-ghost btn-icon" @click="toggleShortcuts">
-            <Tooltip
-              :content="`Shortcuts (${HOTKEYS.help})`"
-              :disabled="tooltipsDisabled"
-              :delay="tooltipDelay"
-            >
-              <span class="text-xs font-semibold">?</span>
-            </Tooltip>
-          </button>
           <select
             v-if="languageSwitcherVisible && languageSwitcherMode === 'header'"
             v-model="languageSelection"
@@ -4852,7 +4856,7 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="user-dropdown-divider"></div>
                   <button
-                    v-if="isAdmin"
+                    v-if="isAdmin && ENABLE_V0_DEV_ADMIN_SEAMS"
                     class="user-dropdown-item"
                     :title="t('app.adminPanel')"
                     :aria-label="t('app.adminPanel')"
@@ -4908,7 +4912,7 @@ onBeforeUnmount(() => {
                     </select>
                   </div>
                   <div
-                    v-if="actualIsAdmin"
+                    v-if="actualIsAdmin && ENABLE_V0_DEV_ADMIN_SEAMS"
                     class="user-dropdown-section user-dropdown-section-compact"
                   >
                     <div
@@ -5179,12 +5183,34 @@ onBeforeUnmount(() => {
 
     <div v-else-if="spaces.length === 0 && me && !isAdmin" class="empty-workspace-container">
       <div class="empty-workspace-hero" :class="{ 'animate-fade-in-scale': performanceMode !== 'low' }">
-        <p class="text-white/50 text-sm text-center">
-          {{ t("app.noAccessSpaces", { role: effectiveRole || actualRole || 'guest' }) }}
+        <div class="empty-workspace-icon">
+          <Users class="w-12 h-12 text-accent" />
+        </div>
+        <h2 class="empty-workspace-title">{{ t("app.noAccessTitle") }}</h2>
+        <p class="empty-workspace-description">
+          {{ t("app.noAccessBody") }}
         </p>
-        <p class="text-white/40 text-xs text-center mt-3">
-          {{ t("guest.trustNote") }}
-        </p>
+
+        <div class="guest-notes">
+          <div class="guest-note-card">
+            <div class="guest-note-label">{{ t("app.noAccessRoleTitle") }}</div>
+            <div class="guest-note-body">
+              {{ t("app.noAccessSpaces", { role: effectiveRole || actualRole || 'guest' }) }}
+            </div>
+          </div>
+          <div class="guest-note-card">
+            <div class="guest-note-label">{{ t("app.noAccessHelpTitle") }}</div>
+            <div class="guest-note-body">{{ t("app.noAccessHelpBody") }}</div>
+          </div>
+          <div class="guest-note-card">
+            <div class="guest-note-label">{{ t("app.noAccessTrustTitle") }}</div>
+            <div class="guest-note-body">{{ t("guest.trustNote") }}</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary mt-6" @click="logout">
+          {{ t("app.logout") }}
+        </button>
       </div>
     </div>
 
@@ -5817,7 +5843,7 @@ onBeforeUnmount(() => {
                     <div class="flex items-center justify-between w-full">
                       <div class="font-medium text-sm truncate">{{ item.title }}</div>
                       <div class="flex items-center gap-2">
-                        <button class="btn btn-ghost text-xs" @click="openServiceDetails(item)">{{ t("app.details") }}</button>
+                        <button v-if="ENABLE_V0_RESOURCE_DETAILS" class="btn btn-ghost text-xs" @click="openServiceDetails(item)">{{ t("app.details") }}</button>
                         <button class="btn btn-ghost text-xs" @click="deleteDirectoryItem(item)">{{ t("admin.spaces.delete") }}</button>
                       </div>
                     </div>
@@ -6177,20 +6203,11 @@ onBeforeUnmount(() => {
           </div>
           <div class="flex items-center gap-2">
             <button
-              v-if="canManage && !isMobile && !isDashboardEditing(space) && !isPublicReadonlySpace(space)"
+              v-if="ENABLE_V0_EDITOR && canManage && !isMobile && !isDashboardEditing(space) && !isPublicReadonlySpace(space)"
               class="btn btn-ghost"
               @click="toggleDashboardEdit(space)"
             >
               {{ t("app.editLayout") }}
-            </button>
-            <button v-if="space.is_lockable && !isPublicReadonlySpace(space)" class="btn btn-ghost btn-icon">
-              <Tooltip
-                :content="t('space.lock')"
-                :disabled="tooltipsDisabled"
-                :delay="tooltipDelay"
-              >
-                <Lock class="w-4 h-4" />
-              </Tooltip>
             </button>
           </div>
         </div>
@@ -6237,9 +6254,9 @@ onBeforeUnmount(() => {
           <div v-if="me && (hasDashboard(space) || canManage) && !isPublicReadonlySpace(space)" class="col-span-full">
             <div class="dashboard-header">
               <div class="flex items-center gap-2">
-                <span v-if="dashboardLoading[space.id]" class="chip chip-muted">loading</span>
+                <span v-if="dashboardLoading[space.id]" class="chip chip-muted">{{ t("app.loading") }}</span>
                 <button
-                  v-if="canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
+                  v-if="ENABLE_V0_EDITOR && canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
                   class="btn"
                   :class="dashboardEditDirty ? 'btn-primary' : 'btn-ghost'"
                   :disabled="dashboardEditorSaving || !dashboardEditDirty"
@@ -6248,14 +6265,14 @@ onBeforeUnmount(() => {
                   {{ dashboardEditorSaving ? `${t("app.save")}...` : t("app.save") }}
                 </button>
                 <button
-                  v-if="canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
+                  v-if="ENABLE_V0_EDITOR && canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
                   class="btn btn-ghost"
                   @click="openAddBlockPicker"
                 >
                   {{ t("app.addBlock") }}
                 </button>
                 <button
-                  v-if="canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
+                  v-if="ENABLE_V0_EDITOR && canManage && !isMobile && isDashboardEditing(space) && !isPublicReadonlySpace(space)"
                   class="btn btn-ghost"
                   @click="stopDashboardEdit"
                 >
@@ -6364,7 +6381,7 @@ onBeforeUnmount(() => {
                               <span v-else-if="item.description" class="resource-desc">{{ item.description }}</span>
                             </span>
                             <button
-                              v-if="canOpenResourceDetails(item) && !isPublicReadonlySpace(space)"
+                              v-if="ENABLE_V0_RESOURCE_DETAILS && canOpenResourceDetails(item) && !isPublicReadonlySpace(space)"
                               class="resource-detail-toggle"
                               :class="{ active: resourcePopoverOpen && resourcePopoverItem?.id === item.id }"
                               @click.stop="toggleResourcePopover($event, item)"
@@ -6374,7 +6391,7 @@ onBeforeUnmount(() => {
                             </button>
 
                             <div
-                              v-if="resourcePopoverOpen && resourcePopoverItem?.id === item.id && !isPublicReadonlySpace(space)"
+                              v-if="ENABLE_V0_RESOURCE_DETAILS && resourcePopoverOpen && resourcePopoverItem?.id === item.id && !isPublicReadonlySpace(space)"
                               :class="[
                                 'resource-popover',
                                 'inline',
@@ -6930,7 +6947,7 @@ onBeforeUnmount(() => {
     </div>
 
 
-    <div v-if="showDashboardEditor && dashboardEditorSpace" class="modal-backdrop" @click.self="showDashboardEditor = false">
+    <div v-if="ENABLE_V0_EDITOR && showDashboardEditor && dashboardEditorSpace" class="modal-backdrop" @click.self="showDashboardEditor = false">
       <div class="modal-content dashboard-editor-modal">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -7025,7 +7042,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Inline Block Settings Popover -->
-    <div v-if="serviceDetailsOpen && serviceDetailsItem" class="modal-backdrop" @click.self="closeServiceDetails">
+    <div v-if="ENABLE_V0_RESOURCE_DETAILS && serviceDetailsOpen && serviceDetailsItem" class="modal-backdrop" @click.self="closeServiceDetails">
       <div class="modal-content admin-modal">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold">{{ t("resource.details.title") }}</h3>

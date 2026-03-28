@@ -105,11 +105,22 @@ func List(ctx context.Context, db *sql.DB, spaceID int) ([]Item, error) {
 		var desc sql.NullString
 		var icon sql.NullString
 		var url sql.NullString
+		var serviceType sql.NullString
+		var accessPath sql.NullString
+		var runbookURL sql.NullString
+		var classification sql.NullString
 		var tags []byte
 		var actions []byte
 		var audience []byte
+		var owners []byte
+		var links []byte
+		var endpoints []byte
+		var tier sql.NullString
+		var lifecycle sql.NullString
+		var dependsOn []byte
 		if err := rows.Scan(
-			&item.ID, &item.SpaceID, &item.Type, &key, &item.Title, &desc, &icon, &url, &item.Pinned, &tags, &actions, &audience, &item.CreatedAt,
+			&item.ID, &item.SpaceID, &item.Type, &key, &item.Title, &desc, &icon, &url, &item.Pinned, &tags, &actions, &audience,
+			&serviceType, &owners, &links, &endpoints, &tier, &lifecycle, &accessPath, &runbookURL, &classification, &dependsOn, &item.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan directory item: %w", err)
 		}
@@ -117,9 +128,19 @@ func List(ctx context.Context, db *sql.DB, spaceID int) ([]Item, error) {
 		item.Description = desc.String
 		item.IconURL = icon.String
 		item.URL = url.String
+		item.ServiceType = serviceType.String
+		item.AccessPath = accessPath.String
+		item.RunbookURL = runbookURL.String
+		item.Classification = classification.String
 		item.Tags = decodeGroups(tags)
 		item.ActionKeys = decodeGroups(actions)
 		item.AudienceGroups = decodeGroups(audience)
+		item.Owners = normalizeJSONRaw(owners, "{}")
+		item.Links = normalizeJSONRaw(links, "{}")
+		item.Endpoints = normalizeJSONRaw(endpoints, "[]")
+		item.Tier = tier.String
+		item.Lifecycle = lifecycle.String
+		item.DependsOn = normalizeJSONRaw(dependsOn, "[]")
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
