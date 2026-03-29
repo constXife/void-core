@@ -1,7 +1,7 @@
 {...}: {
   imports = [
     ./hardware-configuration.nix
-    ../../profiles/family-core/default.nix
+    ../../profiles/default/default.nix
   ];
 
   networking.hostName = "core-01";

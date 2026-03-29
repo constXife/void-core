@@ -1,5 +1,5 @@
 {
-  description = "Client-owned deployment template for family-core";
+  description = "Client-owned deployment template for default";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";

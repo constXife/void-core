@@ -3,7 +3,7 @@
 This directory contains reusable templates for downstream consumption.
 
 The initial focus is:
-- a minimal client deployment template for `family-core`.
+- a minimal client deployment template for `default`.
 
 That template now includes:
 - a vendor-shipped seed for baseline service configuration;

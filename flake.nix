@@ -553,7 +553,7 @@
       status = import ./platform/nixos/modules/status;
       secrets-files = import ./platform/nixos/modules/secrets/files.nix;
       sops-baseline = import ./platform/nixos/modules/secrets/sops-baseline.nix;
-      reference-family-core-minimal = import ./platform/nixos/profiles/reference/family-core-minimal;
+      reference-default-minimal = import ./platform/nixos/profiles/reference/default-minimal;
       foundation = foundationModule;
     };
 

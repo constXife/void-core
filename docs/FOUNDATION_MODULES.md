@@ -39,6 +39,6 @@ That output is included in the flake `checks` so the generated contract docs sta
 
 `void-core` also ships a minimal client deployment template under:
 
-- `templates/client-deploy/family-core`
+- `templates/client-deploy/default`
 
 This template shows how a client-owned deployment repository is expected to consume the foundation layer and includes baseline service defaults for the first setup.

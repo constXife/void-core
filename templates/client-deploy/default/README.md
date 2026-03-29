@@ -1,4 +1,4 @@
-# family-core Client Deployment Template
+# default Client Deployment Template
 
 This template shows how a client-owned deployment repository can consume `void-core`.
 

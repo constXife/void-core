@@ -22,8 +22,8 @@ The initial scaffold focuses on:
 - a minimal Nix flake;
 - foundation module placeholders;
 - the `Atrium` foundation shell source and module scaffold;
-- a reference profile for `family-core-minimal`;
-- a client deployment template for `family-core` with baseline service defaults;
+- a reference profile for `default-minimal`;
+- a client deployment template for `default` with baseline service defaults;
 - a first naming / DNS / ingress / private-CA scaffold for private deployments;
 - short documentation for trust model, distribution baseline, and extensibility.
 

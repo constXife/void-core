@@ -4,7 +4,7 @@
   ...
 }: {
   imports = [
-    inputs.void-core.nixosModules.reference-family-core-minimal
+    inputs.void-core.nixosModules.reference-default-minimal
     ../../inventory/hosts.nix
     ../../overlays/local-policy.nix
   ];
