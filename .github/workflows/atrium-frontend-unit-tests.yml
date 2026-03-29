@@ -1,0 +1,39 @@
+name: Atrium Frontend Unit Tests
+
+on:
+  push:
+    paths:
+      - ".github/workflows/atrium-frontend-unit-tests.yml"
+      - "platform/apps/atrium/frontend/**"
+      - "platform/apps/atrium/Taskfile.yml"
+  pull_request:
+    paths:
+      - ".github/workflows/atrium-frontend-unit-tests.yml"
+      - "platform/apps/atrium/frontend/**"
+      - "platform/apps/atrium/Taskfile.yml"
+
+concurrency:
+  group: atrium-frontend-unit-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/apps/atrium/frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run frontend unit tests
+        run: bun run test

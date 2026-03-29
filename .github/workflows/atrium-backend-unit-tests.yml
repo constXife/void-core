@@ -1,0 +1,37 @@
+name: Atrium Backend Unit Tests
+
+on:
+  push:
+    paths:
+      - ".github/workflows/atrium-backend-unit-tests.yml"
+      - "platform/apps/atrium/backend/**"
+      - "platform/apps/atrium/Taskfile.yml"
+  pull_request:
+    paths:
+      - ".github/workflows/atrium-backend-unit-tests.yml"
+      - "platform/apps/atrium/backend/**"
+      - "platform/apps/atrium/Taskfile.yml"
+
+concurrency:
+  group: atrium-backend-unit-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/apps/atrium/backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: platform/apps/atrium/backend/go.mod
+          cache-dependency-path: platform/apps/atrium/backend/go.sum
+
+      - name: Run backend unit tests
+        run: go test ./...
