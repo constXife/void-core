@@ -11,7 +11,9 @@
     "interactjs": "^1.10.27",
     "lucide-vue-next": "^0.468.0",
     "marked": "^17.0.1",
-    "tinykeys": "^3.0.0"
+    "pinia": "^3.0.4",
+    "tinykeys": "^3.0.0",
+    "vue-router": "4.5.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
