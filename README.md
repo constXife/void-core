@@ -7,7 +7,7 @@ Public foundation repository for reusable self-hosted building blocks.
 `void-core` contains:
 - reusable platform primitives;
 - NixOS modules for the foundation layer;
-- starter defaults, templates, and reference profiles;
+- reference profiles and client deployment templates;
 - foundation app source for shell/navigation capabilities;
 - foundation-facing contracts and documentation.
 
@@ -22,8 +22,8 @@ The initial scaffold focuses on:
 - a minimal Nix flake;
 - foundation module placeholders;
 - the `Atrium` foundation shell source and module scaffold;
-- a starter default bundle for `family-core` foundation services;
-- a client deployment template for `family-core`;
+- a reference profile for `family-core-minimal`;
+- a client deployment template for `family-core` with baseline service defaults;
 - a first naming / DNS / ingress / private-CA scaffold for private deployments;
 - short documentation for trust model, distribution baseline, and extensibility.
 

@@ -27,7 +27,7 @@
     };
     auth.rauthy = {
       enable = true;
-      configTemplate = inputs.void-core + "/templates/starter/family-core/rauthy.toml.template";
+      configTemplate = ../../rauthy.toml.template;
     };
   };
 

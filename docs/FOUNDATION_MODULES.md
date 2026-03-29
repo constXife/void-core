@@ -35,9 +35,10 @@ The foundation module surface also has generated options documentation:
 
 That output is included in the flake `checks` so the generated contract docs stay in sync with the module surface.
 
-## Related Templates
+## Related Template
 
-`void-core` ships two closely related downstream artifacts:
+`void-core` also ships a minimal client deployment template under:
 
-- `templates/starter/family-core` — copy-oriented starter defaults for baseline foundation services
-- `templates/client-deploy/family-core` — a minimal client deployment template that consumes the foundation layer
+- `templates/client-deploy/family-core`
+
+This template shows how a client-owned deployment repository is expected to consume the foundation layer and includes baseline service defaults for the first setup.
