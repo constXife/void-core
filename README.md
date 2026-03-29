@@ -1,54 +1,70 @@
 # void-core
 
-Public foundation repository for reusable self-hosted building blocks.
+`void-core` is the public foundation repository for reusable self-hosted building blocks.
 
-`void-core` is licensed under Apache License 2.0.
+It exists so higher-level product repos and client-owned deployment repos can build on a shared, auditable baseline instead of re-implementing the same foundation concerns or depending on a hidden SaaS control plane.
 
-`void-core` contains:
-- reusable platform primitives;
-- NixOS modules for the foundation layer;
-- reference profiles and client deployment templates;
-- foundation app source for shell/navigation capabilities;
-- foundation-facing contracts and documentation.
+## Why this project exists
 
-`void-core` does not contain:
-- closed or vendor-specific product logic;
-- client-specific inventory, secrets, or runtime data;
-- vertical product behavior tied to a single domain.
+`void-core` is meant to strengthen:
+- client ownership;
+- auditability;
+- portability;
+- offline and degraded usefulness;
+- reproducible, declarative self-hosted deployments.
 
-## Scope
+In practice, it gives downstream layers a stable foundation for naming, secrets contracts, identity, private DNS, ingress, private PKI, and a foundation shell.
 
-The initial scaffold focuses on:
-- a minimal Nix flake;
-- foundation module placeholders;
-- the `Atrium` foundation shell source and module scaffold;
-- a reference profile for `default-minimal`;
-- a client deployment template for `default` with baseline service defaults;
-- a first naming / DNS / ingress / private-CA scaffold for private deployments;
-- short documentation for trust model, distribution baseline, and extensibility.
+## What belongs here
 
-## Documentation Language
+- reusable NixOS foundation modules;
+- foundation packages and contracts;
+- reference profiles and deployment templates;
+- foundation-facing documentation;
+- shared building blocks that downstream repos can compose.
 
-Canonical documentation in `void-core` should be written in English.
+## What does not belong here
 
-Translations may be added later as optional convenience material, but the English version should remain the source of truth for:
-- repository structure;
-- contracts and interfaces;
-- trust and distribution guarantees.
+- closed or product-specific business logic;
+- client-specific inventory, secrets, or runtime state;
+- domain-specific behavior that only makes sense in one downstream product;
+- a mandatory vendor-operated control plane.
 
-## Key Docs
+## Quick start
 
-- `docs/ATRIUM.md` — role and boundary of the Atrium foundation shell
-- `docs/TRUST_MODEL.md` — trust and ownership baseline
-- `docs/DISTRIBUTION_BASELINE.md` — distribution and deployment assumptions
-- `docs/FOUNDATION_COMPONENTS.md` — canonical inventory of first-wave foundation components and how the foundation uses them
-- `docs/FOUNDATION_MODULES.md` — current module scaffold and priorities
+1. Enter the development shell:
 
-## Quality Gates
+   ```bash
+   nix develop
+   ```
 
-The canonical local quality baseline is:
+2. Format the repository:
 
-- `nix fmt` for formatting via `alejandra`
-- `nix run .#lint` for the repository lint bundle
-- `nix run .#governance-lint` for `void`-specific NixOS governance checks
-- `nix flake check` for formatter, lints, and governance checks through the flake interface
+   ```bash
+   nix fmt
+   ```
+
+3. Run the local checks:
+
+   ```bash
+   nix run .#lint
+   nix run .#governance-lint
+   nix flake check
+   ```
+
+4. If you want to see how this foundation is consumed by a client-owned deployment repo, start with:
+
+   `templates/client-deploy/default/README.md`
+
+## Read next
+
+- `docs/README.md` — documentation map
+- `docs/TRUST_MODEL.md` — ownership and trust boundary
+- `docs/DISTRIBUTION_BASELINE.md` — self-hosted and NixOS-first baseline
+- `docs/FOUNDATION_COMPONENTS.md` — current foundation component inventory
+- `docs/ATRIUM.md` — role and limits of the Atrium foundation shell
+
+## Notes
+
+- Canonical documentation in `void-core` is English-first.
+- `void-core` is licensed under the Apache License 2.0.

@@ -35,6 +35,10 @@ export default defineConfig(({ mode }) => {
         "/auth": "http://localhost:8080"
       }
     },
+    test: {
+      environment: "jsdom",
+      globals: true
+    },
     build: {
       outDir: "../backend/internal/web/dist",
       emptyOutDir: true

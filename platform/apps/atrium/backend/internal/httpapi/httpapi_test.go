@@ -1,9 +1,15 @@
 package httpapi
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"atrium/internal/auth"
+	"atrium/internal/portal"
+	"atrium/internal/workspace"
 )
 
 func TestHealthOK(t *testing.T) {
@@ -15,5 +21,223 @@ func TestHealthOK(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestAuthModesWithoutAuth(t *testing.T) {
+	handler := Handler(Deps{})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/modes", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var payload map[string]bool
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode auth modes: %v", err)
+	}
+
+	if payload["oidc"] {
+		t.Fatalf("expected oidc to be disabled")
+	}
+	if payload["local"] {
+		t.Fatalf("expected local auth to be disabled")
+	}
+}
+
+func TestAuthModesWithLocalAuth(t *testing.T) {
+	manager, err := auth.NewManager(context.Background(), nil, auth.Config{
+		LocalEnabled: true,
+		CookieSecret: "test-secret",
+	})
+	if err != nil {
+		t.Fatalf("create auth manager: %v", err)
+	}
+
+	handler := Handler(Deps{Auth: manager})
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/modes", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var payload map[string]bool
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode auth modes: %v", err)
+	}
+
+	if payload["oidc"] {
+		t.Fatalf("expected oidc to be disabled")
+	}
+	if !payload["local"] {
+		t.Fatalf("expected local auth to be enabled")
+	}
+}
+
+func TestWorkspaceRouteReturnsPayload(t *testing.T) {
+	called := false
+	handler := Handler(Deps{
+		LoadSpaces: func(ctx context.Context) (workspace.SpaceWorkspace, error) {
+			called = true
+			return workspace.SpaceWorkspace{
+				Spaces: []workspace.Space{
+					{
+						ID:         "home",
+						DatabaseID: 1,
+						Title:      "Home",
+						LayoutMode: "grid",
+					},
+				},
+			}, nil
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/workspace", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if !called {
+		t.Fatalf("expected LoadSpaces to be called")
+	}
+
+	var payload workspace.SpaceWorkspace
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode workspace payload: %v", err)
+	}
+
+	if len(payload.Spaces) != 1 {
+		t.Fatalf("expected 1 space, got %d", len(payload.Spaces))
+	}
+	if payload.Spaces[0].ID != "home" {
+		t.Fatalf("expected space id home, got %q", payload.Spaces[0].ID)
+	}
+}
+
+func TestConfigReloadRoute(t *testing.T) {
+	t.Run("rejects wrong method", func(t *testing.T) {
+		handler := Handler(Deps{
+			ReloadConfig: func(ctx context.Context) error {
+				t.Fatalf("reload hook should not be called for GET")
+				return nil
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/api/config/reload", nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusMethodNotAllowed {
+			t.Fatalf("expected status 405, got %d", rec.Code)
+		}
+	})
+
+	t.Run("reloads config on post", func(t *testing.T) {
+		called := false
+		handler := Handler(Deps{
+			ReloadConfig: func(ctx context.Context) error {
+				called = true
+				return nil
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/api/config/reload", nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", rec.Code)
+		}
+		if !called {
+			t.Fatalf("expected ReloadConfig to be called")
+		}
+
+		var payload map[string]string
+		if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode reload response: %v", err)
+		}
+		if payload["status"] != "ok" {
+			t.Fatalf("expected reload status ok, got %q", payload["status"])
+		}
+	})
+}
+
+func TestDashboardRouteLoadsSpaceDashboard(t *testing.T) {
+	var loadedSpaceID int
+	handler := Handler(Deps{
+		LoadDashboard: func(ctx context.Context, spaceID int, session auth.Session) (portal.DashboardPayload, error) {
+			loadedSpaceID = spaceID
+			return portal.DashboardPayload{
+				Space: portal.SpaceSummary{
+					ID:    spaceID,
+					Title: "Home",
+					Slug:  "home",
+				},
+			}, nil
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/spaces/7/dashboard", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if loadedSpaceID != 7 {
+		t.Fatalf("expected dashboard to load space 7, got %d", loadedSpaceID)
+	}
+
+	var payload portal.DashboardPayload
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode dashboard response: %v", err)
+	}
+	if payload.Space.Slug != "home" {
+		t.Fatalf("expected dashboard slug home, got %q", payload.Space.Slug)
+	}
+}
+
+func TestBlocksDataRouteParsesIDsAndTypes(t *testing.T) {
+	handler := Handler(Deps{
+		LoadBlocksData: func(ctx context.Context, spaceID int, session auth.Session, blocks []portal.BlockDescriptor) (map[string]any, error) {
+			if spaceID != 5 {
+				t.Fatalf("expected space id 5, got %d", spaceID)
+			}
+			if len(blocks) != 2 {
+				t.Fatalf("expected 2 blocks, got %d", len(blocks))
+			}
+			if blocks[0].ID != "clock" || blocks[0].Type != "calendar" {
+				t.Fatalf("unexpected first block: %+v", blocks[0])
+			}
+			if blocks[1].ID != "notes" || blocks[1].Type != "notes" {
+				t.Fatalf("unexpected second block: %+v", blocks[1])
+			}
+			return map[string]any{
+				"clock": map[string]string{"status": "ok"},
+			}, nil
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/spaces/5/blocks/data?ids=clock,notes&types=calendar,", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var payload map[string]map[string]string
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode blocks response: %v", err)
+	}
+	if payload["clock"]["status"] != "ok" {
+		t.Fatalf("expected block data to be returned")
 	}
 }
