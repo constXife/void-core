@@ -1,0 +1,94 @@
+# Foundation Components
+
+## Purpose
+
+This document defines the canonical inventory of first-wave foundation components in `void-core`
+and explains how the foundation layer is expected to use them.
+
+It exists to:
+- make the first-wave foundation stack explicit;
+- separate reusable foundation components from product-specific composition;
+- clarify which parts belong to `void-core` and which remain client-owned deployment reality.
+
+This document is not:
+- a client host inventory;
+- a secret manifest;
+- a complete production BOM;
+- a promise that every deployment must be identical.
+
+## How to read this inventory
+
+Each component below is described in terms of:
+- its role in the foundation contour;
+- how `void-core` uses it;
+- where the boundary sits between foundation and client deployment;
+- whether it is part of the first-wave baseline.
+
+The goal is to describe reusable building blocks, not to encode one customer's exact topology.
+
+## First-wave baseline
+
+The current first-wave foundation baseline is intentionally narrow:
+- `naming`
+- `secrets/files`
+- `secrets/sops-baseline`
+- `auth/rauthy`
+- `dns/coredns`
+- `ingress/caddy`
+- `pki/step-ca`
+- `shell/atrium`
+
+Together these components provide:
+- stable service naming;
+- a baseline runtime secret contract;
+- identity and protected web access;
+- private DNS;
+- private HTTPS and trust bootstrap;
+- a first operator-facing shell.
+
+## Foundation component inventory
+
+| Component | First-wave status | Role | How `void-core` uses it | Boundary |
+| --- | --- | --- | --- | --- |
+| `naming` | `required` | defines the site domain and service FQDN contract | foundation modules derive service naming from a neutral site-domain model instead of hardcoded hostnames | concrete domain values and DNS delivery remain client-owned |
+| `secrets/files` | `required` | defines the runtime secret-files contract | modules consume file paths and secret material contracts without owning the secret values themselves | secret values, storage, rotation, and delivery remain client-owned |
+| `secrets/sops-baseline` | `optional baseline companion` | provides a reference way to materialize runtime secret files via `sops-nix` | foundation offers a canonical integration path for teams that want declarative secret materialization | deployments may use another compatible secret delivery path |
+| `auth/rauthy` | `required` | provides the first identity and protected web access baseline | foundation exposes a reusable auth primitive and integration seam for protected internal web endpoints | realm data, credentials, policies, and operational rollout remain client-owned |
+| `dns/coredns` | `required` | provides the preferred private-zone DNS resolver baseline | foundation uses `CoreDNS` as the first canonical private naming implementation | router, DHCP, network distribution, and environment-specific records remain client-owned |
+| `ingress/caddy` | `required` | provides the preferred host-based ingress baseline | foundation uses `Caddy` as the first canonical reverse-proxy entry for internal web services | actual ingress placement, certificates wiring, and deployment topology remain client-owned |
+| `pki/step-ca` | `required` | provides the preferred private CA and certificate issuance baseline | foundation uses `step-ca` as the first canonical private trust and ACME-compatible issuance primitive | root trust distribution, bootstrap handling, and CA operational material remain client-owned |
+| `shell/atrium` | `required` | provides the first foundation shell and entry surface | foundation exposes a reusable portal shell that higher-level products and profiles may package and extend | product-specific spaces, composition, and resource catalogs belong above the foundation layer |
+
+## Usage principles
+
+The inventory above should be interpreted with these rules:
+
+1. `void-core` owns reusable primitives and contracts.
+2. `void-core` may ship reference defaults and integration seams.
+3. `void-core` must not own client inventory, secrets, or runtime data.
+4. Products built above the foundation may compose these primitives differently, but should not redefine their core contracts casually.
+
+## Relationship to products
+
+`void-core` describes reusable components.
+Product repositories such as `void` describe how those components are packaged into a product contour.
+
+Examples:
+- `Caddy` belongs here as a foundation ingress baseline.
+- `Atrium` as a foundation shell belongs here.
+- a product-specific operator resource list does not belong here.
+- a client-specific deployment inventory does not belong here.
+
+## Related documents
+
+- `FOUNDATION_MODULES.md` — current module scaffold and first-wave priorities
+- `DISTRIBUTION_BASELINE.md` — distribution and deployment posture
+- `TRUST_MODEL.md` — trust, ownership, and boundary guarantees
+- `ATRIUM.md` — the role and limits of the Atrium foundation shell
+
+## What is not canonical yet
+
+- multiple equal first-wave ingress baselines;
+- a different auth system as an equally supported first-wave default;
+- a managed control plane as a required dependency;
+- client-specific services becoming part of the public foundation contract by accident.

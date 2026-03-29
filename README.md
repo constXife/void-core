@@ -41,6 +41,7 @@ Translations may be added later as optional convenience material, but the Englis
 - `docs/ATRIUM.md` — role and boundary of the Atrium foundation shell
 - `docs/TRUST_MODEL.md` — trust and ownership baseline
 - `docs/DISTRIBUTION_BASELINE.md` — distribution and deployment assumptions
+- `docs/FOUNDATION_COMPONENTS.md` — canonical inventory of first-wave foundation components and how the foundation uses them
 - `docs/FOUNDATION_MODULES.md` — current module scaffold and priorities
 
 ## Quality Gates
