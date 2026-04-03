@@ -31,11 +31,13 @@
       imports = [
         sops-nix.nixosModules.sops
         ./platform/nixos/modules/naming
+        ./platform/nixos/modules/data
         ./platform/nixos/modules/auth
         ./platform/nixos/modules/dns
         ./platform/nixos/modules/ingress
         ./platform/nixos/modules/pki
         ./platform/nixos/modules/shell
+        ./platform/nixos/modules/storage
         ./platform/nixos/modules/status
         ./platform/nixos/modules/secrets/files.nix
         ./platform/nixos/modules/secrets/sops-baseline.nix
@@ -102,6 +104,21 @@
                   default = null;
                   readOnly = true;
                   description = "Fully-qualified domain name for the private CA endpoint.";
+                };
+              };
+
+              s3 = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "s3";
+                  description = "Subdomain used for the object-storage endpoint.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the object-storage endpoint.";
                 };
               };
             };
@@ -221,6 +238,68 @@
               };
             };
 
+            data = {
+              postgresql = {
+                enable = lib.mkEnableOption "PostgreSQL foundation substrate";
+                package = lib.mkOption {
+                  type = lib.types.package;
+                  description = "PostgreSQL package used for the shared relational substrate.";
+                };
+                dataDir = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.absoluteRuntimePath;
+                  default = null;
+                  description = "Optional override for the PostgreSQL data directory.";
+                };
+                port = lib.mkOption {
+                  type = lib.types.port;
+                  default = 5432;
+                  description = "TCP port exposed by PostgreSQL.";
+                };
+                listenAddresses = lib.mkOption {
+                  type = lib.types.listOf (lib.types.strMatching "^.+$");
+                  default = ["127.0.0.1"];
+                  description = "Listen addresses forwarded into PostgreSQL listen_addresses.";
+                };
+                authentication = lib.mkOption {
+                  type = lib.types.lines;
+                  default = "";
+                  description = "pg_hba.conf fragment used for PostgreSQL authentication.";
+                };
+                settings = lib.mkOption {
+                  type = lib.types.attrs;
+                  default = {};
+                  description = "Additional services.postgresql.settings entries.";
+                };
+                initialDatabases = lib.mkOption {
+                  type = lib.types.listOf (lib.types.strMatching "^[A-Za-z_][A-Za-z0-9_-]*$");
+                  default = [];
+                  description = "Databases ensured during bootstrap.";
+                };
+                initialUsers = lib.mkOption {
+                  type = lib.types.listOf (lib.types.submodule {
+                    options = {
+                      name = lib.mkOption {
+                        type = lib.types.strMatching "^[A-Za-z_][A-Za-z0-9_-]*$";
+                        description = "Role name ensured during bootstrap.";
+                      };
+                      ensureDBOwnership = lib.mkOption {
+                        type = lib.types.bool;
+                        default = false;
+                        description = "Whether PostgreSQL should transfer ownership of the same-named database to this role.";
+                      };
+                      ensureClauses = lib.mkOption {
+                        type = lib.types.attrs;
+                        default = {};
+                        description = "Additional ensureClauses forwarded to services.postgresql.ensureUsers.";
+                      };
+                    };
+                  });
+                  default = [];
+                  description = "Roles ensured during bootstrap.";
+                };
+              };
+            };
+
             dns = {
               coredns = {
                 enable = lib.mkEnableOption "CoreDNS foundation baseline";
@@ -288,6 +367,115 @@
                   type = nixosTypes.absoluteRuntimePath;
                   default = "/var/lib/step-ca/public";
                   description = "Directory used to serve public CA bootstrap material over HTTP.";
+                };
+              };
+            };
+
+            storage = {
+              garage = {
+                enable = lib.mkEnableOption "Garage foundation object storage";
+                package = lib.mkOption {
+                  type = lib.types.package;
+                  description = "Garage package used for the object-storage substrate.";
+                };
+                logLevel = lib.mkOption {
+                  type = lib.types.enum [
+                    "error"
+                    "warn"
+                    "info"
+                    "debug"
+                    "trace"
+                  ];
+                  default = "info";
+                  description = "Garage log level.";
+                };
+                metadataDir = lib.mkOption {
+                  type = nixosTypes.absoluteRuntimePath;
+                  default = "/var/lib/garage/meta";
+                  description = "Metadata directory for Garage.";
+                };
+                dataDir = lib.mkOption {
+                  type = nixosTypes.absoluteRuntimePath;
+                  default = "/var/lib/garage/data";
+                  description = "Data directory for Garage object blocks.";
+                };
+                replicationFactor = lib.mkOption {
+                  type = lib.types.ints.positive;
+                  default = 1;
+                  description = "Garage replication_factor.";
+                };
+                consistencyMode = lib.mkOption {
+                  type = lib.types.enum [
+                    "consistent"
+                    "degraded"
+                  ];
+                  default = "consistent";
+                  description = "Garage consistency_mode.";
+                };
+                rpcBindAddress = lib.mkOption {
+                  type = lib.types.strMatching "^.+:[0-9]+$";
+                  default = "127.0.0.1:3901";
+                  description = "Garage RPC bind address.";
+                };
+                rpcPublicAddress = lib.mkOption {
+                  type = lib.types.strMatching "^.+:[0-9]+$";
+                  default = "127.0.0.1:3901";
+                  description = "Garage RPC public address advertised to peers.";
+                };
+                rpcSecretFile = lib.mkOption {
+                  type = nixosTypes.absoluteRuntimePath;
+                  default = "/run/secrets/garage-rpc-secret";
+                  description = "Runtime file containing the Garage RPC secret.";
+                };
+                s3ApiBindAddress = lib.mkOption {
+                  type = lib.types.strMatching "^.+:[0-9]+$";
+                  default = "127.0.0.1:3900";
+                  description = "Bind address for the Garage S3 API.";
+                };
+                s3Region = lib.mkOption {
+                  type = lib.types.strMatching "^[A-Za-z0-9._-]+$";
+                  default = "garage";
+                  description = "Garage S3 region name.";
+                };
+                s3RootDomain = lib.mkOption {
+                  type = lib.types.nullOr (lib.types.strMatching "^\\..+$");
+                  default = null;
+                  description = "Optional root_domain for virtual-hosted S3 access.";
+                };
+                webBindAddress = lib.mkOption {
+                  type = lib.types.nullOr (lib.types.strMatching "^.+:[0-9]+$");
+                  default = null;
+                  description = "Optional bind address for Garage website hosting.";
+                };
+                webRootDomain = lib.mkOption {
+                  type = lib.types.nullOr (lib.types.strMatching "^\\..+$");
+                  default = null;
+                  description = "Optional root_domain for Garage website hosting.";
+                };
+                adminBindAddress = lib.mkOption {
+                  type = lib.types.nullOr (lib.types.strMatching "^.+:[0-9]+$");
+                  default = null;
+                  description = "Optional bind address for the Garage admin API.";
+                };
+                adminTokenFile = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.absoluteRuntimePath;
+                  default = null;
+                  description = "Optional runtime file containing the Garage admin token.";
+                };
+                metricsTokenFile = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.absoluteRuntimePath;
+                  default = null;
+                  description = "Optional runtime file containing the Garage metrics token.";
+                };
+                extraEnvironment = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.str;
+                  default = {};
+                  description = "Extra environment variables passed to the Garage service.";
+                };
+                extraSettings = lib.mkOption {
+                  type = lib.types.attrs;
+                  default = {};
+                  description = "Additional Garage configuration merged into services.garage.settings.";
                 };
               };
             };
@@ -545,11 +733,13 @@
 
     nixosModules = {
       naming = import ./platform/nixos/modules/naming;
+      data = import ./platform/nixos/modules/data;
       auth = import ./platform/nixos/modules/auth;
       dns = import ./platform/nixos/modules/dns;
       ingress = import ./platform/nixos/modules/ingress;
       pki = import ./platform/nixos/modules/pki;
       shell = import ./platform/nixos/modules/shell;
+      storage = import ./platform/nixos/modules/storage;
       status = import ./platform/nixos/modules/status;
       secrets-files = import ./platform/nixos/modules/secrets/files.nix;
       sops-baseline = import ./platform/nixos/modules/secrets/sops-baseline.nix;

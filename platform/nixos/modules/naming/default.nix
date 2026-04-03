@@ -63,11 +63,27 @@ in {
         readOnly = true;
         description = "Fully-qualified domain name for the private CA endpoint.";
       };
+
+      s3.subdomain = lib.mkOption {
+        type = lib.types.nullOr types.dnsLabel;
+        default = "s3";
+        example = "s3";
+        description = "Subdomain used for the object-storage endpoint.";
+      };
+
+      s3.fqdn = lib.mkOption {
+        type = lib.types.nullOr types.fqdn;
+        readOnly = true;
+        description = "Fully-qualified domain name for the object-storage endpoint.";
+      };
     };
   };
 
   config = {
-    void.services.id.fqdn = mkFqdn config.void.services.id.subdomain;
-    void.services.ca.fqdn = mkFqdn config.void.services.ca.subdomain;
+    void.services = {
+      id.fqdn = mkFqdn config.void.services.id.subdomain;
+      ca.fqdn = mkFqdn config.void.services.ca.subdomain;
+      s3.fqdn = mkFqdn config.void.services.s3.subdomain;
+    };
   };
 }

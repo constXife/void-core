@@ -1,0 +1,5 @@
+{
+  imports = [
+    ./garage.nix
+  ];
+}
