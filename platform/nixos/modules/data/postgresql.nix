@@ -123,44 +123,47 @@ in {
     };
   };
 
-  assertions = [
+  config = lib.mkMerge [
     {
-      assertion = !cfg.enable || cfg.authentication != "";
-      message = "void.data.postgresql.enable requires a non-empty authentication contract.";
+      assertions = [
+        {
+          assertion = !cfg.enable || cfg.authentication != "";
+          message = "void.data.postgresql.enable requires a non-empty authentication contract.";
+        }
+        {
+          assertion = lib.length (lib.unique cfg.initialDatabases) == lib.length cfg.initialDatabases;
+          message = "void.data.postgresql.initialDatabases must not contain duplicates.";
+        }
+        {
+          assertion = lib.length (lib.unique (map (user: user.name) cfg.initialUsers)) == lib.length cfg.initialUsers;
+          message = "void.data.postgresql.initialUsers must not contain duplicate role names.";
+        }
+      ];
     }
-    {
-      assertion = lib.length (lib.unique cfg.initialDatabases) == lib.length cfg.initialDatabases;
-      message = "void.data.postgresql.initialDatabases must not contain duplicates.";
-    }
-    {
-      assertion = lib.length (lib.unique (map (user: user.name) cfg.initialUsers)) == lib.length cfg.initialUsers;
-      message = "void.data.postgresql.initialUsers must not contain duplicate role names.";
-    }
+    (lib.mkIf cfg.enable {
+      services.postgresql =
+        {
+          enable = true;
+          inherit (cfg) package authentication;
+          enableTCPIP = cfg.listenAddresses != [];
+          ensureDatabases = cfg.initialDatabases;
+          ensureUsers =
+            map (user: {
+              inherit (user) name ensureDBOwnership ensureClauses;
+            })
+            cfg.initialUsers;
+          settings =
+            {
+              inherit (cfg) port;
+            }
+            // lib.optionalAttrs (cfg.listenAddresses != []) {
+              listen_addresses = lib.concatStringsSep "," cfg.listenAddresses;
+            }
+            // cfg.settings;
+        }
+        // lib.optionalAttrs (cfg.dataDir != null) {
+          inherit (cfg) dataDir;
+        };
+    })
   ];
-
-  config = lib.mkIf cfg.enable {
-    services.postgresql =
-      {
-        enable = true;
-        inherit (cfg) package authentication;
-        enableTCPIP = cfg.listenAddresses != [];
-        ensureDatabases = cfg.initialDatabases;
-        ensureUsers =
-          map (user: {
-            inherit (user) name ensureDBOwnership ensureClauses;
-          })
-          cfg.initialUsers;
-        settings =
-          {
-            inherit (cfg) port;
-          }
-          // lib.optionalAttrs (cfg.listenAddresses != []) {
-            listen_addresses = lib.concatStringsSep "," cfg.listenAddresses;
-          }
-          // cfg.settings;
-      }
-      // lib.optionalAttrs (cfg.dataDir != null) {
-        inherit (cfg) dataDir;
-      };
-  };
 }

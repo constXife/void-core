@@ -161,65 +161,68 @@ in {
     };
   };
 
-  assertions = [
+  config = lib.mkMerge [
     {
-      assertion = cfg.adminTokenFile == null || cfg.adminBindAddress != null;
-      message = "void.storage.garage.adminTokenFile requires adminBindAddress to expose the admin API.";
-    }
-    {
-      assertion = cfg.metricsTokenFile == null || cfg.adminBindAddress != null;
-      message = "void.storage.garage.metricsTokenFile requires adminBindAddress to expose the admin API.";
-    }
-    {
-      assertion = cfg.webRootDomain == null || cfg.webBindAddress != null;
-      message = "void.storage.garage.webRootDomain requires webBindAddress.";
-    }
-  ];
-
-  config = lib.mkIf cfg.enable {
-    services.garage = {
-      enable = true;
-      inherit (cfg) package logLevel extraEnvironment;
-      settings =
+      assertions = [
         {
-          replication_factor = cfg.replicationFactor;
-          consistency_mode = cfg.consistencyMode;
-          metadata_dir = cfg.metadataDir;
-          data_dir = cfg.dataDir;
-          rpc_bind_addr = cfg.rpcBindAddress;
-          rpc_public_addr = cfg.rpcPublicAddress;
-          rpc_secret_file = cfg.rpcSecretFile;
-          s3_api =
-            {
-              api_bind_addr = cfg.s3ApiBindAddress;
-              s3_region = cfg.s3Region;
-            }
-            // lib.optionalAttrs (cfg.s3RootDomain != null) {
-              root_domain = cfg.s3RootDomain;
-            };
+          assertion = cfg.adminTokenFile == null || cfg.adminBindAddress != null;
+          message = "void.storage.garage.adminTokenFile requires adminBindAddress to expose the admin API.";
         }
-        // lib.optionalAttrs (cfg.webBindAddress != null) {
-          s3_web =
-            {
-              bind_addr = cfg.webBindAddress;
-            }
-            // lib.optionalAttrs (cfg.webRootDomain != null) {
-              root_domain = cfg.webRootDomain;
-            };
+        {
+          assertion = cfg.metricsTokenFile == null || cfg.adminBindAddress != null;
+          message = "void.storage.garage.metricsTokenFile requires adminBindAddress to expose the admin API.";
         }
-        // lib.optionalAttrs (cfg.adminBindAddress != null) {
-          admin =
-            {
-              api_bind_addr = cfg.adminBindAddress;
-            }
-            // lib.optionalAttrs (cfg.adminTokenFile != null) {
-              admin_token_file = cfg.adminTokenFile;
-            }
-            // lib.optionalAttrs (cfg.metricsTokenFile != null) {
-              metrics_token_file = cfg.metricsTokenFile;
-            };
+        {
+          assertion = cfg.webRootDomain == null || cfg.webBindAddress != null;
+          message = "void.storage.garage.webRootDomain requires webBindAddress.";
         }
-        // cfg.extraSettings;
-    };
-  };
+      ];
+    }
+    (lib.mkIf cfg.enable {
+      services.garage = {
+        enable = true;
+        inherit (cfg) package logLevel extraEnvironment;
+        settings =
+          {
+            replication_factor = cfg.replicationFactor;
+            consistency_mode = cfg.consistencyMode;
+            metadata_dir = cfg.metadataDir;
+            data_dir = cfg.dataDir;
+            rpc_bind_addr = cfg.rpcBindAddress;
+            rpc_public_addr = cfg.rpcPublicAddress;
+            rpc_secret_file = cfg.rpcSecretFile;
+            s3_api =
+              {
+                api_bind_addr = cfg.s3ApiBindAddress;
+                s3_region = cfg.s3Region;
+              }
+              // lib.optionalAttrs (cfg.s3RootDomain != null) {
+                root_domain = cfg.s3RootDomain;
+              };
+          }
+          // lib.optionalAttrs (cfg.webBindAddress != null) {
+            s3_web =
+              {
+                bind_addr = cfg.webBindAddress;
+              }
+              // lib.optionalAttrs (cfg.webRootDomain != null) {
+                root_domain = cfg.webRootDomain;
+              };
+          }
+          // lib.optionalAttrs (cfg.adminBindAddress != null) {
+            admin =
+              {
+                api_bind_addr = cfg.adminBindAddress;
+              }
+              // lib.optionalAttrs (cfg.adminTokenFile != null) {
+                admin_token_file = cfg.adminTokenFile;
+              }
+              // lib.optionalAttrs (cfg.metricsTokenFile != null) {
+                metrics_token_file = cfg.metricsTokenFile;
+              };
+          }
+          // cfg.extraSettings;
+      };
+    })
+  ];
 }
