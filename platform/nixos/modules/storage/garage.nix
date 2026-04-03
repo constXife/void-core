@@ -26,7 +26,8 @@
           "$(${pkgs.coreutils}/bin/tr -d '\r\n' < ${quote account.keyIdFile})" \
           "$(${pkgs.coreutils}/bin/tr -d '\r\n' < ${quote account.secretKeyFile})" \
           -n ${quote name} \
-          --yes
+          --yes \
+          >/dev/null
       fi
     '')
     provisionCfg.serviceAccounts;
