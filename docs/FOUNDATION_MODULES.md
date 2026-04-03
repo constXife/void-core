@@ -13,7 +13,7 @@ The first real foundation content in `void-core` is intentionally narrow:
 - `ingress/caddy` — provides a minimal host-based ingress baseline
 - `pki/step-ca` — provides a minimal private CA baseline
 - `shell/atrium` — provides the first foundation portal shell source tree and NixOS module baseline
-- `storage/garage` — future optional object-storage substrate for binary artifacts and media
+- `storage/garage` — optional object-storage substrate for binary artifacts and media, including a declarative provisioning seam for baseline buckets and service accounts
 
 ## Why This Comes First
 
@@ -29,6 +29,12 @@ This order matches the first-wave implementation strategy:
 8. object storage and richer state later
 
 The current modules are scaffolds, not a production-complete identity stack.
+
+For object storage specifically, the intended split is:
+
+- `void-core` provides the reusable `Garage` substrate and a generic provisioning contract
+- product repositories may publish recommended default bucket shapes
+- client-owned deployment repositories decide which defaults to enable, which concrete names/secrets to supply, and which extra buckets or grants to add
 
 ## Generated Docs
 

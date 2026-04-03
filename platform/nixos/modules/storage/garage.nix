@@ -8,6 +8,87 @@
   cfg = config.void.storage.garage;
   bindAddressType = lib.types.strMatching "^.+:[0-9]+$";
   rootDomainType = lib.types.strMatching "^\\..+$";
+  bucketNameType = lib.types.strMatching "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$";
+  keyNameType = lib.types.strMatching "^[A-Za-z0-9._-]+$";
+  quotaSizeType = lib.types.strMatching "^(none|[0-9]+[A-Za-z]+)$";
+  websiteDocumentType = lib.types.strMatching "^[A-Za-z0-9._/-]+$";
+  quote = lib.escapeShellArg;
+  provisionCfg = cfg.provision;
+  provisionStateDir = "/var/lib/void/garage-provision";
+  provisionSecretFiles = lib.concatMap (account: [
+    account.keyIdFile
+    account.secretKeyFile
+  ]) (lib.attrValues provisionCfg.serviceAccounts);
+  serviceAccountCommands =
+    lib.mapAttrsToList (name: account: ''
+      if ! garage key info ${quote name} >/dev/null 2>&1; then
+        garage key import \
+          "$(${pkgs.coreutils}/bin/tr -d '\r\n' < ${quote account.keyIdFile})" \
+          "$(${pkgs.coreutils}/bin/tr -d '\r\n' < ${quote account.secretKeyFile})" \
+          -n ${quote name} \
+          --yes
+      fi
+    '')
+    provisionCfg.serviceAccounts;
+  bucketCommands =
+    lib.mapAttrsToList (name: bucket: ''
+      if ! garage bucket info ${quote name} >/dev/null 2>&1; then
+        garage bucket create ${quote name}
+      fi
+      ${lib.optionalString bucket.website.enable ''
+        garage bucket website --allow ${quote name} \
+          -i ${quote bucket.website.indexDocument} \
+          ${lib.optionalString (bucket.website.errorDocument != null) "-e ${quote bucket.website.errorDocument}"}
+      ''}
+      ${lib.optionalString (bucket.maxSize != null || bucket.maxObjects != null) ''
+        garage bucket set-quotas ${quote name} \
+          ${
+          if bucket.maxSize != null
+          then "--max-size ${quote bucket.maxSize}"
+          else "--max-size none"
+        } \
+          ${
+          if bucket.maxObjects != null
+          then "--max-objects ${toString bucket.maxObjects}"
+          else "--max-objects none"
+        }
+      ''}
+    '')
+    provisionCfg.buckets;
+  grantCommands =
+    map (grant: ''
+      garage bucket allow \
+        ${lib.optionalString grant.read "--read "}\
+        ${lib.optionalString grant.write "--write "}\
+        ${lib.optionalString grant.owner "--owner "}\
+        ${quote grant.bucket} \
+        --key ${quote grant.serviceAccount}
+    '')
+    provisionCfg.grants;
+  provisionScript = pkgs.writeShellScript "void-garage-provision" ''
+    set -euo pipefail
+
+    export GARAGE_CONFIG_FILE=/etc/garage.toml
+    export GARAGE_RPC_SECRET_FILE=${quote cfg.rpcSecretFile}
+    export GARAGE_ADMIN_TOKEN_FILE=${quote cfg.adminTokenFile}
+
+    for _ in $(seq 1 ${toString provisionCfg.waitForSeconds}); do
+      if garage status >/dev/null 2>&1; then
+        break
+      fi
+      sleep 1
+    done
+
+    garage status >/dev/null
+
+    ${lib.concatStringsSep "\n" serviceAccountCommands}
+    ${lib.concatStringsSep "\n" bucketCommands}
+    ${lib.concatStringsSep "\n" grantCommands}
+    ${provisionCfg.extraCommands}
+
+    ${pkgs.coreutils}/bin/install -d -m 0750 ${quote provisionStateDir}
+    ${pkgs.coreutils}/bin/touch ${quote "${provisionStateDir}/applied"}
+  '';
 in {
   options.void.storage.garage = {
     enable = lib.mkEnableOption "Garage foundation object storage";
@@ -159,6 +240,159 @@ in {
       '';
       description = "Additional Garage configuration merged into services.garage.settings.";
     };
+
+    provision = {
+      enable = lib.mkEnableOption "declarative Garage provisioning for buckets, service accounts, and grants";
+
+      waitForSeconds = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 60;
+        example = 120;
+        description = "How long the provisioning service waits for Garage to become reachable.";
+      };
+
+      serviceAccounts = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule ({name, ...}: {
+          options = {
+            keyIdFile = lib.mkOption {
+              type = types.absoluteRuntimePath;
+              example = "/run/secrets/garage-assets-key-id";
+              description = "Runtime file containing the S3 access key ID for service account `${name}`.";
+            };
+
+            secretKeyFile = lib.mkOption {
+              type = types.absoluteRuntimePath;
+              example = "/run/secrets/garage-assets-secret-key";
+              description = "Runtime file containing the S3 secret key for service account `${name}`.";
+            };
+          };
+        }));
+        default = {};
+        example = lib.literalExpression ''
+          {
+            assets = {
+              keyIdFile = "/run/secrets/garage-assets-key-id";
+              secretKeyFile = "/run/secrets/garage-assets-secret-key";
+            };
+          }
+        '';
+        description = ''
+          Declarative Garage S3 service accounts keyed by logical key name.
+          Values are imported idempotently through `garage key import`.
+        '';
+      };
+
+      buckets = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule ({name, ...}: {
+          options = {
+            maxSize = lib.mkOption {
+              type = lib.types.nullOr quotaSizeType;
+              default = null;
+              example = "20GiB";
+              description = "Optional max-size quota for bucket `${name}`.";
+            };
+
+            maxObjects = lib.mkOption {
+              type = lib.types.nullOr lib.types.ints.positive;
+              default = null;
+              example = 500000;
+              description = "Optional max-objects quota for bucket `${name}`.";
+            };
+
+            website = {
+              enable = lib.mkEnableOption "Garage website hosting for bucket `${name}`";
+
+              indexDocument = lib.mkOption {
+                type = websiteDocumentType;
+                default = "index.html";
+                example = "index.html";
+                description = "Index document used when website hosting is enabled.";
+              };
+
+              errorDocument = lib.mkOption {
+                type = lib.types.nullOr websiteDocumentType;
+                default = null;
+                example = "404.html";
+                description = "Optional error document used when website hosting is enabled.";
+              };
+            };
+          };
+        }));
+        default = {};
+        example = lib.literalExpression ''
+          {
+            arkham-assets = {};
+            arkham-static = {
+              website.enable = true;
+            };
+          }
+        '';
+        description = ''
+          Declarative Garage buckets keyed by bucket name.
+          Buckets are created idempotently and may optionally receive quotas or website settings.
+        '';
+      };
+
+      grants = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            bucket = lib.mkOption {
+              type = bucketNameType;
+              example = "arkham-assets";
+              description = "Target bucket name.";
+            };
+
+            serviceAccount = lib.mkOption {
+              type = keyNameType;
+              example = "assets";
+              description = "Logical service account name from `void.storage.garage.provision.serviceAccounts`.";
+            };
+
+            read = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether the service account may read objects from the bucket.";
+            };
+
+            write = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether the service account may write objects to the bucket.";
+            };
+
+            owner = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether the service account may perform administrative bucket operations.";
+            };
+          };
+        });
+        default = [];
+        example = lib.literalExpression ''
+          [
+            {
+              bucket = "arkham-assets";
+              serviceAccount = "assets";
+              read = true;
+              write = true;
+            }
+          ]
+        '';
+        description = "Declarative bucket grants applied through `garage bucket allow`.";
+      };
+
+      extraCommands = lib.mkOption {
+        type = lib.types.lines;
+        default = "";
+        example = ''
+          garage bucket alias arkham-assets assets
+        '';
+        description = ''
+          Extra shell commands appended to the end of the provisioning service.
+          Use this as an escape hatch for client-specific Garage provisioning that does not yet justify a first-class option.
+        '';
+      };
+    };
   };
 
   config = lib.mkMerge [
@@ -175,6 +409,53 @@ in {
         {
           assertion = cfg.webRootDomain == null || cfg.webBindAddress != null;
           message = "void.storage.garage.webRootDomain requires webBindAddress.";
+        }
+        {
+          assertion = !provisionCfg.enable || cfg.enable;
+          message = "void.storage.garage.provision.enable requires void.storage.garage.enable.";
+        }
+        {
+          assertion = !provisionCfg.enable || cfg.adminBindAddress != null;
+          message = "void.storage.garage.provision.enable requires adminBindAddress.";
+        }
+        {
+          assertion = !provisionCfg.enable || cfg.adminTokenFile != null;
+          message = "void.storage.garage.provision.enable requires adminTokenFile.";
+        }
+        {
+          assertion =
+            lib.all
+            (name: builtins.match "^[A-Za-z0-9._-]+$" name != null)
+            (builtins.attrNames provisionCfg.serviceAccounts);
+          message = "Garage provision.serviceAccounts names may contain only ASCII letters, digits, dot, underscore, and dash.";
+        }
+        {
+          assertion =
+            lib.all
+            (name: builtins.match "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$" name != null)
+            (builtins.attrNames provisionCfg.buckets);
+          message = "Garage provision.buckets attribute names must be valid bucket names.";
+        }
+        {
+          assertion =
+            lib.all
+            (grant: grant.read || grant.write || grant.owner)
+            provisionCfg.grants;
+          message = "Each Garage provision grant must enable at least one of read, write, or owner.";
+        }
+        {
+          assertion =
+            lib.all
+            (grant: builtins.hasAttr grant.bucket provisionCfg.buckets)
+            provisionCfg.grants;
+          message = "Each Garage provision grant must reference a declared bucket.";
+        }
+        {
+          assertion =
+            lib.all
+            (grant: builtins.hasAttr grant.serviceAccount provisionCfg.serviceAccounts)
+            provisionCfg.grants;
+          message = "Each Garage provision grant must reference a declared service account.";
         }
       ];
     }
@@ -222,6 +503,28 @@ in {
               };
           }
           // cfg.extraSettings;
+      };
+    })
+    (lib.mkIf provisionCfg.enable {
+      systemd.services.void-garage-provision = {
+        description = "Declarative Garage provisioning";
+        after = [
+          "garage.service"
+          "network-online.target"
+        ];
+        wants = ["network-online.target"];
+        requires = ["garage.service"];
+        wantedBy = ["multi-user.target"];
+        restartTriggers = [provisionScript] ++ provisionSecretFiles;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          RuntimeDirectory = "void-garage-provision";
+        };
+        path = [cfg.package pkgs.coreutils];
+        script = ''
+          ${provisionScript}
+        '';
       };
     })
   ];
