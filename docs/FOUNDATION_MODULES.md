@@ -7,11 +7,13 @@ The first real foundation content in `void-core` is intentionally narrow:
 - `naming` — defines the site domain and service FQDN contract
 - `secrets/files` — defines the runtime secret-files contract
 - `secrets/sops-baseline` — provides an optional `sops-nix` reference baseline for materializing runtime secret files
+- `data/postgresql` — provides the canonical relational storage substrate for foundation and product consumers
 - `auth/rauthy` — provides a minimal Rauthy container and config-generation integration
 - `dns/coredns` — provides a minimal private-zone resolver baseline
 - `ingress/caddy` — provides a minimal host-based ingress baseline
 - `pki/step-ca` — provides a minimal private CA baseline
 - `shell/atrium` — provides the first foundation portal shell source tree and NixOS module baseline
+- `storage/garage` — future optional object-storage substrate for binary artifacts and media
 
 ## Why This Comes First
 
@@ -20,10 +22,11 @@ This order matches the first-wave implementation strategy:
 1. deployment skeleton
 2. private naming contract
 3. bootstrap secrets
-4. auth baseline
-5. private DNS, ingress, and PKI baseline
-6. shell baseline via Atrium
-7. richer status later
+4. relational state substrate
+5. auth baseline
+6. private DNS, ingress, and PKI baseline
+7. shell baseline via Atrium
+8. object storage and richer state later
 
 The current modules are scaffolds, not a production-complete identity stack.
 

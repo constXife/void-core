@@ -32,6 +32,7 @@ The current first-wave foundation baseline is intentionally narrow:
 - `naming`
 - `secrets/files`
 - `secrets/sops-baseline`
+- `data/postgresql`
 - `auth/rauthy`
 - `dns/coredns`
 - `ingress/caddy`
@@ -41,6 +42,7 @@ The current first-wave foundation baseline is intentionally narrow:
 Together these components provide:
 - stable service naming;
 - a baseline runtime secret contract;
+- a canonical SQL substrate for shared foundation and product state;
 - identity and protected web access;
 - private DNS;
 - private HTTPS and trust bootstrap;
@@ -53,11 +55,13 @@ Together these components provide:
 | `naming` | `required` | defines the site domain and service FQDN contract | foundation modules derive service naming from a neutral site-domain model instead of hardcoded hostnames | concrete domain values and DNS delivery remain client-owned |
 | `secrets/files` | `required` | defines the runtime secret-files contract | modules consume file paths and secret material contracts without owning the secret values themselves | secret values, storage, rotation, and delivery remain client-owned |
 | `secrets/sops-baseline` | `optional baseline companion` | provides a reference way to materialize runtime secret files via `sops-nix` | foundation offers a canonical integration path for teams that want declarative secret materialization | deployments may use another compatible secret delivery path |
+| `data/postgresql` | `required` | provides the canonical SQL substrate for shared service state | foundation exposes a reusable database primitive for services such as `Rauthy` and other product-level consumers that require relational state | physical placement, credentials, HA/backup posture, sizing, and tenant-specific database layout remain client-owned |
 | `auth/rauthy` | `required` | provides the first identity and protected web access baseline | foundation exposes a reusable auth primitive and integration seam for protected internal web endpoints | realm data, credentials, policies, and operational rollout remain client-owned |
 | `dns/coredns` | `required` | provides the preferred private-zone DNS resolver baseline | foundation uses `CoreDNS` as the first canonical private naming implementation | router, DHCP, network distribution, and environment-specific records remain client-owned |
 | `ingress/caddy` | `required` | provides the preferred host-based ingress baseline | foundation uses `Caddy` as the first canonical reverse-proxy entry for internal web services | actual ingress placement, certificates wiring, and deployment topology remain client-owned |
 | `pki/step-ca` | `required` | provides the preferred private CA and certificate issuance baseline | foundation uses `step-ca` as the first canonical private trust and ACME-compatible issuance primitive | root trust distribution, bootstrap handling, and CA operational material remain client-owned |
 | `shell/atrium` | `required` | provides the first foundation shell and entry surface | foundation exposes a reusable portal shell that higher-level products and profiles may package and extend | product-specific spaces, composition, and resource catalogs belong above the foundation layer |
+| `storage/garage` | `optional foundation companion` | provides the preferred object-storage substrate for blobs and large artifacts | foundation may expose an S3-compatible storage primitive for media, attachments, exports, backups, and other binary objects without pushing those payloads into graph or SQL models | bucket layout, retention, replication, durability choices, and concrete client data remain client-owned |
 
 ## Usage principles
 
@@ -76,6 +80,8 @@ Product repositories such as `void` describe how those components are packaged i
 Examples:
 - `Caddy` belongs here as a foundation ingress baseline.
 - `Atrium` as a foundation shell belongs here.
+- `PostgreSQL` as a shared relational substrate belongs here.
+- `Garage` as a preferred object-storage primitive belongs here.
 - a product-specific operator resource list does not belong here.
 - a client-specific deployment inventory does not belong here.
 
