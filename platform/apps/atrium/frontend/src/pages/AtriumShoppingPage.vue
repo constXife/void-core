@@ -15,8 +15,10 @@ const {
 } = storeToRefs(appStore);
 
 const manualItemTitle = ref("");
+const editingIntentId = ref("");
 const intentTitle = ref("");
 const intentCategory = ref("other");
+const intentStatus = ref("wanted");
 const intentPriority = ref("normal");
 const intentNote = ref("");
 
@@ -55,10 +57,17 @@ const copy = computed(() =>
         createIntentTitleLabel: "Что нужно купить",
         createIntentTitlePlaceholder: "Например: фильтры для кофе",
         createIntentCategoryLabel: "Категория",
+        createIntentStatusLabel: "Статус",
         createIntentPriorityLabel: "Приоритет",
         createIntentNoteLabel: "Заметка",
         createIntentNotePlaceholder: "Почему это нужно или какие есть ограничения",
         createIntentButton: "Добавить потребность",
+        editIntentLabel: "Правка потребности",
+        editIntentButton: "Сохранить изменения",
+        editIntentHint:
+          "Это правит общий purchase intent. Когда позиция в shopping run становится «куплено» или «снято», intent закрывается автоматически.",
+        editIntentAction: "Править",
+        cancelIntentButton: "Отменить",
         createIntentRequired: "Сначала укажи, что именно нужно купить.",
         quickAddLabel: "Быстро добавить вручную",
         quickAddPlaceholder: "Например: фильтры для кофе",
@@ -103,10 +112,17 @@ const copy = computed(() =>
         createIntentTitleLabel: "What needs to be bought",
         createIntentTitlePlaceholder: "For example: coffee filters",
         createIntentCategoryLabel: "Category",
+        createIntentStatusLabel: "Status",
         createIntentPriorityLabel: "Priority",
         createIntentNoteLabel: "Note",
         createIntentNotePlaceholder: "Why this matters or any constraints",
         createIntentButton: "Add need",
+        editIntentLabel: "Edit need",
+        editIntentButton: "Save changes",
+        editIntentHint:
+          "This edits the shared purchase intent. When a shopping item becomes purchased or dismissed, the linked intent closes automatically.",
+        editIntentAction: "Edit",
+        cancelIntentButton: "Cancel",
         createIntentRequired: "Enter what needs to be bought first.",
         quickAddLabel: "Quick add",
         quickAddPlaceholder: "For example: coffee filters",
@@ -227,24 +243,59 @@ const intentPriorityOptions = computed(() =>
     label: localizedValue(priorityLabels, value)
   }))
 );
+const intentStatusOptions = computed(() =>
+  ["considering", "wanted", "planned", "fulfilled", "cancelled"].map((value) => ({
+    value,
+    label: localizedValue(statusLabels, value)
+  }))
+);
+const isEditingIntent = computed(() => !!editingIntentId.value);
 
-const createIntent = async () => {
+const resetIntentForm = () => {
+  editingIntentId.value = "";
+  intentTitle.value = "";
+  intentCategory.value = "other";
+  intentStatus.value = "wanted";
+  intentPriority.value = "normal";
+  intentNote.value = "";
+};
+
+const submitIntent = async () => {
   const title = intentTitle.value.trim();
   if (!title) {
     shoppingMutationError.value = copy.value.createIntentRequired;
     return;
   }
 
-  await appStore.createShoppingIntent({
-    title,
-    intentCategory: intentCategory.value,
-    priority: intentPriority.value,
-    note: intentNote.value
-  });
-  intentTitle.value = "";
-  intentCategory.value = "other";
-  intentPriority.value = "normal";
-  intentNote.value = "";
+  if (editingIntentId.value) {
+    await appStore.patchShoppingIntent(editingIntentId.value, {
+      title,
+      intentCategory: intentCategory.value,
+      intentStatus: intentStatus.value,
+      priority: intentPriority.value,
+      note: intentNote.value
+    });
+  } else {
+    await appStore.createShoppingIntent({
+      title,
+      intentCategory: intentCategory.value,
+      intentStatus: intentStatus.value,
+      priority: intentPriority.value,
+      note: intentNote.value
+    });
+  }
+  resetIntentForm();
+};
+
+const startEditingIntent = (item) => {
+  const intentID = String(item?.intent_id || item?.instance_id || "").trim();
+  if (!intentID) return;
+  editingIntentId.value = intentID;
+  intentTitle.value = String(item?.title || "").trim();
+  intentCategory.value = String(item?.intent_category || "other").trim().toLowerCase() || "other";
+  intentStatus.value = String(item?.intent_status || "wanted").trim().toLowerCase() || "wanted";
+  intentPriority.value = String(item?.priority || "normal").trim().toLowerCase() || "normal";
+  intentNote.value = String(item?.note || "").trim();
 };
 
 const addNeedToRun = async (item) => {
@@ -329,8 +380,10 @@ onMounted(() => {
           <h2>{{ copy.needs }}</h2>
           <span>{{ summary?.needs_to_buy?.count || 0 }}</span>
         </div>
-        <form class="shopping-create-intent" @submit.prevent="createIntent">
-          <div class="shopping-create-intent-header">{{ copy.createIntentLabel }}</div>
+        <form class="shopping-create-intent" @submit.prevent="submitIntent">
+          <div class="shopping-create-intent-header">
+            {{ isEditingIntent ? copy.editIntentLabel : copy.createIntentLabel }}
+          </div>
           <div class="shopping-create-intent-grid">
             <label class="shopping-field">
               <span class="shopping-field-label">{{ copy.createIntentTitleLabel }}</span>
@@ -346,6 +399,14 @@ onMounted(() => {
               <span class="shopping-field-label">{{ copy.createIntentCategoryLabel }}</span>
               <select v-model="intentCategory" class="shopping-input shopping-select" :disabled="!!shoppingMutationPendingKey">
                 <option v-for="option in intentCategoryOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="shopping-field">
+              <span class="shopping-field-label">{{ copy.createIntentStatusLabel }}</span>
+              <select v-model="intentStatus" class="shopping-input shopping-select" :disabled="!!shoppingMutationPendingKey">
+                <option v-for="option in intentStatusOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
@@ -369,10 +430,22 @@ onMounted(() => {
               :disabled="!!shoppingMutationPendingKey"
             />
           </label>
-          <button class="shopping-action shopping-action-small" type="submit" :disabled="!!shoppingMutationPendingKey">
-            <Plus class="w-4 h-4" />
-            <span>{{ copy.createIntentButton }}</span>
-          </button>
+          <p v-if="isEditingIntent" class="shopping-create-intent-hint">{{ copy.editIntentHint }}</p>
+          <div class="shopping-create-intent-actions">
+            <button class="shopping-action shopping-action-small" type="submit" :disabled="!!shoppingMutationPendingKey">
+              <Plus class="w-4 h-4" />
+              <span>{{ isEditingIntent ? copy.editIntentButton : copy.createIntentButton }}</span>
+            </button>
+            <button
+              v-if="isEditingIntent"
+              class="shopping-action shopping-action-small shopping-action-muted"
+              type="button"
+              :disabled="!!shoppingMutationPendingKey"
+              @click="resetIntentForm"
+            >
+              <span>{{ copy.cancelIntentButton }}</span>
+            </button>
+          </div>
         </form>
         <div v-if="needsToBuy.length === 0" class="shopping-empty">{{ copy.emptyNeeds }}</div>
         <ul v-else class="shopping-list">
@@ -382,13 +455,22 @@ onMounted(() => {
                 <div class="shopping-item-title">{{ titleFor(item) }}</div>
                 <div class="shopping-item-meta">{{ chipText(item) }}</div>
               </div>
-              <button
-                class="shopping-chip-action"
-                :disabled="isNeedQueued(item) || !!shoppingMutationPendingKey || !item.intent_id"
-                @click="addNeedToRun(item)"
-              >
-                {{ isNeedQueued(item) ? copy.alreadyQueued : copy.addToRun }}
-              </button>
+              <div class="shopping-item-inline-actions">
+                <button
+                  class="shopping-chip-action shopping-chip-action-muted"
+                  :disabled="!!shoppingMutationPendingKey || !item.intent_id"
+                  @click="startEditingIntent(item)"
+                >
+                  {{ copy.editIntentAction }}
+                </button>
+                <button
+                  class="shopping-chip-action"
+                  :disabled="isNeedQueued(item) || !!shoppingMutationPendingKey || !item.intent_id"
+                  @click="addNeedToRun(item)"
+                >
+                  {{ isNeedQueued(item) ? copy.alreadyQueued : copy.addToRun }}
+                </button>
+              </div>
             </div>
           </li>
         </ul>
@@ -732,12 +814,26 @@ onMounted(() => {
 
 .shopping-create-intent-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.8fr) repeat(3, minmax(0, 1fr));
   gap: 0.7rem;
 }
 
 .shopping-field {
   display: grid;
+  gap: 0.45rem;
+}
+
+.shopping-create-intent-hint {
+  margin: 0.75rem 0 0;
+  color: rgba(255, 247, 224, 0.68);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.shopping-create-intent-actions,
+.shopping-item-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.45rem;
 }
 
@@ -875,6 +971,7 @@ onMounted(() => {
 
   .shopping-hero,
   .shopping-item-row,
+  .shopping-item-inline-actions,
   .shopping-quick-add-row {
     flex-direction: column;
   }

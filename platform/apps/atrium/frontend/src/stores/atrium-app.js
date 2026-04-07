@@ -394,6 +394,38 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     );
   };
 
+  const patchShoppingIntent = async (
+    intentID,
+    { title, intentCategory, priority, note, intentStatus } = {}
+  ) => {
+    const normalizedIntentID = String(intentID || "").trim();
+    if (!normalizedIntentID) return null;
+
+    const payload = {};
+    if (title !== undefined) {
+      payload.title = String(title || "");
+    }
+    if (intentCategory !== undefined) {
+      payload.intent_category = String(intentCategory || "").trim().toLowerCase();
+    }
+    if (priority !== undefined) {
+      payload.priority = String(priority || "").trim().toLowerCase();
+    }
+    if (note !== undefined) {
+      payload.note = String(note || "");
+    }
+    if (intentStatus !== undefined) {
+      payload.intent_status = String(intentStatus || "").trim().toLowerCase();
+    }
+
+    return runShoppingMutation(`shopping-intent:${normalizedIntentID}`, async () =>
+      fetchJSON(`/api/shopping/intents/${encodeURIComponent(normalizedIntentID)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      })
+    );
+  };
+
   const addManualShoppingItem = async (title) => {
     const normalizedTitle = String(title || "").trim();
     if (!normalizedTitle) return null;
@@ -580,6 +612,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     blockTypeIs: (...args) => blockTypeIs(...args),
     blocksForSpace: (...args) => blocksForSpace(...args),
     closeShoppingRun: (...args) => closeShoppingRun(...args),
+    createShoppingIntent: (...args) => createShoppingIntent(...args),
     fetchJSON,
     isAdminSpace: (...args) => isAdminSpace(...args),
     isKidsSpace: (...args) => isKidsSpace(...args),
@@ -588,6 +621,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     navigateTo: (...args) => navigateTo(...args),
     navigateToAdmin: (...args) => navigateToAdmin(...args),
     notify,
+    patchShoppingIntent: (...args) => patchShoppingIntent(...args),
     recentResourcesBySpace,
     recentResourcesKey,
     settingsStore,
@@ -1204,6 +1238,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     addMembership,
     addShoppingNeedToRun,
     createShoppingIntent,
+    patchShoppingIntent,
     adminSubtitle,
     adminTab,
     adminTitle,

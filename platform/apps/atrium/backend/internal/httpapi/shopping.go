@@ -57,6 +57,26 @@ func handleShoppingIntents(w http.ResponseWriter, r *http.Request, deps Deps) {
 	proxyShoppingRequest(w, r, deps, target)
 }
 
+func handleShoppingIntent(w http.ResponseWriter, r *http.Request, deps Deps) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	intentID := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/api/shopping/intents/"))
+	if intentID == "" || strings.Contains(intentID, "/") {
+		http.NotFound(w, r)
+		return
+	}
+
+	target, err := shoppingTargetURL(strings.TrimSpace(deps.ShoppingAPIBaseURL), path.Join("/shopping/intents", intentID))
+	if err != nil {
+		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
+		return
+	}
+	proxyShoppingRequest(w, r, deps, target)
+}
+
 func handleShoppingRun(w http.ResponseWriter, r *http.Request, deps Deps) {
 	if r.Method != http.MethodPatch {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
