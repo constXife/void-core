@@ -250,7 +250,7 @@ onMounted(loadSummary);
 .shopping-page {
   width: min(1280px, calc(100vw - 2rem));
   margin: 0 auto 3rem;
-  padding: 1rem 0 0;
+  padding: clamp(6.5rem, 8vw, 7.75rem) 0 0;
 }
 
 .shopping-hero {
@@ -454,6 +454,10 @@ onMounted(loadSummary);
 }
 
 @media (max-width: 980px) {
+  .shopping-page {
+    padding-top: 9.5rem;
+  }
+
   .shopping-metrics,
   .shopping-grid {
     grid-template-columns: 1fr;
