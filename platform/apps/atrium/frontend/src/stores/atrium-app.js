@@ -246,6 +246,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
       authEnabled.value = false;
     }
   });
+  const shoppingSummary = ref(null);
+  const shoppingSummaryLoading = ref(false);
+  const shoppingSummaryError = ref("");
 
   const loadSession = async () => {
     if (sessionLoaded.value) return me.value;
@@ -260,6 +263,29 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   };
 
   const ensureSession = async () => loadSession();
+
+  const loadShoppingSummary = async ({ force = false } = {}) => {
+    if (!me.value) {
+      shoppingSummary.value = null;
+      shoppingSummaryError.value = "";
+      shoppingSummaryLoading.value = false;
+      return null;
+    }
+    if (shoppingSummaryLoading.value) return shoppingSummary.value;
+    if (!force && shoppingSummary.value) return shoppingSummary.value;
+
+    shoppingSummaryLoading.value = true;
+    shoppingSummaryError.value = "";
+    try {
+      shoppingSummary.value = await fetchJSON("/api/shopping/summary");
+    } catch (err) {
+      shoppingSummary.value = null;
+      shoppingSummaryError.value = String(err?.message || "");
+    } finally {
+      shoppingSummaryLoading.value = false;
+    }
+    return shoppingSummary.value;
+  };
 
   const {
     loadAll,
@@ -396,11 +422,15 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     isAdminSpace: (...args) => isAdminSpace(...args),
     isKidsSpace: (...args) => isKidsSpace(...args),
     isPublicReadonlySpace: (...args) => isPublicReadonlySpace(...args),
+    navigateTo: (...args) => navigateTo(...args),
     navigateToAdmin: (...args) => navigateToAdmin(...args),
     notify,
     recentResourcesBySpace,
     recentResourcesKey,
     settingsStore,
+    shoppingSummary,
+    shoppingSummaryError,
+    shoppingSummaryLoading,
     showUserDropdown,
     spaces,
     t: (...args) => t(...args),
@@ -956,9 +986,13 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
       updateClock();
       updateViewport();
       await loadAll();
+      await loadShoppingSummary();
       workspaceBootstrapped.value = true;
     } else {
       await loadSession();
+      if (me.value && !shoppingSummary.value) {
+        await loadShoppingSummary();
+      }
     }
 
     await syncRouteSelection(route);
@@ -1200,6 +1234,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     showDevLogin,
     showShortcuts,
     showUserDropdown,
+    shoppingSummary,
+    shoppingSummaryError,
+    shoppingSummaryLoading,
     spaceDescription,
     spaceIconLabel,
     spaceMetaLabel,

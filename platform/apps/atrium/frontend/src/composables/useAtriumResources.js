@@ -9,11 +9,15 @@ export function useAtriumResources({
   isAdminSpace,
   isKidsSpace,
   isPublicReadonlySpace,
+  navigateTo,
   navigateToAdmin,
   notify,
   recentResourcesBySpace,
   recentResourcesKey,
   settingsStore,
+  shoppingSummary,
+  shoppingSummaryError,
+  shoppingSummaryLoading,
   showUserDropdown,
   spaces,
   t,
@@ -261,11 +265,89 @@ export function useAtriumResources({
     return items;
   };
 
+  const surfaceShoppingAction = () => ({
+    actionKind: "route",
+    actionLabel: t("surface.action.openShopping"),
+    actionTarget: "/shopping"
+  });
+
+  const shoppingCardTitles = (items, fallback) => {
+    const titles = (Array.isArray(items) ? items : [])
+      .map((item) => String(item?.title || item?.item_name || item?.name || "").trim())
+      .filter(Boolean)
+      .slice(0, 2);
+    return titles.length ? titles.join(" · ") : fallback;
+  };
+
   const surfaceCardsFor = (space) => {
     if (!space) return [];
     const resources = resourceEntriesForSpace(space);
     if (isAdminSpace(space)) {
-      return [];
+      if (shoppingSummaryLoading.value) {
+        return [
+          {
+            id: "shopping-loading",
+            eyebrow: t("surface.shopping.title"),
+            title: t("surface.shopping.loadingTitle"),
+            body: t("surface.shopping.loadingBody"),
+            ...surfaceShoppingAction()
+          }
+        ];
+      }
+      if (shoppingSummaryError.value) {
+        return [
+          {
+            id: "shopping-error",
+            eyebrow: t("surface.shopping.title"),
+            title: t("surface.state.review"),
+            body: t("surface.shopping.errorBody"),
+            ...surfaceShoppingAction()
+          }
+        ];
+      }
+
+      const summary = shoppingSummary.value || {};
+      const needs = summary?.needs_to_buy || {};
+      const activeRun = summary?.active_run || {};
+      const recentlyClosed = summary?.recently_closed || {};
+      const activeRunRecord = activeRun?.run || null;
+      const activeRunItems = Array.isArray(activeRun?.items) ? activeRun.items : [];
+      const actionableCount = Number(activeRun?.actionable_count || 0);
+
+      return [
+        {
+          id: "shopping-needs",
+          eyebrow: t("surface.shopping.needsTitle"),
+          title: Number(needs?.count || 0)
+            ? t("surface.shopping.needsValue", { count: Number(needs.count || 0) })
+            : t("surface.shopping.emptyNeedsTitle"),
+          body: shoppingCardTitles(needs?.items, t("surface.shopping.emptyNeedsBody")),
+          ...surfaceShoppingAction()
+        },
+        {
+          id: "shopping-run",
+          eyebrow: t("surface.shopping.runTitle"),
+          title:
+            String(activeRunRecord?.title || activeRunRecord?.run_id || "").trim() ||
+            t("surface.shopping.emptyRunTitle"),
+          body: activeRunRecord
+            ? t("surface.shopping.runValue", {
+                count: activeRunItems.length,
+                actionable: actionableCount
+              })
+            : t("surface.shopping.emptyRunBody"),
+          ...surfaceShoppingAction()
+        },
+        {
+          id: "shopping-closed",
+          eyebrow: t("surface.shopping.closedTitle"),
+          title: Number(recentlyClosed?.count || 0)
+            ? t("surface.shopping.closedValue", { count: Number(recentlyClosed.count || 0) })
+            : t("surface.shopping.emptyClosedTitle"),
+          body: shoppingCardTitles(recentlyClosed?.items, t("surface.shopping.emptyClosedBody")),
+          ...surfaceShoppingAction()
+        }
+      ];
     }
     if (isKidsSpace(space)) {
       const safeResources = resources.slice(0, 3).map((item) => item.title);
@@ -297,8 +379,8 @@ export function useAtriumResources({
     if (!space) return { title: "", subtitle: "" };
     if (isAdminSpace(space)) {
       return {
-        title: t("surface.admin.title"),
-        subtitle: t("surface.admin.subtitle")
+        title: t("surface.shopping.title"),
+        subtitle: t("surface.shopping.subtitle")
       };
     }
     if (isKidsSpace(space)) {
@@ -314,6 +396,10 @@ export function useAtriumResources({
     if (!card?.actionKind || !card?.actionTarget) return;
     if (card.actionKind === "url") {
       window.open(card.actionTarget, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (card.actionKind === "route") {
+      navigateTo(card.actionTarget);
       return;
     }
     if (card.actionKind === "admin-tab") {
