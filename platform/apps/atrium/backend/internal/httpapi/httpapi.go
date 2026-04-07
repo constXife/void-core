@@ -48,6 +48,9 @@ type Deps struct {
 	UpdateDirectory    func(ctx context.Context, id string, input directory.UpdateInput) (directory.Item, error)
 	DeleteDirectory    func(ctx context.Context, id string) error
 	ReloadConfig       func(ctx context.Context) error
+	ShoppingAPIBaseURL string
+	ShoppingAPIToken   string
+	ShoppingHTTPClient *http.Client
 }
 
 func Handler(deps Deps) http.Handler {
@@ -121,6 +124,16 @@ func Handler(deps Deps) http.Handler {
 		deps.Auth.OptionalMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handleMe(w, r, deps)
 		})).ServeHTTP(w, r)
+	})
+	mux.HandleFunc("/api/shopping/summary", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleShoppingSummary(w, r, deps)
+		}
+		if deps.Auth != nil {
+			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
 	})
 	mux.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
 		if deps.Auth != nil {

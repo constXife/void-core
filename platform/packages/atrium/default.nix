@@ -1,5 +1,4 @@
-{pkgs ? import <nixpkgs> {}}:
-let
+{pkgs ? import <nixpkgs> {}}: let
   sourceTree = import ./source.nix {inherit (pkgs) lib;};
   source = pkgs.linkFarm "atrium-source" [
     {

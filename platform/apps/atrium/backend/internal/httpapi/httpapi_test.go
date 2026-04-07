@@ -3,8 +3,10 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"atrium/internal/auth"
@@ -239,5 +241,71 @@ func TestBlocksDataRouteParsesIDsAndTypes(t *testing.T) {
 	}
 	if payload["clock"]["status"] != "ok" {
 		t.Fatalf("expected block data to be returned")
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
+func TestShoppingSummaryRouteReturnsServiceUnavailableWhenNotConfigured(t *testing.T) {
+	handler := Handler(Deps{})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/shopping/summary", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", rec.Code)
+	}
+}
+
+func TestShoppingSummaryRouteProxiesConfiguredRequest(t *testing.T) {
+	var gotAuth string
+	var gotIntentLimit string
+
+	handler := Handler(Deps{
+		ShoppingAPIBaseURL: "https://api.example.test/knowledge/v1",
+		ShoppingAPIToken:   "void_ak_test",
+		ShoppingHTTPClient: &http.Client{
+			Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				if r.URL.Path != "/knowledge/v1/shopping/summary" {
+					t.Fatalf("expected upstream path /knowledge/v1/shopping/summary, got %q", r.URL.Path)
+				}
+				gotAuth = r.Header.Get("Authorization")
+				gotIntentLimit = r.URL.Query().Get("intent_limit")
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
+					Body: io.NopCloser(strings.NewReader(`{"need_to_buy_count":2}`)),
+				}, nil
+			}),
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/shopping/summary?intent_limit=4", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if gotAuth != "Bearer void_ak_test" {
+		t.Fatalf("expected bearer token to be forwarded, got %q", gotAuth)
+	}
+	if gotIntentLimit != "4" {
+		t.Fatalf("expected intent_limit to be preserved, got %q", gotIntentLimit)
+	}
+
+	var payload map[string]int
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode shopping summary response: %v", err)
+	}
+	if payload["need_to_buy_count"] != 2 {
+		t.Fatalf("expected need_to_buy_count 2, got %d", payload["need_to_buy_count"])
 	}
 }

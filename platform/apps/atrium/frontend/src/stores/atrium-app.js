@@ -58,6 +58,9 @@ const routeStateFromRoute = (route) => {
   if (name === "privacy") {
     return { view: "privacy", tab: null, spaceSlug: null };
   }
+  if (name === "shopping") {
+    return { view: "shopping", tab: null, spaceSlug: null };
+  }
   if (name.startsWith("admin")) {
     const tabFromName = name.startsWith("admin-")
       ? name.replace("admin-", "")

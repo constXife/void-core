@@ -4,6 +4,7 @@ import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
+import AtriumShoppingPage from "../pages/AtriumShoppingPage.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 const routes = [
@@ -40,6 +41,12 @@ const routes = [
         path: "",
         name: "home",
         component: AtriumHomePage
+      },
+      {
+        path: "shopping",
+        name: "shopping",
+        component: AtriumShoppingPage,
+        meta: { authRequired: true }
       }
     ]
   },

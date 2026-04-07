@@ -3,9 +3,11 @@ import {
   Activity,
   ChevronDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ShoppingCart
 } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
+import { RouterLink, useRoute } from "vue-router";
 import UserDropdown from "./UserDropdown.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useAuthStore } from "../stores/auth.js";
@@ -16,6 +18,7 @@ const appStore = useAtriumAppStore();
 const authStore = useAuthStore();
 const spaceStore = useSpaceStore();
 const uiStore = useUiStore();
+const route = useRoute();
 
 const { userMenuRef } = storeToRefs(appStore);
 const { t } = appStore;
@@ -96,6 +99,16 @@ const openHome = () => {
     </div>
 
     <div class="header-actions">
+      <RouterLink
+        v-if="me"
+        :to="{ name: 'shopping' }"
+        class="header-nav-pill"
+        :class="{ active: route.name === 'shopping' }"
+      >
+        <ShoppingCart class="w-4 h-4" />
+        <span>Shopping</span>
+      </RouterLink>
+
       <div class="header-tools">
         <select
           v-if="languageSwitcherVisible && languageSwitcherMode === 'header'"
@@ -130,3 +143,28 @@ const openHome = () => {
     </div>
   </header>
 </template>
+
+<style scoped>
+.header-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.header-nav-pill:hover,
+.header-nav-pill.active {
+  border-color: rgba(255, 214, 102, 0.42);
+  background: rgba(255, 214, 102, 0.14);
+  color: #fff6d6;
+}
+</style>
