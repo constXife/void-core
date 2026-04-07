@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 )
 
@@ -20,9 +21,97 @@ func handleShoppingSummary(w http.ResponseWriter, r *http.Request, deps Deps) {
 		return
 	}
 
-	target, err := url.Parse(strings.TrimRight(baseURL, "/") + "/shopping/summary")
+	target, err := shoppingTargetURL(baseURL, "/shopping/summary")
 	if err != nil {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
+		return
+	}
+	proxyShoppingRequest(w, r, deps, target)
+}
+
+func handleShoppingRuns(w http.ResponseWriter, r *http.Request, deps Deps) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	target, err := shoppingTargetURL(strings.TrimSpace(deps.ShoppingAPIBaseURL), "/shopping/runs")
+	if err != nil {
+		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
+		return
+	}
+	proxyShoppingRequest(w, r, deps, target)
+}
+
+func handleShoppingRun(w http.ResponseWriter, r *http.Request, deps Deps) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	runID := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/api/shopping/runs/"))
+	if runID == "" || strings.Contains(runID, "/") {
+		http.NotFound(w, r)
+		return
+	}
+
+	target, err := shoppingTargetURL(strings.TrimSpace(deps.ShoppingAPIBaseURL), path.Join("/shopping/runs", runID))
+	if err != nil {
+		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
+		return
+	}
+	proxyShoppingRequest(w, r, deps, target)
+}
+
+func handleShoppingItems(w http.ResponseWriter, r *http.Request, deps Deps) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	target, err := shoppingTargetURL(strings.TrimSpace(deps.ShoppingAPIBaseURL), "/shopping/items")
+	if err != nil {
+		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
+		return
+	}
+	proxyShoppingRequest(w, r, deps, target)
+}
+
+func handleShoppingItem(w http.ResponseWriter, r *http.Request, deps Deps) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	itemID := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/api/shopping/items/"))
+	if itemID == "" || strings.Contains(itemID, "/") {
+		http.NotFound(w, r)
+		return
+	}
+
+	target, err := shoppingTargetURL(strings.TrimSpace(deps.ShoppingAPIBaseURL), path.Join("/shopping/items", itemID))
+	if err != nil {
+		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
+		return
+	}
+	proxyShoppingRequest(w, r, deps, target)
+}
+
+func shoppingTargetURL(baseURL string, suffix string) (*url.URL, error) {
+	if baseURL == "" {
+		return nil, url.InvalidHostError("")
+	}
+	target, err := url.Parse(strings.TrimRight(baseURL, "/") + suffix)
+	if err != nil {
+		return nil, err
+	}
+	return target, nil
+}
+
+func proxyShoppingRequest(w http.ResponseWriter, r *http.Request, deps Deps, target *url.URL) {
+	token := strings.TrimSpace(deps.ShoppingAPIToken)
+	if strings.TrimSpace(deps.ShoppingAPIBaseURL) == "" || token == "" {
+		http.Error(w, "shopping api not configured", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -34,12 +123,15 @@ func handleShoppingSummary(w http.ResponseWriter, r *http.Request, deps Deps) {
 	}
 	target.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, target.String(), nil)
+	req, err := http.NewRequestWithContext(r.Context(), r.Method, target.String(), r.Body)
 	if err != nil {
 		http.Error(w, "failed to prepare shopping request", http.StatusInternalServerError)
 		return
 	}
 	req.Header.Set("Accept", "application/json")
+	if contentType := strings.TrimSpace(r.Header.Get("Content-Type")); contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := deps.ShoppingHTTPClient

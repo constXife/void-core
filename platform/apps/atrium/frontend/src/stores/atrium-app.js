@@ -1163,6 +1163,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     languageSelection,
     languageSwitcherMode,
     languageSwitcherVisible,
+    loadShoppingSummary,
     loading,
     localWidgets,
     loginBusy,

@@ -1,17 +1,18 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { RotateCcw } from "lucide-vue-next";
+import { Plus, RotateCcw } from "lucide-vue-next";
 import { createAtriumApi } from "../lib/atrium-api.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 const appStore = useAtriumAppStore();
-const { currentLang } = storeToRefs(appStore);
+const { currentLang, shoppingSummary, shoppingSummaryError, shoppingSummaryLoading } =
+  storeToRefs(appStore);
 const { fetchJSON } = createAtriumApi();
 
-const loading = ref(true);
-const error = ref("");
-const summary = ref(null);
+const pendingKey = ref("");
+const mutationError = ref("");
+const manualItemTitle = ref("");
 
 const copy = computed(() =>
   currentLang.value === "ru"
@@ -19,12 +20,14 @@ const copy = computed(() =>
         eyebrow: "Shopping v0",
         title: "Нужно купить, что уже в списке и что недавно закрыто.",
         subtitle:
-          "Это тонкий product-facing read path поверх Arkham Knowledge API, без browser-side raw MCP.",
+          "Это тонкий product-facing read/write path поверх Arkham Knowledge API, без browser-side raw MCP.",
         back: "Назад к Atrium",
         retry: "Обновить",
         loadFailed: "Не удалось загрузить shopping snapshot.",
         unavailable:
           "Shopping perimeter ещё не сконфигурирован. Проверь `KNOWLEDGE_API_*` env у Atrium backend.",
+        actionFailed: "Не удалось применить shopping-изменение.",
+        loading: "Загружаем shopping snapshot...",
         needs: "Нужно купить",
         run: "Сейчас в списке",
         closed: "Недавно закрыто",
@@ -34,18 +37,32 @@ const copy = computed(() =>
         emptyNeeds: "Активных purchase intent пока нет.",
         emptyRun: "Активный shopping run пока не найден.",
         emptyClosed: "Недавно закрытых позиций пока нет.",
-        untitled: "Без названия"
+        untitled: "Без названия",
+        addToRun: "В список",
+        alreadyQueued: "Уже в run",
+        closeRun: "Закрыть run",
+        quickAddLabel: "Быстро добавить вручную",
+        quickAddPlaceholder: "Например: фильтры для кофе",
+        quickAddButton: "Добавить",
+        quickAddRequired: "Сначала укажи название позиции.",
+        accept: "Принять",
+        defer: "Отложить",
+        purchased: "Куплено",
+        dismiss: "Снять",
+        runHint: "Можно добавить вручную или притянуть из active needs."
       }
     : {
         eyebrow: "Shopping v0",
         title: "What needs to be bought, what is in the current list, and what was closed recently.",
         subtitle:
-          "This is a thin product-facing read path on top of Arkham Knowledge API, without browser-side raw MCP.",
+          "This is a thin product-facing read/write path on top of Arkham Knowledge API, without browser-side raw MCP.",
         back: "Back to Atrium",
         retry: "Refresh",
         loadFailed: "Failed to load shopping snapshot.",
         unavailable:
           "Shopping perimeter is not configured yet. Check Atrium backend `KNOWLEDGE_API_*` env.",
+        actionFailed: "Failed to apply shopping change.",
+        loading: "Loading shopping snapshot...",
         needs: "Need to buy",
         run: "In current run",
         closed: "Recently closed",
@@ -55,9 +72,31 @@ const copy = computed(() =>
         emptyNeeds: "No active purchase intents yet.",
         emptyRun: "No active shopping run yet.",
         emptyClosed: "No recently closed items yet.",
-        untitled: "Untitled"
+        untitled: "Untitled",
+        addToRun: "Queue item",
+        alreadyQueued: "Already queued",
+        closeRun: "Close run",
+        quickAddLabel: "Quick add",
+        quickAddPlaceholder: "For example: coffee filters",
+        quickAddButton: "Add item",
+        quickAddRequired: "Enter an item title first.",
+        accept: "Accept",
+        defer: "Defer",
+        purchased: "Purchased",
+        dismiss: "Dismiss",
+        runHint: "You can add items manually or pull them from active needs."
       }
 );
+
+const summary = computed(() => shoppingSummary.value || null);
+const loading = computed(() => shoppingSummaryLoading.value);
+const loadError = computed(() => {
+  const message = String(shoppingSummaryError.value || "");
+  if (!message) return "";
+  return message.includes("shopping api not configured")
+    ? copy.value.unavailable
+    : message || copy.value.loadFailed;
+});
 
 const needsToBuy = computed(() => summary.value?.needs_to_buy?.items || []);
 const activeRun = computed(() => summary.value?.active_run?.run || null);
@@ -116,7 +155,9 @@ const chipText = (item) => {
   const status =
     item?.intent_status || item?.status || item?.run_status || item?.lifecycle_status || "";
   const priority = item?.priority || "";
-  const quantity = item?.quantity_hint ? `${item.quantity_hint}${item.unit_hint ? ` ${item.unit_hint}` : ""}` : "";
+  const quantity = item?.quantity_hint
+    ? `${item.quantity_hint}${item.unit_hint ? ` ${item.unit_hint}` : ""}`
+    : "";
   const dateText = compactDate(item?.updated_at || item?.generated_at || item?.created_at);
 
   if (status) parts.push(localizedValue(statusLabels, status));
@@ -126,23 +167,127 @@ const chipText = (item) => {
   return parts.filter(Boolean).join(" • ");
 };
 
-const loadSummary = async () => {
-  loading.value = true;
-  error.value = "";
+const defaultRunTitle = computed(() =>
+  currentLang.value === "ru" ? "Текущий shopping batch" : "Current shopping batch"
+);
+
+const loadSummary = async ({ force = false } = {}) => {
+  mutationError.value = "";
+  await appStore.loadShoppingSummary({ force });
+};
+
+const normalizePriority = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["low", "normal", "high"].includes(normalized) ? normalized : "normal";
+};
+
+const queuedIntentIds = computed(() => {
+  const values = new Set();
+  for (const item of activeRunItems.value) {
+    const intentID = String(item?.linked_purchase_intent_id || "").trim();
+    if (intentID) values.add(intentID);
+  }
+  return values;
+});
+
+const isPending = (key) => pendingKey.value === key;
+const isNeedQueued = (item) => queuedIntentIds.value.has(String(item?.intent_id || "").trim());
+
+const runMutation = async (key, action) => {
+  pendingKey.value = key;
+  mutationError.value = "";
   try {
-    summary.value = await fetchJSON("/api/shopping/summary");
+    await action();
+    await loadSummary({ force: true });
   } catch (err) {
-    summary.value = null;
-    const message = String(err?.message || "");
-    error.value = message.includes("shopping api not configured")
-      ? copy.value.unavailable
-      : message || copy.value.loadFailed;
+    mutationError.value = String(err?.message || copy.value.actionFailed);
   } finally {
-    loading.value = false;
+    pendingKey.value = "";
   }
 };
 
-onMounted(loadSummary);
+const ensureActiveRun = async () => {
+  if (activeRun.value?.run_id) return activeRun.value;
+  const payload = await fetchJSON("/api/shopping/runs", {
+    method: "POST",
+    body: JSON.stringify({
+      title: defaultRunTitle.value,
+      status: "active",
+      run_kind: "shopping-list",
+      cadence: "ad-hoc"
+    })
+  });
+  return payload?.run || null;
+};
+
+const addNeedToRun = async (item) => {
+  if (isNeedQueued(item) || !item?.intent_id) return;
+  await runMutation(`need:${item.intent_id}`, async () => {
+    const run = await ensureActiveRun();
+    await fetchJSON("/api/shopping/items", {
+      method: "POST",
+      body: JSON.stringify({
+        run_id: run?.run_id,
+        title: titleFor(item),
+        item_kind: "other",
+        source_kind: "purchase-intent",
+        status: "suggested",
+        priority: normalizePriority(item?.priority),
+        linked_purchase_intent_id: item.intent_id
+      })
+    });
+  });
+};
+
+const addManualItem = async () => {
+  const title = manualItemTitle.value.trim();
+  if (!title) {
+    mutationError.value = copy.value.quickAddRequired;
+    return;
+  }
+
+  await runMutation("manual-item", async () => {
+    const run = await ensureActiveRun();
+    await fetchJSON("/api/shopping/items", {
+      method: "POST",
+      body: JSON.stringify({
+        run_id: run?.run_id,
+        title,
+        item_kind: "other",
+        source_kind: "manual",
+        status: "suggested",
+        priority: "normal"
+      })
+    });
+    manualItemTitle.value = "";
+  });
+};
+
+const patchItemStatus = async (item, status) => {
+  if (!item?.item_id || item?.status === status) return;
+  await runMutation(`item:${item.item_id}:${status}`, async () => {
+    await fetchJSON(`/api/shopping/items/${encodeURIComponent(item.item_id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+  });
+};
+
+const closeRun = async () => {
+  if (!activeRun.value?.run_id) return;
+  await runMutation(`run:${activeRun.value.run_id}:completed`, async () => {
+    await fetchJSON(`/api/shopping/runs/${encodeURIComponent(activeRun.value.run_id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "completed" })
+    });
+  });
+};
+
+onMounted(() => {
+  if (!shoppingSummary.value && !shoppingSummaryLoading.value) {
+    void loadSummary();
+  }
+});
 </script>
 
 <template>
@@ -158,7 +303,7 @@ onMounted(loadSummary);
         <button class="shopping-action shopping-action-muted" @click="appStore.navigateHome()">
           {{ copy.back }}
         </button>
-        <button class="shopping-action" @click="loadSummary">
+        <button class="shopping-action" :disabled="loading || !!pendingKey" @click="loadSummary({ force: true })">
           <RotateCcw class="w-4 h-4" />
           <span>{{ copy.retry }}</span>
         </button>
@@ -180,10 +325,11 @@ onMounted(loadSummary);
       </article>
     </section>
 
-    <div v-if="loading" class="shopping-state">Loading shopping snapshot...</div>
-    <div v-else-if="error" class="shopping-state shopping-state-error">{{ error }}</div>
+    <div v-if="loading" class="shopping-state">{{ copy.loading }}</div>
+    <div v-else-if="loadError" class="shopping-state shopping-state-error">{{ loadError }}</div>
+    <div v-if="mutationError" class="shopping-state shopping-state-error">{{ mutationError }}</div>
 
-    <div v-else class="shopping-grid">
+    <div v-if="!loading && !loadError" class="shopping-grid">
       <article class="shopping-panel">
         <div class="shopping-panel-header">
           <h2>{{ copy.needs }}</h2>
@@ -192,8 +338,19 @@ onMounted(loadSummary);
         <div v-if="needsToBuy.length === 0" class="shopping-empty">{{ copy.emptyNeeds }}</div>
         <ul v-else class="shopping-list">
           <li v-for="item in needsToBuy" :key="item.intent_id || item.id || item.title" class="shopping-item">
-            <div class="shopping-item-title">{{ titleFor(item) }}</div>
-            <div class="shopping-item-meta">{{ chipText(item) }}</div>
+            <div class="shopping-item-row">
+              <div class="shopping-item-copy">
+                <div class="shopping-item-title">{{ titleFor(item) }}</div>
+                <div class="shopping-item-meta">{{ chipText(item) }}</div>
+              </div>
+              <button
+                class="shopping-chip-action"
+                :disabled="isNeedQueued(item) || !!pendingKey || !item.intent_id"
+                @click="addNeedToRun(item)"
+              >
+                {{ isNeedQueued(item) ? copy.alreadyQueued : copy.addToRun }}
+              </button>
+            </div>
           </li>
         </ul>
       </article>
@@ -206,23 +363,85 @@ onMounted(loadSummary);
               {{ activeRun.title || activeRun.run_id }}
             </p>
           </div>
-          <span>{{ activeRunItems.length }}</span>
+          <div class="shopping-panel-tools">
+            <button
+              v-if="activeRun"
+              class="shopping-chip-action shopping-chip-action-muted"
+              :disabled="!!pendingKey"
+              @click="closeRun"
+            >
+              {{ copy.closeRun }}
+            </button>
+            <span>{{ activeRunItems.length }}</span>
+          </div>
         </div>
         <div v-if="!activeRun" class="shopping-empty">{{ copy.emptyRun }}</div>
         <template v-else>
           <div class="shopping-run-meta">{{ chipText(activeRun) }}</div>
-          <ul v-if="activeRunItems.length > 0" class="shopping-list">
-            <li
-              v-for="item in activeRunItems"
-              :key="item.item_id || item.title"
-              class="shopping-item shopping-item-compact"
-            >
-              <div class="shopping-item-title">{{ titleFor(item) }}</div>
-              <div class="shopping-item-meta">{{ chipText(item) }}</div>
-            </li>
-          </ul>
-          <div v-else class="shopping-empty">{{ copy.emptyRun }}</div>
         </template>
+
+        <form class="shopping-quick-add" @submit.prevent="addManualItem">
+          <label class="shopping-quick-add-label" for="shopping-manual-item">
+            {{ copy.quickAddLabel }}
+          </label>
+          <div class="shopping-quick-add-row">
+            <input
+              id="shopping-manual-item"
+              v-model="manualItemTitle"
+              class="shopping-input"
+              type="text"
+              :placeholder="copy.quickAddPlaceholder"
+              :disabled="!!pendingKey"
+            />
+            <button class="shopping-action shopping-action-small" type="submit" :disabled="!!pendingKey">
+              <Plus class="w-4 h-4" />
+              <span>{{ copy.quickAddButton }}</span>
+            </button>
+          </div>
+          <p class="shopping-quick-add-hint">{{ copy.runHint }}</p>
+        </form>
+
+        <ul v-if="activeRunItems.length > 0" class="shopping-list">
+          <li
+            v-for="item in activeRunItems"
+            :key="item.item_id || item.title"
+            class="shopping-item shopping-item-compact"
+          >
+            <div class="shopping-item-title">{{ titleFor(item) }}</div>
+            <div class="shopping-item-meta">{{ chipText(item) }}</div>
+            <div class="shopping-item-actions">
+              <button
+                class="shopping-chip-action"
+                :disabled="!!pendingKey || item.status === 'accepted'"
+                @click="patchItemStatus(item, 'accepted')"
+              >
+                {{ copy.accept }}
+              </button>
+              <button
+                class="shopping-chip-action shopping-chip-action-muted"
+                :disabled="!!pendingKey || item.status === 'deferred'"
+                @click="patchItemStatus(item, 'deferred')"
+              >
+                {{ copy.defer }}
+              </button>
+              <button
+                class="shopping-chip-action shopping-chip-action-success"
+                :disabled="!!pendingKey || item.status === 'purchased'"
+                @click="patchItemStatus(item, 'purchased')"
+              >
+                {{ copy.purchased }}
+              </button>
+              <button
+                class="shopping-chip-action shopping-chip-action-danger"
+                :disabled="!!pendingKey || item.status === 'dismissed'"
+                @click="patchItemStatus(item, 'dismissed')"
+              >
+                {{ copy.dismiss }}
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div v-else class="shopping-empty">{{ copy.emptyRun }}</div>
       </article>
 
       <article class="shopping-panel">
@@ -311,6 +530,16 @@ onMounted(loadSummary);
   cursor: pointer;
   font: inherit;
   font-weight: 600;
+}
+
+.shopping-action:disabled,
+.shopping-chip-action:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.shopping-action-small {
+  padding: 0.75rem 0.95rem;
 }
 
 .shopping-action-muted {
@@ -403,10 +632,17 @@ onMounted(loadSummary);
   font-size: 0.8rem;
 }
 
+.shopping-panel-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .shopping-run-title,
 .shopping-run-meta,
 .shopping-item-meta,
-.shopping-empty {
+.shopping-empty,
+.shopping-quick-add-hint {
   color: rgba(255, 255, 255, 0.62);
   font-size: 0.88rem;
   line-height: 1.5;
@@ -439,6 +675,18 @@ onMounted(loadSummary);
   background: rgba(255, 214, 102, 0.06);
 }
 
+.shopping-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.shopping-item-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .shopping-item-title {
   color: #fffdf5;
   font-weight: 600;
@@ -447,6 +695,82 @@ onMounted(loadSummary);
 
 .shopping-item-meta {
   margin-top: 0.3rem;
+}
+
+.shopping-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.shopping-chip-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 249, 232, 0.9);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shopping-chip-action-muted {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.shopping-chip-action-success {
+  background: rgba(68, 186, 112, 0.16);
+  border-color: rgba(68, 186, 112, 0.24);
+}
+
+.shopping-chip-action-danger {
+  background: rgba(192, 81, 70, 0.18);
+  border-color: rgba(192, 81, 70, 0.24);
+}
+
+.shopping-quick-add {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.shopping-quick-add-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.shopping-quick-add-row {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.6rem;
+}
+
+.shopping-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fffdf5;
+  font: inherit;
+}
+
+.shopping-input::placeholder {
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.shopping-quick-add-hint {
+  margin: 0.55rem 0 0;
 }
 
 .shopping-empty {
@@ -463,7 +787,9 @@ onMounted(loadSummary);
     grid-template-columns: 1fr;
   }
 
-  .shopping-hero {
+  .shopping-hero,
+  .shopping-item-row,
+  .shopping-quick-add-row {
     flex-direction: column;
   }
 }

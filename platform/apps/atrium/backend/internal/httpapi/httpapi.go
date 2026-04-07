@@ -135,6 +135,46 @@ func Handler(deps Deps) http.Handler {
 		}
 		handler(w, r)
 	})
+	mux.HandleFunc("/api/shopping/runs", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleShoppingRuns(w, r, deps)
+		}
+		if deps.Auth != nil {
+			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/shopping/runs/", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleShoppingRun(w, r, deps)
+		}
+		if deps.Auth != nil {
+			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/shopping/items", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleShoppingItems(w, r, deps)
+		}
+		if deps.Auth != nil {
+			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/shopping/items/", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleShoppingItem(w, r, deps)
+		}
+		if deps.Auth != nil {
+			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
 	mux.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
 		if deps.Auth != nil {
 			deps.Auth.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
