@@ -81,6 +81,7 @@ const {
   serviceStatusLabel,
   setDashboardEditSelection,
   spaceDescription,
+  surfaceCardActions,
   surfaceCardsFor,
   surfaceHeadingFor,
   stopDashboardEdit,
@@ -132,13 +133,17 @@ const {
               <div class="surface-brief-eyebrow">{{ card.eyebrow }}</div>
               <div class="surface-brief-card-title">{{ card.title }}</div>
               <p class="surface-brief-card-body">{{ card.body }}</p>
-              <button
-                v-if="card.actionLabel && card.actionTarget"
-                class="btn btn-ghost text-xs self-start"
-                @click="runSurfaceAction(card)"
-              >
-                {{ card.actionLabel }}
-              </button>
+              <div v-if="surfaceCardActions(card).length" class="flex flex-wrap gap-2 self-start">
+                <button
+                  v-for="action in surfaceCardActions(card)"
+                  :key="action.id"
+                  class="btn btn-ghost text-xs self-start"
+                  :disabled="action.disabled"
+                  @click="runSurfaceAction(action)"
+                >
+                  {{ action.label }}
+                </button>
+              </div>
             </article>
           </div>
         </div>

@@ -2,16 +2,18 @@
 import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { Plus, RotateCcw } from "lucide-vue-next";
-import { createAtriumApi } from "../lib/atrium-api.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 const appStore = useAtriumAppStore();
-const { currentLang, shoppingSummary, shoppingSummaryError, shoppingSummaryLoading } =
-  storeToRefs(appStore);
-const { fetchJSON } = createAtriumApi();
+const {
+  currentLang,
+  shoppingMutationError,
+  shoppingMutationPendingKey,
+  shoppingSummary,
+  shoppingSummaryError,
+  shoppingSummaryLoading
+} = storeToRefs(appStore);
 
-const pendingKey = ref("");
-const mutationError = ref("");
 const manualItemTitle = ref("");
 
 const copy = computed(() =>
@@ -90,6 +92,7 @@ const copy = computed(() =>
 
 const summary = computed(() => shoppingSummary.value || null);
 const loading = computed(() => shoppingSummaryLoading.value);
+const mutationError = computed(() => shoppingMutationError.value);
 const loadError = computed(() => {
   const message = String(shoppingSummaryError.value || "");
   if (!message) return "";
@@ -167,120 +170,36 @@ const chipText = (item) => {
   return parts.filter(Boolean).join(" • ");
 };
 
-const defaultRunTitle = computed(() =>
-  currentLang.value === "ru" ? "Текущий shopping batch" : "Current shopping batch"
-);
-
 const loadSummary = async ({ force = false } = {}) => {
-  mutationError.value = "";
   await appStore.loadShoppingSummary({ force });
 };
-
-const normalizePriority = (value) => {
-  const normalized = String(value || "").trim().toLowerCase();
-  return ["low", "normal", "high"].includes(normalized) ? normalized : "normal";
-};
-
-const queuedIntentIds = computed(() => {
-  const values = new Set();
-  for (const item of activeRunItems.value) {
-    const intentID = String(item?.linked_purchase_intent_id || "").trim();
-    if (intentID) values.add(intentID);
-  }
-  return values;
-});
-
-const isPending = (key) => pendingKey.value === key;
-const isNeedQueued = (item) => queuedIntentIds.value.has(String(item?.intent_id || "").trim());
-
-const runMutation = async (key, action) => {
-  pendingKey.value = key;
-  mutationError.value = "";
-  try {
-    await action();
-    await loadSummary({ force: true });
-  } catch (err) {
-    mutationError.value = String(err?.message || copy.value.actionFailed);
-  } finally {
-    pendingKey.value = "";
-  }
-};
-
-const ensureActiveRun = async () => {
-  if (activeRun.value?.run_id) return activeRun.value;
-  const payload = await fetchJSON("/api/shopping/runs", {
-    method: "POST",
-    body: JSON.stringify({
-      title: defaultRunTitle.value,
-      status: "active",
-      run_kind: "shopping-list",
-      cadence: "ad-hoc"
-    })
-  });
-  return payload?.run || null;
-};
+const isPending = (key) => shoppingMutationPendingKey.value === key;
+const isNeedQueued = (item) => appStore.shoppingNeedQueued(item);
 
 const addNeedToRun = async (item) => {
   if (isNeedQueued(item) || !item?.intent_id) return;
-  await runMutation(`need:${item.intent_id}`, async () => {
-    const run = await ensureActiveRun();
-    await fetchJSON("/api/shopping/items", {
-      method: "POST",
-      body: JSON.stringify({
-        run_id: run?.run_id,
-        title: titleFor(item),
-        item_kind: "other",
-        source_kind: "purchase-intent",
-        status: "suggested",
-        priority: normalizePriority(item?.priority),
-        linked_purchase_intent_id: item.intent_id
-      })
-    });
-  });
+  await appStore.addShoppingNeedToRun(item);
 };
 
 const addManualItem = async () => {
   const title = manualItemTitle.value.trim();
   if (!title) {
-    mutationError.value = copy.value.quickAddRequired;
+    shoppingMutationError.value = copy.value.quickAddRequired;
     return;
   }
 
-  await runMutation("manual-item", async () => {
-    const run = await ensureActiveRun();
-    await fetchJSON("/api/shopping/items", {
-      method: "POST",
-      body: JSON.stringify({
-        run_id: run?.run_id,
-        title,
-        item_kind: "other",
-        source_kind: "manual",
-        status: "suggested",
-        priority: "normal"
-      })
-    });
-    manualItemTitle.value = "";
-  });
+  await appStore.addManualShoppingItem(title);
+  manualItemTitle.value = "";
 };
 
 const patchItemStatus = async (item, status) => {
   if (!item?.item_id || item?.status === status) return;
-  await runMutation(`item:${item.item_id}:${status}`, async () => {
-    await fetchJSON(`/api/shopping/items/${encodeURIComponent(item.item_id)}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status })
-    });
-  });
+  await appStore.patchShoppingItemStatus(item.item_id, status);
 };
 
 const closeRun = async () => {
   if (!activeRun.value?.run_id) return;
-  await runMutation(`run:${activeRun.value.run_id}:completed`, async () => {
-    await fetchJSON(`/api/shopping/runs/${encodeURIComponent(activeRun.value.run_id)}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: "completed" })
-    });
-  });
+  await appStore.closeShoppingRun({ runID: activeRun.value.run_id });
 };
 
 onMounted(() => {
@@ -303,7 +222,11 @@ onMounted(() => {
         <button class="shopping-action shopping-action-muted" @click="appStore.navigateHome()">
           {{ copy.back }}
         </button>
-        <button class="shopping-action" :disabled="loading || !!pendingKey" @click="loadSummary({ force: true })">
+        <button
+          class="shopping-action"
+          :disabled="loading || !!shoppingMutationPendingKey"
+          @click="loadSummary({ force: true })"
+        >
           <RotateCcw class="w-4 h-4" />
           <span>{{ copy.retry }}</span>
         </button>
@@ -345,7 +268,7 @@ onMounted(() => {
               </div>
               <button
                 class="shopping-chip-action"
-                :disabled="isNeedQueued(item) || !!pendingKey || !item.intent_id"
+                :disabled="isNeedQueued(item) || !!shoppingMutationPendingKey || !item.intent_id"
                 @click="addNeedToRun(item)"
               >
                 {{ isNeedQueued(item) ? copy.alreadyQueued : copy.addToRun }}
@@ -367,7 +290,7 @@ onMounted(() => {
             <button
               v-if="activeRun"
               class="shopping-chip-action shopping-chip-action-muted"
-              :disabled="!!pendingKey"
+              :disabled="!!shoppingMutationPendingKey"
               @click="closeRun"
             >
               {{ copy.closeRun }}
@@ -391,9 +314,13 @@ onMounted(() => {
               class="shopping-input"
               type="text"
               :placeholder="copy.quickAddPlaceholder"
-              :disabled="!!pendingKey"
+              :disabled="!!shoppingMutationPendingKey"
             />
-            <button class="shopping-action shopping-action-small" type="submit" :disabled="!!pendingKey">
+            <button
+              class="shopping-action shopping-action-small"
+              type="submit"
+              :disabled="!!shoppingMutationPendingKey"
+            >
               <Plus class="w-4 h-4" />
               <span>{{ copy.quickAddButton }}</span>
             </button>
@@ -412,28 +339,28 @@ onMounted(() => {
             <div class="shopping-item-actions">
               <button
                 class="shopping-chip-action"
-                :disabled="!!pendingKey || item.status === 'accepted'"
+                :disabled="!!shoppingMutationPendingKey || item.status === 'accepted'"
                 @click="patchItemStatus(item, 'accepted')"
               >
                 {{ copy.accept }}
               </button>
               <button
                 class="shopping-chip-action shopping-chip-action-muted"
-                :disabled="!!pendingKey || item.status === 'deferred'"
+                :disabled="!!shoppingMutationPendingKey || item.status === 'deferred'"
                 @click="patchItemStatus(item, 'deferred')"
               >
                 {{ copy.defer }}
               </button>
               <button
                 class="shopping-chip-action shopping-chip-action-success"
-                :disabled="!!pendingKey || item.status === 'purchased'"
+                :disabled="!!shoppingMutationPendingKey || item.status === 'purchased'"
                 @click="patchItemStatus(item, 'purchased')"
               >
                 {{ copy.purchased }}
               </button>
               <button
                 class="shopping-chip-action shopping-chip-action-danger"
-                :disabled="!!pendingKey || item.status === 'dismissed'"
+                :disabled="!!shoppingMutationPendingKey || item.status === 'dismissed'"
                 @click="patchItemStatus(item, 'dismissed')"
               >
                 {{ copy.dismiss }}

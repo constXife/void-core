@@ -2,22 +2,27 @@ import { computed, ref } from "vue";
 
 export function useAtriumResources({
   BLOCK_TYPES,
+  addShoppingNeedToRun,
   blockDataFor,
   blockTypeIs,
   blocksForSpace,
+  closeShoppingRun,
   fetchJSON,
   isAdminSpace,
   isKidsSpace,
   isPublicReadonlySpace,
+  loadShoppingSummary,
   navigateTo,
   navigateToAdmin,
   notify,
   recentResourcesBySpace,
   recentResourcesKey,
   settingsStore,
+  shoppingMutationPendingKey,
   shoppingSummary,
   shoppingSummaryError,
   shoppingSummaryLoading,
+  shoppingNeedQueued,
   showUserDropdown,
   spaces,
   t,
@@ -271,6 +276,14 @@ export function useAtriumResources({
     actionTarget: "/shopping"
   });
 
+  const shoppingInlineAction = (id, label, actionKind, actionTarget, disabled = false) => ({
+    id,
+    label,
+    actionKind,
+    actionTarget,
+    disabled
+  });
+
   const shoppingCardTitles = (items, fallback) => {
     const titles = (Array.isArray(items) ? items : [])
       .map((item) => String(item?.title || item?.item_name || item?.name || "").trim())
@@ -313,6 +326,23 @@ export function useAtriumResources({
       const activeRunRecord = activeRun?.run || null;
       const activeRunItems = Array.isArray(activeRun?.items) ? activeRun.items : [];
       const actionableCount = Number(activeRun?.actionable_count || 0);
+      const firstNeedToQueue = (Array.isArray(needs?.items) ? needs.items : []).find(
+        (item) => !shoppingNeedQueued(item)
+      );
+      const shoppingBusy = Boolean(shoppingMutationPendingKey.value);
+      const openAction = shoppingInlineAction(
+        "open-shopping",
+        t("surface.action.openShopping"),
+        "route",
+        "/shopping"
+      );
+      const refreshAction = shoppingInlineAction(
+        "refresh-shopping",
+        t("surface.action.refreshShopping"),
+        "handler",
+        () => loadShoppingSummary({ force: true }),
+        shoppingBusy
+      );
 
       return [
         {
@@ -322,7 +352,20 @@ export function useAtriumResources({
             ? t("surface.shopping.needsValue", { count: Number(needs.count || 0) })
             : t("surface.shopping.emptyNeedsTitle"),
           body: shoppingCardTitles(needs?.items, t("surface.shopping.emptyNeedsBody")),
-          ...surfaceShoppingAction()
+          actions: [
+            ...(firstNeedToQueue
+              ? [
+                  shoppingInlineAction(
+                    `queue-need:${String(firstNeedToQueue?.instance_id || firstNeedToQueue?.intent_id || "").trim()}`,
+                    t("surface.action.queueShoppingNeed"),
+                    "handler",
+                    () => addShoppingNeedToRun(firstNeedToQueue),
+                    shoppingBusy
+                  )
+                ]
+              : []),
+            openAction
+          ]
         },
         {
           id: "shopping-run",
@@ -336,7 +379,18 @@ export function useAtriumResources({
                 actionable: actionableCount
               })
             : t("surface.shopping.emptyRunBody"),
-          ...surfaceShoppingAction()
+          actions: activeRunRecord
+            ? [
+                shoppingInlineAction(
+                  `close-run:${String(activeRunRecord?.run_id || "").trim()}`,
+                  t("surface.action.closeShoppingRun"),
+                  "handler",
+                  () => closeShoppingRun({ runID: activeRunRecord?.run_id }),
+                  shoppingBusy
+                ),
+                openAction
+              ]
+            : [openAction]
         },
         {
           id: "shopping-closed",
@@ -345,7 +399,7 @@ export function useAtriumResources({
             ? t("surface.shopping.closedValue", { count: Number(recentlyClosed.count || 0) })
             : t("surface.shopping.emptyClosedTitle"),
           body: shoppingCardTitles(recentlyClosed?.items, t("surface.shopping.emptyClosedBody")),
-          ...surfaceShoppingAction()
+          actions: [refreshAction, openAction]
         }
       ];
     }
@@ -392,18 +446,39 @@ export function useAtriumResources({
     return { title: "", subtitle: "" };
   };
 
-  const runSurfaceAction = (card) => {
-    if (!card?.actionKind || !card?.actionTarget) return;
-    if (card.actionKind === "url") {
-      window.open(card.actionTarget, "_blank", "noopener,noreferrer");
+  const surfaceCardActions = (card) => {
+    if (Array.isArray(card?.actions) && card.actions.length) return card.actions;
+    if (card?.actionLabel && card?.actionTarget) {
+      return [
+        {
+          id: `${String(card?.id || "card")}-primary-action`,
+          label: card.actionLabel,
+          actionKind: card.actionKind,
+          actionTarget: card.actionTarget,
+          disabled: false
+        }
+      ];
+    }
+    return [];
+  };
+
+  const runSurfaceAction = async (value) => {
+    const action = value?.actionKind ? value : surfaceCardActions(value)[0];
+    if (!action?.actionKind || action.disabled) return;
+    if (action.actionKind === "url") {
+      window.open(action.actionTarget, "_blank", "noopener,noreferrer");
       return;
     }
-    if (card.actionKind === "route") {
-      navigateTo(card.actionTarget);
+    if (action.actionKind === "route") {
+      navigateTo(action.actionTarget);
       return;
     }
-    if (card.actionKind === "admin-tab") {
-      navigateToAdmin(card.actionTarget);
+    if (action.actionKind === "admin-tab") {
+      navigateToAdmin(action.actionTarget);
+      return;
+    }
+    if (action.actionKind === "handler" && typeof action.actionTarget === "function") {
+      await action.actionTarget();
     }
   };
 
@@ -427,6 +502,7 @@ export function useAtriumResources({
     runSurfaceAction,
     s3EndpointsFor,
     serviceStatusLabel,
+    surfaceCardActions,
     surfaceCardsFor,
     surfaceHeadingFor,
     toggleResourcePopover,

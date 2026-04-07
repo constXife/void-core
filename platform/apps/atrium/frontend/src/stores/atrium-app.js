@@ -249,6 +249,8 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   const shoppingSummary = ref(null);
   const shoppingSummaryLoading = ref(false);
   const shoppingSummaryError = ref("");
+  const shoppingMutationPendingKey = ref("");
+  const shoppingMutationError = ref("");
 
   const loadSession = async () => {
     if (sessionLoaded.value) return me.value;
@@ -285,6 +287,131 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
       shoppingSummaryLoading.value = false;
     }
     return shoppingSummary.value;
+  };
+
+  const activeShoppingRun = () => shoppingSummary.value?.active_run?.run || null;
+  const activeShoppingRunItems = () =>
+    Array.isArray(shoppingSummary.value?.active_run?.items) ? shoppingSummary.value.active_run.items : [];
+  const shoppingNeedQueued = (itemOrIntentID) => {
+    const intentID =
+      typeof itemOrIntentID === "string"
+        ? itemOrIntentID
+        : String(itemOrIntentID?.intent_id || itemOrIntentID?.instance_id || "").trim();
+    if (!intentID) return false;
+    return activeShoppingRunItems().some(
+      (item) => String(item?.linked_purchase_intent_id || "").trim() === intentID
+    );
+  };
+
+  const defaultShoppingRunTitle = () =>
+    currentLang.value === "ru" ? "Текущий shopping batch" : "Current shopping batch";
+
+  const runShoppingMutation = async (key, action) => {
+    shoppingMutationPendingKey.value = key;
+    shoppingMutationError.value = "";
+    try {
+      const result = await action();
+      await loadShoppingSummary({ force: true });
+      return result;
+    } catch (err) {
+      const message = String(err?.message || "Request failed");
+      shoppingMutationError.value = message;
+      notify(message, "error");
+      throw err;
+    } finally {
+      shoppingMutationPendingKey.value = "";
+    }
+  };
+
+  const ensureActiveShoppingRun = async () => {
+    const currentRun = activeShoppingRun();
+    if (currentRun?.run_id) return currentRun;
+    const payload = await fetchJSON("/api/shopping/runs", {
+      method: "POST",
+      body: JSON.stringify({
+        title: defaultShoppingRunTitle(),
+        status: "active",
+        run_kind: "shopping-list",
+        cadence: "ad-hoc"
+      })
+    });
+    return payload?.run || null;
+  };
+
+  const addShoppingNeedToRun = async (item) => {
+    const intentID = String(item?.intent_id || item?.instance_id || "").trim();
+    const title = String(item?.title || item?.name || "").trim();
+    if (!intentID || !title || shoppingNeedQueued(intentID)) return null;
+
+    return runShoppingMutation(`shopping-need:${intentID}`, async () => {
+      const run = await ensureActiveShoppingRun();
+      return fetchJSON("/api/shopping/items", {
+        method: "POST",
+        body: JSON.stringify({
+          run_id: run?.run_id,
+          title,
+          item_kind: "other",
+          source_kind: "purchase-intent",
+          status: "suggested",
+          priority: ["low", "normal", "high"].includes(String(item?.priority || "").toLowerCase())
+            ? String(item.priority).toLowerCase()
+            : "normal",
+          linked_purchase_intent_id: intentID
+        })
+      });
+    });
+  };
+
+  const addManualShoppingItem = async (title) => {
+    const normalizedTitle = String(title || "").trim();
+    if (!normalizedTitle) return null;
+
+    return runShoppingMutation("shopping-manual-item", async () => {
+      const run = await ensureActiveShoppingRun();
+      return fetchJSON("/api/shopping/items", {
+        method: "POST",
+        body: JSON.stringify({
+          run_id: run?.run_id,
+          title: normalizedTitle,
+          item_kind: "other",
+          source_kind: "manual",
+          status: "suggested",
+          priority: "normal"
+        })
+      });
+    });
+  };
+
+  const patchShoppingItemStatus = async (itemID, status) => {
+    const normalizedItemID = String(itemID || "").trim();
+    const normalizedStatus = String(status || "").trim().toLowerCase();
+    if (!normalizedItemID || !normalizedStatus) return null;
+
+    return runShoppingMutation(`shopping-item:${normalizedItemID}:${normalizedStatus}`, async () =>
+      fetchJSON(`/api/shopping/items/${encodeURIComponent(normalizedItemID)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: normalizedStatus })
+      })
+    );
+  };
+
+  const closeShoppingRun = async ({ runID, closeOpenItemsAs } = {}) => {
+    const targetRunID = String(runID || activeShoppingRun()?.run_id || "").trim();
+    if (!targetRunID) return null;
+
+    const payload = {
+      status: "completed"
+    };
+    if (closeOpenItemsAs) {
+      payload.close_open_items_as = String(closeOpenItemsAs).trim().toLowerCase();
+    }
+
+    return runShoppingMutation(`shopping-run:${targetRunID}:completed`, async () =>
+      fetchJSON(`/api/shopping/runs/${encodeURIComponent(targetRunID)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      })
+    );
   };
 
   const {
@@ -409,28 +536,34 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     runSurfaceAction,
     s3EndpointsFor,
     serviceStatusLabel,
+    surfaceCardActions,
     surfaceCardsFor,
     surfaceHeadingFor,
     toggleResourcePopover,
     updateResourcePopoverPlacement
   } = useAtriumResources({
     BLOCK_TYPES,
+    addShoppingNeedToRun: (...args) => addShoppingNeedToRun(...args),
     blockDataFor: (...args) => blockDataFor(...args),
     blockTypeIs: (...args) => blockTypeIs(...args),
     blocksForSpace: (...args) => blocksForSpace(...args),
+    closeShoppingRun: (...args) => closeShoppingRun(...args),
     fetchJSON,
     isAdminSpace: (...args) => isAdminSpace(...args),
     isKidsSpace: (...args) => isKidsSpace(...args),
     isPublicReadonlySpace: (...args) => isPublicReadonlySpace(...args),
+    loadShoppingSummary: (...args) => loadShoppingSummary(...args),
     navigateTo: (...args) => navigateTo(...args),
     navigateToAdmin: (...args) => navigateToAdmin(...args),
     notify,
     recentResourcesBySpace,
     recentResourcesKey,
     settingsStore,
+    shoppingMutationPendingKey,
     shoppingSummary,
     shoppingSummaryError,
     shoppingSummaryLoading,
+    shoppingNeedQueued: (...args) => shoppingNeedQueued(...args),
     showUserDropdown,
     spaces,
     t: (...args) => t(...args),
@@ -1035,7 +1168,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     actualRole,
     addBlockFromPicker,
     addDashboardBlock,
+    addManualShoppingItem,
     addMembership,
+    addShoppingNeedToRun,
     adminSubtitle,
     adminTab,
     adminTitle,
@@ -1197,6 +1332,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     performanceMode,
     performanceSelection,
     performanceSelectorVisible,
+    patchShoppingItemStatus,
     prevSpace,
     privacyDocumentHtml,
     recentResourcesBySpace,
@@ -1235,6 +1371,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     showDevLogin,
     showShortcuts,
     showUserDropdown,
+    shoppingMutationError,
+    shoppingMutationPendingKey,
+    shoppingNeedQueued,
     shoppingSummary,
     shoppingSummaryError,
     shoppingSummaryLoading,
@@ -1255,11 +1394,13 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     startEditSpace,
     stopDashboardEdit,
     supportedLangs,
+    surfaceCardActions,
     surfaceCardsFor,
     surfaceHeadingFor,
     syncRoleOverride,
     t,
     toastStore,
+    closeShoppingRun,
     todoItemsFor,
     toggleDashboardEdit,
     toggleDashboardEditAdvanced,
