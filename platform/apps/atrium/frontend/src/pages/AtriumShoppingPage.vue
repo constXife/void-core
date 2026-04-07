@@ -18,7 +18,7 @@ const manualItemTitle = ref("");
 
 const copy = computed(() =>
   currentLang.value === "ru"
-    ? {
+      ? {
         eyebrow: "Shopping v0",
         title: "Нужно купить, что уже в списке и что недавно закрыто.",
         subtitle:
@@ -37,12 +37,16 @@ const copy = computed(() =>
         actionableCount: "Actionable items",
         closedCount: "Закрыто недавно",
         emptyNeeds: "Активных purchase intent пока нет.",
-        emptyRun: "Активный shopping run пока не найден.",
-        emptyClosed: "Недавно закрытых позиций пока нет.",
+        emptyRun:
+          "Активного shopping run сейчас нет. Он появится автоматически, когда ты добавишь первую позицию.",
+        emptyClosed:
+          "Здесь видны только купленные и снятые позиции. Отложенный остаток остаётся в истории run.",
         untitled: "Без названия",
         addToRun: "В список",
         alreadyQueued: "Уже в run",
-        closeRun: "Закрыть run",
+        closeRun: "Закрыть run и отложить остаток",
+        closeRunHint:
+          "При закрытии незавершённые позиции переходят в «отложено» и не попадают в «недавно закрыто».",
         quickAddLabel: "Быстро добавить вручную",
         quickAddPlaceholder: "Например: фильтры для кофе",
         quickAddButton: "Добавить",
@@ -72,12 +76,16 @@ const copy = computed(() =>
         actionableCount: "Actionable items",
         closedCount: "Recently closed",
         emptyNeeds: "No active purchase intents yet.",
-        emptyRun: "No active shopping run yet.",
-        emptyClosed: "No recently closed items yet.",
+        emptyRun:
+          "There is no active shopping run right now. A new run will appear automatically once you add the first item.",
+        emptyClosed:
+          "Only purchased and dismissed items show here. Deferred leftovers stay in run history.",
         untitled: "Untitled",
         addToRun: "Queue item",
         alreadyQueued: "Already queued",
-        closeRun: "Close run",
+        closeRun: "Close run and defer rest",
+        closeRunHint:
+          "Closing the run moves unfinished items to deferred, so they do not appear in recently closed.",
         quickAddLabel: "Quick add",
         quickAddPlaceholder: "For example: coffee filters",
         quickAddButton: "Add item",
@@ -301,6 +309,7 @@ onMounted(() => {
         <div v-if="!activeRun" class="shopping-empty">{{ copy.emptyRun }}</div>
         <template v-else>
           <div class="shopping-run-meta">{{ chipText(activeRun) }}</div>
+          <p class="shopping-run-hint">{{ copy.closeRunHint }}</p>
         </template>
 
         <form class="shopping-quick-add" @submit.prevent="addManualItem">
@@ -567,6 +576,7 @@ onMounted(() => {
 
 .shopping-run-title,
 .shopping-run-meta,
+.shopping-run-hint,
 .shopping-item-meta,
 .shopping-empty,
 .shopping-quick-add-hint {
@@ -582,6 +592,10 @@ onMounted(() => {
 
 .shopping-run-meta {
   margin-top: 0.7rem;
+}
+
+.shopping-run-hint {
+  margin: 0.65rem 0 0;
 }
 
 .shopping-list {
