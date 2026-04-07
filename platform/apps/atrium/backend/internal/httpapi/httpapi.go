@@ -145,6 +145,16 @@ func Handler(deps Deps) http.Handler {
 		}
 		handler(w, r)
 	})
+	mux.HandleFunc("/api/shopping/intents", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleShoppingIntents(w, r, deps)
+		}
+		if deps.Auth != nil {
+			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
 	mux.HandleFunc("/api/shopping/runs/", func(w http.ResponseWriter, r *http.Request) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			handleShoppingRun(w, r, deps)

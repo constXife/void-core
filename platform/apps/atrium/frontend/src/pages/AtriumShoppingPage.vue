@@ -15,6 +15,10 @@ const {
 } = storeToRefs(appStore);
 
 const manualItemTitle = ref("");
+const intentTitle = ref("");
+const intentCategory = ref("other");
+const intentPriority = ref("normal");
+const intentNote = ref("");
 
 const copy = computed(() =>
   currentLang.value === "ru"
@@ -47,6 +51,15 @@ const copy = computed(() =>
         closeRun: "Закрыть run и отложить остаток",
         closeRunHint:
           "При закрытии незавершённые позиции переходят в «отложено» и не попадают в «недавно закрыто».",
+        createIntentLabel: "Новая потребность",
+        createIntentTitleLabel: "Что нужно купить",
+        createIntentTitlePlaceholder: "Например: фильтры для кофе",
+        createIntentCategoryLabel: "Категория",
+        createIntentPriorityLabel: "Приоритет",
+        createIntentNoteLabel: "Заметка",
+        createIntentNotePlaceholder: "Почему это нужно или какие есть ограничения",
+        createIntentButton: "Добавить потребность",
+        createIntentRequired: "Сначала укажи, что именно нужно купить.",
         quickAddLabel: "Быстро добавить вручную",
         quickAddPlaceholder: "Например: фильтры для кофе",
         quickAddButton: "Добавить",
@@ -86,6 +99,15 @@ const copy = computed(() =>
         closeRun: "Close run and defer rest",
         closeRunHint:
           "Closing the run moves unfinished items to deferred, so they do not appear in recently closed.",
+        createIntentLabel: "New need",
+        createIntentTitleLabel: "What needs to be bought",
+        createIntentTitlePlaceholder: "For example: coffee filters",
+        createIntentCategoryLabel: "Category",
+        createIntentPriorityLabel: "Priority",
+        createIntentNoteLabel: "Note",
+        createIntentNotePlaceholder: "Why this matters or any constraints",
+        createIntentButton: "Add need",
+        createIntentRequired: "Enter what needs to be bought first.",
         quickAddLabel: "Quick add",
         quickAddPlaceholder: "For example: coffee filters",
         quickAddButton: "Add item",
@@ -133,6 +155,16 @@ const priorityLabels = {
   low: { ru: "низкий", en: "low" },
   normal: { ru: "обычный", en: "normal" },
   high: { ru: "высокий", en: "high" }
+};
+
+const intentCategoryLabels = {
+  electronics: { ru: "электроника", en: "electronics" },
+  clothing: { ru: "одежда", en: "clothing" },
+  grocery: { ru: "продукты", en: "grocery" },
+  subscription: { ru: "подписка", en: "subscription" },
+  home: { ru: "дом", en: "home" },
+  travel: { ru: "поездка", en: "travel" },
+  other: { ru: "другое", en: "other" }
 };
 
 const localizedValue = (table, value) => {
@@ -183,6 +215,37 @@ const loadSummary = async ({ force = false } = {}) => {
 };
 const isPending = (key) => shoppingMutationPendingKey.value === key;
 const isNeedQueued = (item) => appStore.shoppingNeedQueued(item);
+const intentCategoryOptions = computed(() =>
+  Object.keys(intentCategoryLabels).map((value) => ({
+    value,
+    label: localizedValue(intentCategoryLabels, value)
+  }))
+);
+const intentPriorityOptions = computed(() =>
+  Object.keys(priorityLabels).map((value) => ({
+    value,
+    label: localizedValue(priorityLabels, value)
+  }))
+);
+
+const createIntent = async () => {
+  const title = intentTitle.value.trim();
+  if (!title) {
+    shoppingMutationError.value = copy.value.createIntentRequired;
+    return;
+  }
+
+  await appStore.createShoppingIntent({
+    title,
+    intentCategory: intentCategory.value,
+    priority: intentPriority.value,
+    note: intentNote.value
+  });
+  intentTitle.value = "";
+  intentCategory.value = "other";
+  intentPriority.value = "normal";
+  intentNote.value = "";
+};
 
 const addNeedToRun = async (item) => {
   if (isNeedQueued(item) || !item?.intent_id) return;
@@ -266,6 +329,51 @@ onMounted(() => {
           <h2>{{ copy.needs }}</h2>
           <span>{{ summary?.needs_to_buy?.count || 0 }}</span>
         </div>
+        <form class="shopping-create-intent" @submit.prevent="createIntent">
+          <div class="shopping-create-intent-header">{{ copy.createIntentLabel }}</div>
+          <div class="shopping-create-intent-grid">
+            <label class="shopping-field">
+              <span class="shopping-field-label">{{ copy.createIntentTitleLabel }}</span>
+              <input
+                v-model="intentTitle"
+                class="shopping-input"
+                type="text"
+                :placeholder="copy.createIntentTitlePlaceholder"
+                :disabled="!!shoppingMutationPendingKey"
+              />
+            </label>
+            <label class="shopping-field">
+              <span class="shopping-field-label">{{ copy.createIntentCategoryLabel }}</span>
+              <select v-model="intentCategory" class="shopping-input shopping-select" :disabled="!!shoppingMutationPendingKey">
+                <option v-for="option in intentCategoryOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="shopping-field">
+              <span class="shopping-field-label">{{ copy.createIntentPriorityLabel }}</span>
+              <select v-model="intentPriority" class="shopping-input shopping-select" :disabled="!!shoppingMutationPendingKey">
+                <option v-for="option in intentPriorityOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+          </div>
+          <label class="shopping-field">
+            <span class="shopping-field-label">{{ copy.createIntentNoteLabel }}</span>
+            <textarea
+              v-model="intentNote"
+              class="shopping-input shopping-textarea"
+              rows="2"
+              :placeholder="copy.createIntentNotePlaceholder"
+              :disabled="!!shoppingMutationPendingKey"
+            />
+          </label>
+          <button class="shopping-action shopping-action-small" type="submit" :disabled="!!shoppingMutationPendingKey">
+            <Plus class="w-4 h-4" />
+            <span>{{ copy.createIntentButton }}</span>
+          </button>
+        </form>
         <div v-if="needsToBuy.length === 0" class="shopping-empty">{{ copy.emptyNeeds }}</div>
         <ul v-else class="shopping-list">
           <li v-for="item in needsToBuy" :key="item.intent_id || item.id || item.title" class="shopping-item">
@@ -606,6 +714,33 @@ onMounted(() => {
   list-style: none;
 }
 
+.shopping-create-intent {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.shopping-create-intent-header,
+.shopping-field-label {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shopping-create-intent-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.shopping-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .shopping-item {
   padding: 0.8rem 0.9rem;
   border-radius: 18px;
@@ -710,6 +845,16 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.36);
 }
 
+.shopping-select,
+.shopping-textarea {
+  appearance: none;
+}
+
+.shopping-textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
 .shopping-quick-add-hint {
   margin: 0.55rem 0 0;
 }
@@ -732,6 +877,10 @@ onMounted(() => {
   .shopping-item-row,
   .shopping-quick-add-row {
     flex-direction: column;
+  }
+
+  .shopping-create-intent-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

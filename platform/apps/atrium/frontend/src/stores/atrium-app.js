@@ -362,6 +362,38 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     });
   };
 
+  const createShoppingIntent = async ({
+    title,
+    intentCategory,
+    priority,
+    note,
+    intentStatus
+  } = {}) => {
+    const normalizedTitle = String(title || "").trim();
+    if (!normalizedTitle) return null;
+
+    const payload = {
+      title: normalizedTitle,
+      intent_category: String(intentCategory || "other").trim().toLowerCase()
+    };
+    if (priority) {
+      payload.priority = String(priority).trim().toLowerCase();
+    }
+    if (note) {
+      payload.note = String(note).trim();
+    }
+    if (intentStatus) {
+      payload.intent_status = String(intentStatus).trim().toLowerCase();
+    }
+
+    return runShoppingMutation("shopping-intent:create", async () =>
+      fetchJSON("/api/shopping/intents", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+    );
+  };
+
   const addManualShoppingItem = async (title) => {
     const normalizedTitle = String(title || "").trim();
     if (!normalizedTitle) return null;
@@ -1171,6 +1203,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     addManualShoppingItem,
     addMembership,
     addShoppingNeedToRun,
+    createShoppingIntent,
     adminSubtitle,
     adminTab,
     adminTitle,
