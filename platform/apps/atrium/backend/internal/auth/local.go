@@ -65,9 +65,10 @@ func (m *Manager) handleLocalLogin(w http.ResponseWriter, r *http.Request) {
 
 	role := m.normalizeRoleValue(record.Role)
 	session := Session{
-		Email:     record.Email,
-		Role:      role,
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		Email:       record.Email,
+		Role:        role,
+		AuthSubject: m.authSubjectForEmail(record.Email),
+		ExpiresAt:   time.Now().Add(24 * time.Hour).Unix(),
 	}
 	encoded, err := m.encode(session)
 	if err != nil {
@@ -78,6 +79,7 @@ func (m *Manager) handleLocalLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     m.cookieName,
 		Value:    encoded,
+		Domain:   m.cookieDomain,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   m.cookieSecure,

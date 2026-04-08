@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -29,11 +30,15 @@ type Manager struct {
 	admins        map[string]bool
 	roleMapExact  map[string]string
 	roleMapDomain map[string]string
+	subjectMap    map[string]string
 	defaultRole   string
 	guestEnabled  bool
 	cookieName    string
 	cookieSecret  []byte
 	cookieSecure  bool
+	cookieDomain  string
+	redirectHosts map[string]bool
+	callbackPath  string
 }
 
 type Config struct {
@@ -48,16 +53,20 @@ type Config struct {
 	AdminEmails   []string
 	RoleMapExact  map[string]string
 	RoleMapDomain map[string]string
+	SubjectMap    map[string]string
 	DefaultRole   string
 	GuestEnabled  bool
 	CookieSecure  bool
+	CookieDomain  string
+	RedirectHosts []string
 }
 
 type Session struct {
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	StayID    string `json:"stay_id,omitempty"`
-	ExpiresAt int64  `json:"expires_at"`
+	Email       string `json:"email"`
+	Role        string `json:"role"`
+	AuthSubject string `json:"auth_subject,omitempty"`
+	StayID      string `json:"stay_id,omitempty"`
+	ExpiresAt   int64  `json:"expires_at"`
 }
 
 type statePayload struct {
@@ -77,6 +86,16 @@ func NewManager(ctx context.Context, db *sql.DB, cfg Config) (*Manager, error) {
 	}
 	if oidcEnabled && len(cfg.AllowedEmails) == 0 {
 		return nil, fmt.Errorf("allowed emails list is empty")
+	}
+	callbackPath := "/auth/callback"
+	if oidcEnabled {
+		redirectURL, err := url.Parse(cfg.RedirectURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid redirect url: %w", err)
+		}
+		if strings.TrimSpace(redirectURL.Path) != "" {
+			callbackPath = strings.TrimSpace(redirectURL.Path)
+		}
 	}
 
 	var provider *oidc.Provider
@@ -111,11 +130,15 @@ func NewManager(ctx context.Context, db *sql.DB, cfg Config) (*Manager, error) {
 		admins:        toSet(cfg.AdminEmails),
 		roleMapExact:  normalizeRoleMap(cfg.RoleMapExact),
 		roleMapDomain: normalizeRoleMap(cfg.RoleMapDomain),
+		subjectMap:    normalizeSubjectMap(cfg.SubjectMap),
 		defaultRole:   normalizeRole(cfg.DefaultRole, "user"),
 		guestEnabled:  cfg.GuestEnabled,
 		cookieName:    defaultString(cfg.CookieName, "atrium_session"),
 		cookieSecret:  []byte(cfg.CookieSecret),
 		cookieSecure:  cfg.CookieSecure,
+		cookieDomain:  strings.TrimSpace(cfg.CookieDomain),
+		redirectHosts: toSet(cfg.RedirectHosts),
+		callbackPath:  callbackPath,
 	}
 
 	return mgr, nil
@@ -167,7 +190,8 @@ func (m *Manager) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	http.Redirect(w, r, m.oauth2Config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
+	oauth2Config := m.oauth2ConfigForRequest(r)
+	http.Redirect(w, r, oauth2Config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
 }
 
 func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +222,8 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := m.oauth2Config.Exchange(r.Context(), code)
+	oauth2Config := m.oauth2ConfigForRequest(r)
+	token, err := oauth2Config.Exchange(r.Context(), code)
 	if err != nil {
 		http.Error(w, "token exchange failed", http.StatusBadRequest)
 		return
@@ -256,9 +281,10 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := Session{
-		Email:     email,
-		Role:      role,
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		Email:       email,
+		Role:        role,
+		AuthSubject: m.authSubjectForEmail(email),
+		ExpiresAt:   time.Now().Add(24 * time.Hour).Unix(),
 	}
 	encoded, err := m.encode(session)
 	if err != nil {
@@ -269,6 +295,7 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     m.cookieName,
 		Value:    encoded,
+		Domain:   m.cookieDomain,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   m.cookieSecure,
@@ -278,6 +305,7 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "atrium_oidc_state",
 		Value:    "",
+		Domain:   m.cookieDomain,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   m.cookieSecure,
@@ -296,6 +324,7 @@ func (m *Manager) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     m.cookieName,
 		Value:    "",
+		Domain:   m.cookieDomain,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   m.cookieSecure,
@@ -360,6 +389,14 @@ func (m *Manager) roleForEmail(email string) string {
 		}
 	}
 	return m.normalizeRoleValue(m.defaultRole)
+}
+
+func (m *Manager) authSubjectForEmail(email string) string {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return ""
+	}
+	return strings.TrimSpace(m.subjectMap[email])
 }
 
 func (m *Manager) normalizeRoleValue(role string) string {
@@ -465,6 +502,22 @@ func normalizeRoleMap(input map[string]string) map[string]string {
 	return result
 }
 
+func normalizeSubjectMap(input map[string]string) map[string]string {
+	if len(input) == 0 {
+		return map[string]string{}
+	}
+	result := make(map[string]string, len(input))
+	for key, value := range input {
+		k := strings.ToLower(strings.TrimSpace(key))
+		v := strings.TrimSpace(value)
+		if k == "" || v == "" {
+			continue
+		}
+		result[k] = v
+	}
+	return result
+}
+
 func normalizeRole(value, fallback string) string {
 	value = strings.ToLower(strings.TrimSpace(value))
 	if value == "" {
@@ -481,6 +534,10 @@ func (m *Manager) OIDCEnabled() bool {
 	return m.oidcEnabled
 }
 
+func (m *Manager) EncodeForTests(value any) (string, error) {
+	return m.encode(value)
+}
+
 func sanitizeNext(value string) string {
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -493,4 +550,45 @@ func sanitizeNext(value string) string {
 		return ""
 	}
 	return value
+}
+
+func (m *Manager) oauth2ConfigForRequest(r *http.Request) oauth2.Config {
+	if !m.oidcEnabled {
+		return m.oauth2Config
+	}
+	config := m.oauth2Config
+	if callbackURL := m.callbackURLForRequest(r); callbackURL != "" {
+		config.RedirectURL = callbackURL
+	}
+	return config
+}
+
+func (m *Manager) callbackURLForRequest(r *http.Request) string {
+	if !m.oidcEnabled {
+		return ""
+	}
+	host := strings.TrimSpace(r.Header.Get("X-Forwarded-Host"))
+	if host == "" {
+		host = strings.TrimSpace(r.Host)
+	}
+	host = strings.ToLower(strings.TrimSpace(strings.Split(host, ",")[0]))
+	if host == "" {
+		return m.oauth2Config.RedirectURL
+	}
+	if len(m.redirectHosts) > 0 && !m.redirectHosts[host] {
+		return m.oauth2Config.RedirectURL
+	}
+	scheme := strings.TrimSpace(r.Header.Get("X-Forwarded-Proto"))
+	if scheme == "" {
+		if r.TLS != nil {
+			scheme = "https"
+		} else {
+			scheme = "http"
+		}
+	}
+	return (&url.URL{
+		Scheme: scheme,
+		Host:   host,
+		Path:   m.callbackPath,
+	}).String()
 }

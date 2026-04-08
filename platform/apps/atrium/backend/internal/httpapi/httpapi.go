@@ -21,36 +21,39 @@ import (
 )
 
 type Deps struct {
-	LoadSpaces         func(ctx context.Context) (workspace.SpaceWorkspace, error)
-	ListCategories     func(ctx context.Context) ([]spaces.Space, error)
-	ListCategoriesAll  func(ctx context.Context) ([]spaces.Space, error)
-	CreateCategory     func(ctx context.Context, input spaces.Input) (spaces.Space, error)
-	UpdateCategory     func(ctx context.Context, id int, input spaces.Input) (spaces.Space, error)
-	ArchiveCategory    func(ctx context.Context, id int) error
-	RestoreCategory    func(ctx context.Context, id int) error
-	DeleteCategory     func(ctx context.Context, id int) error
-	Auth               *auth.Manager
-	LoadDashboard      func(ctx context.Context, spaceID int, session auth.Session) (portal.DashboardPayload, error)
-	LoadBlocksData     func(ctx context.Context, spaceID int, session auth.Session, blocks []portal.BlockDescriptor) (map[string]any, error)
-	InvokeAction       func(ctx context.Context, input portal.ActionInvokeInput, session auth.Session) (portal.ActionInvokeResult, error)
-	SaveDashboard      func(ctx context.Context, spaceID int, session auth.Session, input portal.DashboardSaveInput) (portal.DashboardPayload, error)
-	ListTemplates      func(ctx context.Context) ([]portal.TemplateSummary, error)
-	ListRoles          func(ctx context.Context) ([]roles.Role, error)
-	RolePermissions    func(ctx context.Context, roleKey string) ([]string, error)
-	UserSegmentByEmail func(ctx context.Context, email string) (string, error)
-	ListMemberships    func(ctx context.Context, spaceID *int) ([]memberships.Membership, error)
-	UpsertMembership   func(ctx context.Context, input memberships.Input) (memberships.Membership, error)
-	ImportMemberships  func(ctx context.Context, input memberships.ImportInput) (int, error)
-	DeleteMembership   func(ctx context.Context, principalID string, spaceID int) error
-	UpdateUserSegment  func(ctx context.Context, userID string, segment string) error
-	ListDirectory      func(ctx context.Context, spaceID int) ([]directory.Item, error)
-	CreateDirectory    func(ctx context.Context, input directory.CreateInput) (directory.Item, error)
-	UpdateDirectory    func(ctx context.Context, id string, input directory.UpdateInput) (directory.Item, error)
-	DeleteDirectory    func(ctx context.Context, id string) error
-	ReloadConfig       func(ctx context.Context) error
-	ShoppingAPIBaseURL string
-	ShoppingAPIToken   string
-	ShoppingHTTPClient *http.Client
+	LoadSpaces               func(ctx context.Context) (workspace.SpaceWorkspace, error)
+	ListCategories           func(ctx context.Context) ([]spaces.Space, error)
+	ListCategoriesAll        func(ctx context.Context) ([]spaces.Space, error)
+	CreateCategory           func(ctx context.Context, input spaces.Input) (spaces.Space, error)
+	UpdateCategory           func(ctx context.Context, id int, input spaces.Input) (spaces.Space, error)
+	ArchiveCategory          func(ctx context.Context, id int) error
+	RestoreCategory          func(ctx context.Context, id int) error
+	DeleteCategory           func(ctx context.Context, id int) error
+	Auth                     *auth.Manager
+	LoadDashboard            func(ctx context.Context, spaceID int, session auth.Session) (portal.DashboardPayload, error)
+	LoadBlocksData           func(ctx context.Context, spaceID int, session auth.Session, blocks []portal.BlockDescriptor) (map[string]any, error)
+	InvokeAction             func(ctx context.Context, input portal.ActionInvokeInput, session auth.Session) (portal.ActionInvokeResult, error)
+	SaveDashboard            func(ctx context.Context, spaceID int, session auth.Session, input portal.DashboardSaveInput) (portal.DashboardPayload, error)
+	ListTemplates            func(ctx context.Context) ([]portal.TemplateSummary, error)
+	ListRoles                func(ctx context.Context) ([]roles.Role, error)
+	RolePermissions          func(ctx context.Context, roleKey string) ([]string, error)
+	UserSegmentByEmail       func(ctx context.Context, email string) (string, error)
+	ListMemberships          func(ctx context.Context, spaceID *int) ([]memberships.Membership, error)
+	UpsertMembership         func(ctx context.Context, input memberships.Input) (memberships.Membership, error)
+	ImportMemberships        func(ctx context.Context, input memberships.ImportInput) (int, error)
+	DeleteMembership         func(ctx context.Context, principalID string, spaceID int) error
+	UpdateUserSegment        func(ctx context.Context, userID string, segment string) error
+	ListDirectory            func(ctx context.Context, spaceID int) ([]directory.Item, error)
+	CreateDirectory          func(ctx context.Context, input directory.CreateInput) (directory.Item, error)
+	UpdateDirectory          func(ctx context.Context, id string, input directory.UpdateInput) (directory.Item, error)
+	DeleteDirectory          func(ctx context.Context, id string) error
+	ReloadConfig             func(ctx context.Context) error
+	ShoppingAPIBaseURL       string
+	ShoppingAPIToken         string
+	ShoppingHTTPClient       *http.Client
+	KnowledgeProxyBaseURL    string
+	KnowledgeProxyToken      string
+	KnowledgeProxyHTTPClient *http.Client
 }
 
 func Handler(deps Deps) http.Handler {
@@ -191,6 +194,66 @@ func Handler(deps Deps) http.Handler {
 		}
 		if deps.Auth != nil {
 			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/inventory/", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleKnowledgeHostRequest(w, r, deps, "inventory")
+		}
+		if deps.Auth != nil {
+			deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/finance/", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleKnowledgeHostRequest(w, r, deps, "finance")
+		}
+		if deps.Auth != nil {
+			deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/knowledge/v1/inventory", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleKnowledgeHostRequest(w, r, deps, "inventory")
+		}
+		if deps.Auth != nil {
+			deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/knowledge/v1/inventory/", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleKnowledgeHostRequest(w, r, deps, "inventory")
+		}
+		if deps.Auth != nil {
+			deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/knowledge/v1/finance", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleKnowledgeHostRequest(w, r, deps, "finance")
+		}
+		if deps.Auth != nil {
+			deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+			return
+		}
+		handler(w, r)
+	})
+	mux.HandleFunc("/api/knowledge/v1/finance/", func(w http.ResponseWriter, r *http.Request) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			handleKnowledgeHostRequest(w, r, deps, "finance")
+		}
+		if deps.Auth != nil {
+			deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
 			return
 		}
 		handler(w, r)
@@ -481,6 +544,7 @@ func handleMe(w http.ResponseWriter, r *http.Request, deps Deps) {
 	payload := struct {
 		Email       string   `json:"email"`
 		Role        string   `json:"role"`
+		AuthSubject string   `json:"auth_subject,omitempty"`
 		Segment     string   `json:"segment,omitempty"`
 		StayID      string   `json:"stay_id,omitempty"`
 		ExpiresAt   int64    `json:"expires_at"`
@@ -488,6 +552,7 @@ func handleMe(w http.ResponseWriter, r *http.Request, deps Deps) {
 	}{
 		Email:       session.Email,
 		Role:        session.Role,
+		AuthSubject: session.AuthSubject,
 		Segment:     segment,
 		StayID:      session.StayID,
 		ExpiresAt:   session.ExpiresAt,

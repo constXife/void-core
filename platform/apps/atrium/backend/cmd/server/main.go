@@ -100,9 +100,12 @@ func main() {
 			AdminEmails:   splitCSV(os.Getenv("AUTH_ADMIN_EMAILS")),
 			RoleMapExact:  roleMapExact,
 			RoleMapDomain: roleMapDomain,
+			SubjectMap:    parseExactMap(os.Getenv("AUTH_SUBJECT_MAP")),
 			DefaultRole:   os.Getenv("AUTH_DEFAULT_ROLE"),
 			GuestEnabled:  isGuestEnabled(),
 			CookieSecure:  os.Getenv("AUTH_COOKIE_SECURE") == "1",
+			CookieDomain:  os.Getenv("AUTH_COOKIE_DOMAIN"),
+			RedirectHosts: splitCSV(os.Getenv("AUTH_REDIRECT_HOSTS")),
 		})
 		if err != nil {
 			log.Fatalf("init auth: %v", err)
@@ -196,12 +199,15 @@ func main() {
 		DeleteDirectory: func(ctx context.Context, id string) error {
 			return directory.Delete(ctx, db, id)
 		},
-			Auth:               authManager,
-			ReloadConfig:       nil,
-			ShoppingAPIBaseURL: strings.TrimSpace(os.Getenv("KNOWLEDGE_API_BASE_URL")),
-			ShoppingAPIToken:   strings.TrimSpace(os.Getenv("KNOWLEDGE_API_TOKEN")),
-			ShoppingHTTPClient: &http.Client{Timeout: 15 * time.Second},
-		}
+		Auth:                     authManager,
+		ReloadConfig:             nil,
+		ShoppingAPIBaseURL:       strings.TrimSpace(os.Getenv("KNOWLEDGE_API_BASE_URL")),
+		ShoppingAPIToken:         strings.TrimSpace(os.Getenv("KNOWLEDGE_API_TOKEN")),
+		ShoppingHTTPClient:       &http.Client{Timeout: 15 * time.Second},
+		KnowledgeProxyBaseURL:    strings.TrimSpace(os.Getenv("KNOWLEDGE_PROXY_BASE_URL")),
+		KnowledgeProxyToken:      strings.TrimSpace(os.Getenv("KNOWLEDGE_PROXY_TOKEN")),
+		KnowledgeProxyHTTPClient: &http.Client{Timeout: 15 * time.Second},
+	}
 
 	if configFirst {
 		store := configstore.NewProvisioningStore(provisioningPath)
@@ -263,6 +269,26 @@ func splitCSV(value string) []string {
 		out = append(out, part)
 	}
 	return out
+}
+
+func parseExactMap(value string) map[string]string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	result := map[string]string{}
+	for _, item := range strings.Split(value, ",") {
+		parts := strings.SplitN(item, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.ToLower(strings.TrimSpace(parts[0]))
+		mapped := strings.TrimSpace(parts[1])
+		if key == "" || mapped == "" {
+			continue
+		}
+		result[key] = mapped
+	}
+	return result
 }
 
 func parseRoleMap(value string) (map[string]string, map[string]string) {

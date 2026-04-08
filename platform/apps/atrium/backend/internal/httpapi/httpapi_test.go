@@ -309,3 +309,101 @@ func TestShoppingSummaryRouteProxiesConfiguredRequest(t *testing.T) {
 		t.Fatalf("expected need_to_buy_count 2, got %d", payload["need_to_buy_count"])
 	}
 }
+
+func TestKnowledgeHostRouteRedirectsToLoginWhenSessionMissing(t *testing.T) {
+	manager, err := auth.NewManager(context.Background(), nil, auth.Config{
+		LocalEnabled: true,
+		CookieSecret: "test-secret",
+	})
+	if err != nil {
+		t.Fatalf("create auth manager: %v", err)
+	}
+
+	handler := Handler(Deps{
+		Auth:                  manager,
+		KnowledgeProxyBaseURL: "http://knowledge.internal:8787",
+		KnowledgeProxyToken:   "bridge-token",
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/finance/dashboard/page?month=2026-04", nil)
+	req.Header.Set("Accept", "text/html")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected status 302, got %d", rec.Code)
+	}
+	if got := rec.Header().Get("Location"); got != "/auth/login?next=%2Ffinance%2Fdashboard%2Fpage%3Fmonth%3D2026-04" {
+		t.Fatalf("expected login redirect, got %q", got)
+	}
+}
+
+func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
+	manager, err := auth.NewManager(context.Background(), nil, auth.Config{
+		LocalEnabled: true,
+		CookieSecret: "test-secret",
+	})
+	if err != nil {
+		t.Fatalf("create auth manager: %v", err)
+	}
+
+	encoded, err := manager.EncodeForTests(auth.Session{
+		Email:       "admin@example.com",
+		Role:        "admin",
+		AuthSubject: "constxife",
+		ExpiresAt:   4102444800,
+	})
+	if err != nil {
+		t.Fatalf("encode test session: %v", err)
+	}
+
+	var gotAuth string
+	var gotSubject string
+	var gotEmail string
+	var gotRole string
+
+	handler := Handler(Deps{
+		Auth:                  manager,
+		KnowledgeProxyBaseURL: "https://api.example.test",
+		KnowledgeProxyToken:   "bridge-token",
+		KnowledgeProxyHTTPClient: &http.Client{
+			Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				if r.URL.Path != "/inventory/dashboard/page" {
+					t.Fatalf("expected upstream path /inventory/dashboard/page, got %q", r.URL.Path)
+				}
+				gotAuth = r.Header.Get("Authorization")
+				gotSubject = r.Header.Get(knowledgeAuthSubjectHeader)
+				gotEmail = r.Header.Get(knowledgeUserEmailHeader)
+				gotRole = r.Header.Get(knowledgeUserRoleHeader)
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header: http.Header{
+						"Content-Type": []string{"text/html; charset=utf-8"},
+					},
+					Body: io.NopCloser(strings.NewReader("<html>inventory</html>")),
+				}, nil
+			}),
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page", nil)
+	req.AddCookie(&http.Cookie{Name: "atrium_session", Value: encoded})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if gotAuth != "Bearer bridge-token" {
+		t.Fatalf("expected bridge bearer token, got %q", gotAuth)
+	}
+	if gotSubject != "constxife" {
+		t.Fatalf("expected auth subject constxife, got %q", gotSubject)
+	}
+	if gotEmail != "admin@example.com" {
+		t.Fatalf("expected forwarded email, got %q", gotEmail)
+	}
+	if gotRole != "admin" {
+		t.Fatalf("expected forwarded role, got %q", gotRole)
+	}
+}
