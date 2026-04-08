@@ -8,6 +8,7 @@
   cfg = config.void.ingress.caddy;
   idHost = config.void.services.id.fqdn;
   caHost = config.void.services.ca.fqdn;
+  publishedHosts = lib.filterAttrs (_: hostCfg: hostCfg.enable && hostCfg.host != null) cfg.publishedHosts;
   tlsSnippet = ''
     tls {
       issuer acme {
@@ -75,6 +76,34 @@ in {
       example = "/var/lib/step-ca/public";
       description = "Directory used to serve public CA bootstrap material over HTTP.";
     };
+
+    publishedHosts = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule ({name, ...}: {
+        options = {
+          enable = lib.mkEnableOption "published host ${name} via Caddy";
+
+          host = lib.mkOption {
+            type = lib.types.nullOr types.fqdn;
+            default = null;
+            description = "Fully-qualified domain name published for this host.";
+          };
+
+          upstream = lib.mkOption {
+            type = lib.types.nullOr types.httpUrl;
+            default = null;
+            description = "HTTP upstream reverse-proxied for this published host.";
+          };
+
+          extraConfig = lib.mkOption {
+            type = lib.types.lines;
+            default = "";
+            description = "Additional per-host Caddy directives appended after reverse_proxy.";
+          };
+        };
+      }));
+      default = {};
+      description = "Additional published product or shell hosts reverse-proxied by the ingress baseline.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -91,7 +120,10 @@ in {
         assertion = config.void.network.tls.mode != "private-ca" || cfg.acmeCA != null;
         message = "void.ingress.caddy requires void.ingress.caddy.acmeCA when private-ca mode is enabled.";
       }
-    ];
+    ] ++ lib.mapAttrsToList (name: hostCfg: {
+      assertion = hostCfg.upstream != null;
+      message = "void.ingress.caddy.publishedHosts.${name}.enable requires a non-null upstream.";
+    }) publishedHosts;
 
     services.caddy =
       {
@@ -145,7 +177,17 @@ in {
               '';
               logFormat = null;
             };
-          };
+          }
+          // lib.mapAttrs' (_: hostCfg:
+            lib.nameValuePair hostCfg.host {
+              extraConfig = ''
+                ${tlsSnippet}
+                reverse_proxy ${hostCfg.upstream}
+                ${hostCfg.extraConfig}
+              '';
+              logFormat = null;
+            }
+          ) publishedHosts;
       }
       // lib.optionalAttrs (cfg.acmeCA != null) {
         inherit (cfg) acmeCA;

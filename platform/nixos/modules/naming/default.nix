@@ -8,6 +8,24 @@
     if subdomain == null
     then null
     else "${subdomain}.${config.void.site.domain}";
+  mkServiceOptions = {
+    defaultSubdomain,
+    subdomainDescription,
+    fqdnDescription,
+  }: {
+    subdomain = lib.mkOption {
+      type = lib.types.nullOr types.dnsLabel;
+      default = defaultSubdomain;
+      example = defaultSubdomain;
+      description = subdomainDescription;
+    };
+
+    fqdn = lib.mkOption {
+      type = lib.types.nullOr types.fqdn;
+      readOnly = true;
+      description = fqdnDescription;
+    };
+  };
 in {
   options.void = {
     site.domain = lib.mkOption {
@@ -38,49 +56,70 @@ in {
     };
 
     services = {
-      id.subdomain = lib.mkOption {
-        type = lib.types.nullOr types.dnsLabel;
-        default = "id";
-        example = "id";
-        description = "Subdomain used for the identity endpoint.";
+      atrium = mkServiceOptions {
+        defaultSubdomain = "atrium";
+        subdomainDescription = "Subdomain used for the Atrium shell endpoint.";
+        fqdnDescription = "Fully-qualified domain name for the Atrium shell endpoint.";
       };
 
-      id.fqdn = lib.mkOption {
-        type = lib.types.nullOr types.fqdn;
-        readOnly = true;
-        description = "Fully-qualified domain name for the identity endpoint.";
+      api = mkServiceOptions {
+        defaultSubdomain = "api";
+        subdomainDescription = "Subdomain used for the canonical product API endpoint.";
+        fqdnDescription = "Fully-qualified domain name for the canonical product API endpoint.";
       };
 
-      ca.subdomain = lib.mkOption {
-        type = lib.types.nullOr types.dnsLabel;
-        default = "ca";
-        example = "ca";
-        description = "Subdomain used for the private CA endpoint.";
+      mcp = mkServiceOptions {
+        defaultSubdomain = "mcp";
+        subdomainDescription = "Subdomain used for the MCP and tooling endpoint.";
+        fqdnDescription = "Fully-qualified domain name for the MCP and tooling endpoint.";
       };
 
-      ca.fqdn = lib.mkOption {
-        type = lib.types.nullOr types.fqdn;
-        readOnly = true;
-        description = "Fully-qualified domain name for the private CA endpoint.";
+      calendar = mkServiceOptions {
+        defaultSubdomain = "calendar";
+        subdomainDescription = "Subdomain used for the calendar-facing product host.";
+        fqdnDescription = "Fully-qualified domain name for the calendar-facing product host.";
       };
 
-      s3.subdomain = lib.mkOption {
-        type = lib.types.nullOr types.dnsLabel;
-        default = "s3";
-        example = "s3";
-        description = "Subdomain used for the object-storage endpoint.";
+      inventory = mkServiceOptions {
+        defaultSubdomain = "inventory";
+        subdomainDescription = "Subdomain used for the inventory-facing product host.";
+        fqdnDescription = "Fully-qualified domain name for the inventory-facing product host.";
       };
 
-      s3.fqdn = lib.mkOption {
-        type = lib.types.nullOr types.fqdn;
-        readOnly = true;
-        description = "Fully-qualified domain name for the object-storage endpoint.";
+      finance = mkServiceOptions {
+        defaultSubdomain = "finance";
+        subdomainDescription = "Subdomain used for the finance-facing product host.";
+        fqdnDescription = "Fully-qualified domain name for the finance-facing product host.";
+      };
+
+      id = mkServiceOptions {
+        defaultSubdomain = "id";
+        subdomainDescription = "Subdomain used for the identity endpoint.";
+        fqdnDescription = "Fully-qualified domain name for the identity endpoint.";
+      };
+
+      ca = mkServiceOptions {
+        defaultSubdomain = "ca";
+        subdomainDescription = "Subdomain used for the private CA endpoint.";
+        fqdnDescription = "Fully-qualified domain name for the private CA endpoint.";
+      };
+
+      s3 = mkServiceOptions {
+        defaultSubdomain = "s3";
+        subdomainDescription = "Subdomain used for the object-storage endpoint.";
+        fqdnDescription = "Fully-qualified domain name for the object-storage endpoint.";
       };
     };
   };
 
   config = {
     void.services = {
+      atrium.fqdn = mkFqdn config.void.services.atrium.subdomain;
+      api.fqdn = mkFqdn config.void.services.api.subdomain;
+      mcp.fqdn = mkFqdn config.void.services.mcp.subdomain;
+      calendar.fqdn = mkFqdn config.void.services.calendar.subdomain;
+      inventory.fqdn = mkFqdn config.void.services.inventory.subdomain;
+      finance.fqdn = mkFqdn config.void.services.finance.subdomain;
       id.fqdn = mkFqdn config.void.services.id.subdomain;
       ca.fqdn = mkFqdn config.void.services.ca.subdomain;
       s3.fqdn = mkFqdn config.void.services.s3.subdomain;

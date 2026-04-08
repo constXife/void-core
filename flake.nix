@@ -77,6 +77,96 @@
             };
 
             services = {
+              atrium = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "atrium";
+                  description = "Subdomain used for the Atrium shell endpoint.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the Atrium shell endpoint.";
+                };
+              };
+
+              api = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "api";
+                  description = "Subdomain used for the canonical product API endpoint.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the canonical product API endpoint.";
+                };
+              };
+
+              mcp = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "mcp";
+                  description = "Subdomain used for the MCP and tooling endpoint.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the MCP and tooling endpoint.";
+                };
+              };
+
+              calendar = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "calendar";
+                  description = "Subdomain used for the calendar-facing product host.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the calendar-facing product host.";
+                };
+              };
+
+              inventory = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "inventory";
+                  description = "Subdomain used for the inventory-facing product host.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the inventory-facing product host.";
+                };
+              };
+
+              finance = {
+                subdomain = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.dnsLabel;
+                  default = "finance";
+                  description = "Subdomain used for the finance-facing product host.";
+                };
+
+                fqdn = lib.mkOption {
+                  type = lib.types.nullOr nixosTypes.fqdn;
+                  default = null;
+                  readOnly = true;
+                  description = "Fully-qualified domain name for the finance-facing product host.";
+                };
+              };
+
               id = {
                 subdomain = lib.mkOption {
                   type = lib.types.nullOr nixosTypes.dnsLabel;
@@ -367,6 +457,30 @@
                   type = nixosTypes.absoluteRuntimePath;
                   default = "/var/lib/step-ca/public";
                   description = "Directory used to serve public CA bootstrap material over HTTP.";
+                };
+                publishedHosts = lib.mkOption {
+                  type = lib.types.attrsOf (lib.types.submodule {
+                    options = {
+                      enable = lib.mkEnableOption "published host via Caddy";
+                      host = lib.mkOption {
+                        type = lib.types.nullOr nixosTypes.fqdn;
+                        default = null;
+                        description = "Fully-qualified domain name published for this host.";
+                      };
+                      upstream = lib.mkOption {
+                        type = lib.types.nullOr nixosTypes.httpUrl;
+                        default = null;
+                        description = "HTTP upstream reverse-proxied for this published host.";
+                      };
+                      extraConfig = lib.mkOption {
+                        type = lib.types.lines;
+                        default = "";
+                        description = "Additional per-host Caddy directives appended after reverse_proxy.";
+                      };
+                    };
+                  });
+                  default = {};
+                  description = "Additional published product or shell hosts reverse-proxied by the ingress baseline.";
                 };
               };
             };

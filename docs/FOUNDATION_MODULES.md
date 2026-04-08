@@ -30,6 +30,11 @@ This order matches the first-wave implementation strategy:
 
 The current modules are scaffolds, not a production-complete identity stack.
 
+Within that scaffold, the current expectation is:
+
+- `naming` defines neutral FQDN slots not only for `id`, `ca`, and `s3`, but also for `atrium`, `api`, `mcp`, `calendar`, `inventory`, and `finance`
+- `ingress/caddy` exposes a generic published-host map so higher layers can bind a concrete shell or product host to an upstream without forking the ingress module
+
 For object storage specifically, the intended split is:
 
 - `void-core` provides the reusable `Garage` substrate and a generic provisioning contract
