@@ -2,6 +2,7 @@
 import { ChevronDown, X } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import Tooltip from "../components/Tooltip.vue";
+import { resolveBlockInspectHref } from "../lib/dashboard-inspect.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 const props = defineProps([
@@ -67,6 +68,8 @@ const {
   toggleDashboardEditAdvanced,
   toggleResourcePopover
 } = appStore;
+
+const blockInspectHref = (block) => resolveBlockInspectHref(block);
 </script>
 
 <template>
@@ -428,6 +431,21 @@ const {
                   </div>
                 </div>
                 <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">{{ t("resource.noPinned") }}</div>
+              </div>
+              <div v-else-if="blockTypeIs(block, blockTypes.calendarUpcoming)" class="flex flex-col items-start gap-3">
+                <div class="text-sm leading-6 text-white/70">
+                  {{ t("dashboard.calendarUpcoming.body") }}
+                </div>
+                <a
+                  v-if="blockInspectHref(block)"
+                  class="btn btn-ghost text-xs"
+                  :href="blockInspectHref(block)"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {{ t("surface.action.openCalendar") }}
+                </a>
+                <div v-else class="core-empty">{{ t("dashboard.calendarUpcoming.missing") }}</div>
               </div>
               <div v-else-if="blockTypeIs(block, blockTypes.text)" class="dashboard-text">
                 <div v-if="block.config?.text" class="text-white/80 whitespace-pre-wrap">

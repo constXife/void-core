@@ -29,6 +29,7 @@ export function createAtriumDashboardModel({ BLOCK_TYPES, isMobile, t }) {
     const raw = String(value || "").trim().toLowerCase();
     if (!raw) return BLOCK_TYPES.resourcesPinned;
     if (raw === "resources_pinned") return BLOCK_TYPES.resourcesPinned;
+    if (raw === "calendar_upcoming") return BLOCK_TYPES.calendarUpcoming;
     if (raw === "text") return BLOCK_TYPES.text;
     if (raw === "core.text") return BLOCK_TYPES.text;
     if (raw.startsWith("core.") || raw.startsWith("plugin.")) return raw;
@@ -39,6 +40,8 @@ export function createAtriumDashboardModel({ BLOCK_TYPES, isMobile, t }) {
     switch (normalizeBlockType(type)) {
       case BLOCK_TYPES.resourcesPinned:
         return { limit: 12, scope: "this", filter: "pinned" };
+      case BLOCK_TYPES.calendarUpcoming:
+        return { limit: 8, scope: "this", filter: "" };
       case BLOCK_TYPES.text:
         return { text: "", scope: "this", filter: "" };
       default:
@@ -137,6 +140,8 @@ export function createAtriumDashboardModel({ BLOCK_TYPES, isMobile, t }) {
     switch (normalized) {
       case BLOCK_TYPES.resourcesPinned:
         return t("block.type.resourcesPinned");
+      case BLOCK_TYPES.calendarUpcoming:
+        return t("block.type.calendarUpcoming");
       case BLOCK_TYPES.text:
         return t("block.type.text");
       default:
