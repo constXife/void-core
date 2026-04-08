@@ -246,6 +246,8 @@ export const MESSAGES = {
     "dashboard.empty.body": "The v1 baseline keeps orientation and curated entry points visible even before heavy customization.",
     "dashboard.calendarUpcoming.body": "The upcoming week summary is published through the dedicated calendar surface.",
     "dashboard.calendarUpcoming.missing": "Calendar surface is not published yet.",
+    "dashboard.inventorySummary.body": "Inventory summary stays in Atrium, while drilldown opens through the dedicated inventory surface.",
+    "dashboard.inventorySummary.missing": "Inventory surface is not published yet.",
     "resource.noPinned": "No pinned resources",
     "resource.noActivity": "No activity yet",
     "resource.copied": "Copied",
@@ -326,6 +328,7 @@ export const MESSAGES = {
     "surface.state.guided": "Guided",
     "surface.action.openResource": "Open resource",
     "surface.action.openCalendar": "Open calendar",
+    "surface.action.openInventory": "Open inventory",
     "surface.action.openAdmin": "Open admin panel",
     "surface.action.openShopping": "Open shopping",
     "surface.action.refreshShopping": "Refresh",
@@ -333,6 +336,7 @@ export const MESSAGES = {
     "surface.action.closeShoppingRun": "Close run and defer rest",
     "block.type.resourcesPinned": "Pinned resources",
     "block.type.calendarUpcoming": "Upcoming calendar",
+    "block.type.inventorySummary": "Inventory summary",
     "block.type.text": "Text",
     "language.title": "Language",
     "performance.title": "Performance",
@@ -575,6 +579,8 @@ export const MESSAGES = {
     "dashboard.empty.body": "В baseline v1 сначала должны быть видны ориентация и curated entry points, а уже потом глубокая кастомизация.",
     "dashboard.calendarUpcoming.body": "Сводка по ближайшей неделе публикуется через отдельную calendar surface.",
     "dashboard.calendarUpcoming.missing": "Calendar surface ещё не опубликована.",
+    "dashboard.inventorySummary.body": "Inventory summary остаётся внутри Atrium, а drilldown открывается через отдельную inventory surface.",
+    "dashboard.inventorySummary.missing": "Inventory surface ещё не опубликована.",
     "resource.noPinned": "Закрепленных ресурсов пока нет",
     "resource.noActivity": "Активности пока нет",
     "resource.copied": "Скопировано",
@@ -655,6 +661,7 @@ export const MESSAGES = {
     "surface.state.guided": "Есть следующий шаг",
     "surface.action.openResource": "Открыть ресурс",
     "surface.action.openCalendar": "Открыть календарь",
+    "surface.action.openInventory": "Открыть инвентарь",
     "surface.action.openAdmin": "Открыть панель администратора",
     "surface.action.openShopping": "Открыть shopping",
     "surface.action.refreshShopping": "Обновить",
@@ -662,6 +669,7 @@ export const MESSAGES = {
     "surface.action.closeShoppingRun": "Закрыть run и отложить остаток",
     "block.type.resourcesPinned": "Закреплённые ресурсы",
     "block.type.calendarUpcoming": "Ближайший календарь",
+    "block.type.inventorySummary": "Сводка inventory",
     "block.type.text": "Текст",
     "language.title": "Язык",
     "performance.title": "Производительность",
@@ -676,6 +684,7 @@ export const MESSAGES = {
 export const BLOCK_TYPES = {
   resourcesPinned: "core.resources_pinned",
   calendarUpcoming: "calendar_upcoming",
+  inventorySummary: "inventory_summary",
   text: "core.text"
 };
 

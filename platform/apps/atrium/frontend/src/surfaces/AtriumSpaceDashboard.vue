@@ -447,6 +447,21 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
                 </a>
                 <div v-else class="core-empty">{{ t("dashboard.calendarUpcoming.missing") }}</div>
               </div>
+              <div v-else-if="blockTypeIs(block, blockTypes.inventorySummary)" class="flex flex-col items-start gap-3">
+                <div class="text-sm leading-6 text-white/70">
+                  {{ t("dashboard.inventorySummary.body") }}
+                </div>
+                <a
+                  v-if="blockInspectHref(block)"
+                  class="btn btn-ghost text-xs"
+                  :href="blockInspectHref(block)"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {{ t("surface.action.openInventory") }}
+                </a>
+                <div v-else class="core-empty">{{ t("dashboard.inventorySummary.missing") }}</div>
+              </div>
               <div v-else-if="blockTypeIs(block, blockTypes.text)" class="dashboard-text">
                 <div v-if="block.config?.text" class="text-white/80 whitespace-pre-wrap">
                   {{ block.config.text }}
