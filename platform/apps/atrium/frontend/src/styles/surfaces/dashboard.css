@@ -1,0 +1,101 @@
+/* ============================================
+   DASHBOARD SURFACE — Modern bento-compatible layout
+   Use alongside legacy dashboard-grid from app.css
+   ============================================ */
+
+/* Bento dashboard variant — auto-fit replacement for fixed 12-col grid */
+.dashboard-bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: var(--density-gap, 16px);
+  position: relative;
+}
+
+.dashboard-bento-item {
+  padding: var(--density-padding, 16px);
+  min-height: var(--density-card-min-height, 120px);
+  border-radius: var(--density-radius, 16px);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  backdrop-filter: blur(var(--fx-blur-md, 12px));
+  -webkit-backdrop-filter: blur(var(--fx-blur-md, 12px));
+  transition: all calc(300ms * var(--fx-motion, 1)) var(--ease-default);
+  container-type: inline-size;
+}
+
+.dashboard-bento-item:hover {
+  background: var(--glass-bg-hover, rgba(255, 255, 255, 0.1));
+  border-color: var(--glass-border-hover, rgba(255, 255, 255, 0.2));
+  transform: translateY(calc(-2px * var(--fx-motion, 1)));
+  box-shadow: 0 calc(12px * var(--fx-shadow, 1)) calc(40px * var(--fx-shadow, 1)) rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-bento-item--wide {
+  grid-column: span 2;
+}
+
+.dashboard-bento-item--tall {
+  grid-row: span 2;
+}
+
+.dashboard-bento-item--hero {
+  grid-column: 1 / -1;
+}
+
+.dashboard-bento-item--plain {
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.dashboard-bento-item--plain:hover {
+  background: transparent;
+  border: none;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .dashboard-bento-item--wide {
+    grid-column: span 1;
+  }
+}
+
+/* Bento block header */
+.dashboard-bento-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.dashboard-bento-title {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  color: var(--ink-primary, #e6edf3);
+  opacity: 0.9;
+}
+
+.dashboard-bento-body {
+  font-size: var(--text-xs, 0.6875rem);
+  color: var(--ink-secondary, #7d8590);
+}
+
+/* Resource cards — responsive grid */
+.dashboard-resource-grid {
+  display: grid;
+  gap: var(--density-gap-sm, 12px);
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 200px));
+  justify-content: start;
+}
+
+@media (max-width: 768px) {
+  .dashboard-resource-grid {
+    grid-template-columns: 1fr;
+  }
+}

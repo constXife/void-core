@@ -1,40 +1,12 @@
 @import 'tailwindcss';
+@import './styles/tokens.css';
 
 @theme {
-  --color-bg-base: #0a0e14;
-  --color-bg-surface: #131920;
-  --color-bg-elevated: #1a222c;
-  --color-bg-hover: #242d3a;
-
-  --color-ink: #e6edf3;
-  --color-ink-secondary: #7d8590;
-  --color-ink-muted: #484f58;
-
-  --color-border: #30363d;
-  --color-border-muted: #21262d;
-
+  /* Status aliases — used via Tailwind utilities (bg-status-online, text-status-offline, etc.) */
   --color-status-online: #3fb950;
   --color-status-offline: #f85149;
   --color-status-warning: #d29922;
   --color-status-pending: #58a6ff;
-
-  --color-accent: #58a6ff;
-  --color-accent-cyan: #39d5ff;
-  --color-accent-purple: #a371f7;
-
-  --color-avatar-blue: #3b82f6;
-  --color-avatar-purple: #8b5cf6;
-  --color-avatar-pink: #ec4899;
-  --color-avatar-red: #ef4444;
-  --color-avatar-orange: #f97316;
-  --color-avatar-yellow: #eab308;
-  --color-avatar-green: #22c55e;
-  --color-avatar-teal: #14b8a6;
-  --color-avatar-cyan: #06b6d4;
-  --color-avatar-indigo: #6366f1;
-
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-mono: JetBrains Mono, monospace;
 
   --animate-fade-in: fadeIn 0.4s ease-out forwards;
   --animate-fade-in-up: fadeInUp 0.4s ease-out forwards;
@@ -42,13 +14,6 @@
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-glow: glow 2s ease-in-out infinite alternate;
   --animate-glow-pulse: glowPulse 2s ease-in-out infinite;
-
-  --shadow-glow-online: 0 0 8px 2px rgba(63, 185, 80, 0.5);
-  --shadow-glow-offline: 0 0 8px 2px rgba(248, 81, 73, 0.4);
-  --shadow-glow-pending: 0 0 8px 2px rgba(88, 166, 255, 0.4);
-  --shadow-glow-accent: 0 0 20px rgba(88, 166, 255, 0.2);
-
-  --backdrop-blur-xs: 2px;
 
   @keyframes fadeIn {
     0% {
@@ -97,24 +62,6 @@
   }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
-}
-
 @utility btn {
   /* Buttons */
   @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200;
@@ -128,20 +75,20 @@
   }
 
   &:disabled:hover {
-    @apply bg-white/5 text-ink-secondary border-white/10;
+    @apply bg-white/5 text-gray-400 border-white/10;
   }
 
   &[disabled]:hover {
-    @apply bg-white/5 text-ink-secondary border-white/10;
+    @apply bg-white/5 text-gray-400 border-white/10;
   }
 }
 
 @utility btn-primary {
-  @apply bg-accent text-white hover:bg-accent/90 shadow-glow-accent;
+  @apply bg-blue-500 text-white hover:bg-blue-500/90;
 }
 
 @utility btn-ghost {
-  @apply bg-white/5 text-ink-secondary border border-white/10 hover:bg-white/10 hover:text-ink hover:border-white/20 backdrop-blur-sm;
+  @apply bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-gray-100 hover:border-white/20 backdrop-blur-sm;
 }
 
 @utility btn-danger {
@@ -323,7 +270,7 @@
   }
 
   & a {
-    @apply text-accent underline;
+    @apply text-blue-500 underline;
   }
 
   & ul {
@@ -668,23 +615,23 @@
 
 @utility input {
   /* Form elements */
-  @apply w-full px-3 py-2 rounded-lg text-ink placeholder-ink-muted focus:outline-hidden transition-colors;
+  @apply w-full px-3 py-2 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-hidden transition-colors;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   &:focus {
-    @apply border-accent ring-1 ring-accent/30;
+    @apply border-blue-500 ring-1 ring-blue-500/30;
     background: rgba(255, 255, 255, 0.08);
   }
 }
 
 @utility select {
-  @apply px-3 py-2 rounded-lg text-ink focus:outline-hidden transition-colors cursor-pointer;
+  @apply px-3 py-2 rounded-lg text-gray-100 focus:outline-hidden transition-colors cursor-pointer;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   &:focus {
-    @apply border-accent;
+    @apply border-blue-500;
   }
 }
 
@@ -1452,7 +1399,7 @@
 }
 
 @utility tab-active {
-  @apply text-ink;
+  @apply text-gray-100;
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -1550,7 +1497,7 @@
 }
 
 @utility banner-info {
-  @apply bg-accent/20 text-accent border-accent/30;
+  @apply bg-blue-500/20 text-blue-500 border-blue-500/30;
 }
 
 @utility panel {
@@ -2667,7 +2614,7 @@
   }
 
   &:hover .placeholder-icon {
-    @apply text-accent;
+    @apply text-blue-500;
   }
 
   &:hover .placeholder-title {
@@ -2679,7 +2626,7 @@
   @apply w-10 h-10 text-white/30 transition-colors;
 
   .dashboard-placeholder:hover & {
-    @apply text-accent;
+    @apply text-blue-500;
   }
 
   .placeholder-admin:hover & {
@@ -2754,7 +2701,7 @@
   }
 
   &:hover .placeholder-icon-kids {
-    @apply text-accent-purple;
+    @apply text-purple-500;
     transform: scale(1.1);
   }
 
@@ -2767,7 +2714,7 @@
   @apply w-14 h-14 text-white/50 transition-all;
 
   .placeholder-kids:hover & {
-    @apply text-accent-purple;
+    @apply text-purple-500;
     transform: scale(1.1);
   }
 }
@@ -2832,7 +2779,7 @@
 
 @layer base {
   html {
-    @apply text-ink antialiased;
+    @apply text-gray-100 antialiased;
   }
 
 body {

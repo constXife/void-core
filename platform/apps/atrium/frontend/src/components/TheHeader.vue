@@ -46,7 +46,7 @@ const openHome = () => {
   <header class="spaces-header">
     <a href="/" class="brand-link" @click.prevent="openHome">
       <div class="logo-pill">
-        <Activity class="w-5 h-5 text-accent" />
+        <Activity class="w-5 h-5 text-blue-500" />
       </div>
       <div>
         <div class="text-lg font-semibold tracking-tight">{{ t("app.title") }}</div>

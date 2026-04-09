@@ -45,8 +45,8 @@ const roleLabel = computed(() => props.effectiveRole || props.actualRole || "gue
       :class="[animatedClass, { 'guest-hero': isGuest }]"
     >
       <div class="empty-workspace-icon">
-        <Layout v-if="isGuest || isAdminWelcome" class="w-12 h-12 text-accent" />
-        <Users v-else class="w-12 h-12 text-accent" />
+        <Layout v-if="isGuest || isAdminWelcome" class="w-12 h-12 text-blue-500" />
+        <Users v-else class="w-12 h-12 text-blue-500" />
       </div>
 
       <h2 class="empty-workspace-title">

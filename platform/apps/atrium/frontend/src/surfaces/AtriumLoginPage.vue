@@ -43,7 +43,7 @@ defineEmits(["dev-login"]);
   <div class="login-page">
     <div class="login-panel">
       <div class="logo-pill mx-auto mb-4">
-        <Activity class="w-6 h-6 text-accent" />
+        <Activity class="w-6 h-6 text-blue-500" />
       </div>
       <h2 class="text-xl font-semibold mb-2 text-center">{{ t("auth.title") }}</h2>
       <p class="text-white/50 text-sm text-center mb-6">

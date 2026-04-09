@@ -47,7 +47,7 @@ defineEmits(["dismiss"]);
         <div class="hero-toast-content">
           <div class="hero-toast-header">
             <span v-if="toast.icon" class="hero-toast-icon">{{ toast.icon }}</span>
-            <Bell v-else class="w-5 h-5 text-accent" />
+            <Bell v-else class="w-5 h-5 text-blue-500" />
             <span class="hero-toast-title">{{ toast.title }}</span>
           </div>
           <div v-if="toast.message" class="hero-toast-message">
