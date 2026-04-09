@@ -54,6 +54,7 @@ type Deps struct {
 	KnowledgeProxyBaseURL    string
 	KnowledgeProxyToken      string
 	KnowledgeProxyHTTPClient *http.Client
+	InventoryDefaultSlice    string
 }
 
 func Handler(deps Deps) http.Handler {

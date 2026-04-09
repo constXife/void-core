@@ -338,6 +338,25 @@ func TestKnowledgeHostRouteRedirectsToLoginWhenSessionMissing(t *testing.T) {
 	}
 }
 
+func TestInventoryDashboardRouteRedirectsToDefaultSlice(t *testing.T) {
+	handler := Handler(Deps{
+		KnowledgeProxyBaseURL: "http://knowledge.internal:8787",
+		KnowledgeProxyToken:   "bridge-token",
+		InventoryDefaultSlice: "pantry",
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected status 302, got %d", rec.Code)
+	}
+	if got := rec.Header().Get("Location"); got != "/inventory/dashboard/page?slice=pantry" {
+		t.Fatalf("expected inventory default slice redirect, got %q", got)
+	}
+}
+
 func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
 	manager, err := auth.NewManager(context.Background(), nil, auth.Config{
 		LocalEnabled: true,
@@ -366,6 +385,7 @@ func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
 		Auth:                  manager,
 		KnowledgeProxyBaseURL: "https://api.example.test",
 		KnowledgeProxyToken:   "bridge-token",
+		InventoryDefaultSlice: "pantry",
 		KnowledgeProxyHTTPClient: &http.Client{
 			Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 				if r.URL.Path != "/inventory/dashboard/page" {
@@ -386,7 +406,7 @@ func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
 		},
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page", nil)
+	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page?slice=pantry", nil)
 	req.AddCookie(&http.Cookie{Name: "atrium_session", Value: encoded})
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)

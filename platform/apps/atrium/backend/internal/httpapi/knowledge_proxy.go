@@ -14,6 +14,10 @@ const knowledgeUserEmailHeader = "X-Void-User-Email"
 const knowledgeUserRoleHeader = "X-Void-User-Role"
 
 func handleKnowledgeHostRequest(w http.ResponseWriter, r *http.Request, deps Deps, surface string) {
+	if redirectTarget, ok := canonicalKnowledgeHostRedirect(r, deps, surface); ok {
+		http.Redirect(w, r, redirectTarget, http.StatusFound)
+		return
+	}
 	session, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		if shouldRedirectKnowledgeLogin(r) {
@@ -37,6 +41,33 @@ func handleKnowledgeHostRequest(w http.ResponseWriter, r *http.Request, deps Dep
 		return
 	}
 	proxyKnowledgeRequest(w, r, deps, session, target, surface)
+}
+
+func canonicalKnowledgeHostRedirect(r *http.Request, deps Deps, surface string) (string, bool) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return "", false
+	}
+	if surface != "inventory" {
+		return "", false
+	}
+	if r.URL.Path != "/inventory/dashboard/page" {
+		return "", false
+	}
+	if strings.TrimSpace(r.URL.Query().Get("slice")) != "" {
+		return "", false
+	}
+	defaultSlice := strings.TrimSpace(deps.InventoryDefaultSlice)
+	if defaultSlice == "" {
+		defaultSlice = "pantry"
+	}
+	query := r.URL.Query()
+	query.Set("slice", defaultSlice)
+	target := r.URL.Path
+	encoded := query.Encode()
+	if encoded != "" {
+		target += "?" + encoded
+	}
+	return target, true
 }
 
 func shouldRedirectKnowledgeLogin(r *http.Request) bool {

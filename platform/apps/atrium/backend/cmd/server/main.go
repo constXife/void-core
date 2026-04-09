@@ -207,6 +207,7 @@ func main() {
 		KnowledgeProxyBaseURL:    strings.TrimSpace(os.Getenv("KNOWLEDGE_PROXY_BASE_URL")),
 		KnowledgeProxyToken:      strings.TrimSpace(os.Getenv("KNOWLEDGE_PROXY_TOKEN")),
 		KnowledgeProxyHTTPClient: &http.Client{Timeout: 15 * time.Second},
+		InventoryDefaultSlice:    defaultString(strings.TrimSpace(os.Getenv("INVENTORY_DEFAULT_SLICE")), "pantry"),
 	}
 
 	if configFirst {
@@ -289,6 +290,13 @@ func parseExactMap(value string) map[string]string {
 		result[key] = mapped
 	}
 	return result
+}
+
+func defaultString(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
 }
 
 func parseRoleMap(value string) (map[string]string, map[string]string) {
