@@ -200,6 +200,10 @@ func Handler(deps Deps) http.Handler {
 		handler(w, r)
 	})
 	mux.HandleFunc("/inventory/", func(w http.ResponseWriter, r *http.Request) {
+		if publishedKnowledgeSurfaceFromHost(r) == "inventory" {
+			http.NotFound(w, r)
+			return
+		}
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			handleKnowledgeHostRequest(w, r, deps, "inventory")
 		}
@@ -210,6 +214,10 @@ func Handler(deps Deps) http.Handler {
 		handler(w, r)
 	})
 	mux.HandleFunc("/finance/", func(w http.ResponseWriter, r *http.Request) {
+		if publishedKnowledgeSurfaceFromHost(r) == "finance" {
+			http.NotFound(w, r)
+			return
+		}
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			handleKnowledgeHostRequest(w, r, deps, "finance")
 		}
@@ -455,7 +463,21 @@ func Handler(deps Deps) http.Handler {
 		}
 		handler(w, r)
 	})
-	mux.Handle("/", web.Handler())
+	webHandler := web.Handler()
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if surface := publishedKnowledgeSurfaceFromHost(r); surface != "" {
+			handler := func(w http.ResponseWriter, r *http.Request) {
+				handlePublishedKnowledgeHostRequest(w, r, deps, surface)
+			}
+			if deps.Auth != nil {
+				deps.Auth.OptionalMiddleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
+				return
+			}
+			handler(w, r)
+			return
+		}
+		webHandler.ServeHTTP(w, r)
+	}))
 
 	return mux
 }

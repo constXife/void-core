@@ -310,7 +310,7 @@ func TestShoppingSummaryRouteProxiesConfiguredRequest(t *testing.T) {
 	}
 }
 
-func TestKnowledgeHostRouteRedirectsToLoginWhenSessionMissing(t *testing.T) {
+func TestPublishedKnowledgeHostRouteRedirectsToLoginWhenSessionMissing(t *testing.T) {
 	manager, err := auth.NewManager(context.Background(), nil, auth.Config{
 		LocalEnabled: true,
 		CookieSecret: "test-secret",
@@ -325,7 +325,8 @@ func TestKnowledgeHostRouteRedirectsToLoginWhenSessionMissing(t *testing.T) {
 		KnowledgeProxyToken:   "bridge-token",
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/finance/dashboard/page?month=2026-04", nil)
+	req := httptest.NewRequest(http.MethodGet, "/dashboard?month=2026-04", nil)
+	req.Host = "finance.example.test"
 	req.Header.Set("Accept", "text/html")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -333,31 +334,49 @@ func TestKnowledgeHostRouteRedirectsToLoginWhenSessionMissing(t *testing.T) {
 	if rec.Code != http.StatusFound {
 		t.Fatalf("expected status 302, got %d", rec.Code)
 	}
-	if got := rec.Header().Get("Location"); got != "/auth/login?next=%2Ffinance%2Fdashboard%2Fpage%3Fmonth%3D2026-04" {
+	if got := rec.Header().Get("Location"); got != "/auth/login?next=%2Fdashboard%3Fmonth%3D2026-04" {
 		t.Fatalf("expected login redirect, got %q", got)
 	}
 }
 
-func TestInventoryDashboardRouteRedirectsToDefaultSlice(t *testing.T) {
+func TestInventoryPublishedDashboardRouteRedirectsToDefaultSlice(t *testing.T) {
 	handler := Handler(Deps{
 		KnowledgeProxyBaseURL: "http://knowledge.internal:8787",
 		KnowledgeProxyToken:   "bridge-token",
 		InventoryDefaultSlice: "pantry",
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page", nil)
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	req.Host = "inventory.example.test"
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusFound {
 		t.Fatalf("expected status 302, got %d", rec.Code)
 	}
-	if got := rec.Header().Get("Location"); got != "/inventory/dashboard/page?slice=pantry" {
+	if got := rec.Header().Get("Location"); got != "/dashboard?slice=pantry" {
 		t.Fatalf("expected inventory default slice redirect, got %q", got)
 	}
 }
 
-func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
+func TestPublishedKnowledgeHostRejectsLegacySurfacePath(t *testing.T) {
+	handler := Handler(Deps{
+		KnowledgeProxyBaseURL: "http://knowledge.internal:8787",
+		KnowledgeProxyToken:   "bridge-token",
+		InventoryDefaultSlice: "pantry",
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page?slice=pantry", nil)
+	req.Host = "inventory.example.test"
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d", rec.Code)
+	}
+}
+
+func TestPublishedKnowledgeHostProxiesConfiguredRequest(t *testing.T) {
 	manager, err := auth.NewManager(context.Background(), nil, auth.Config{
 		LocalEnabled: true,
 		CookieSecret: "test-secret",
@@ -400,13 +419,14 @@ func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
 					Header: http.Header{
 						"Content-Type": []string{"text/html; charset=utf-8"},
 					},
-					Body: io.NopCloser(strings.NewReader("<html>inventory</html>")),
+					Body: io.NopCloser(strings.NewReader("<html><a href=\"/inventory/items/eggs/page?include_archived=true\">item</a><form action=\"/inventory/forms/items\"></form></html>")),
 				}, nil
 			}),
 		},
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/inventory/dashboard/page?slice=pantry", nil)
+	req := httptest.NewRequest(http.MethodGet, "/dashboard?slice=pantry", nil)
+	req.Host = "inventory.example.test"
 	req.AddCookie(&http.Cookie{Name: "atrium_session", Value: encoded})
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -425,5 +445,12 @@ func TestKnowledgeHostRouteProxiesConfiguredRequest(t *testing.T) {
 	}
 	if gotRole != "admin" {
 		t.Fatalf("expected forwarded role, got %q", gotRole)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "/items/eggs?include_archived=true") {
+		t.Fatalf("expected rewritten item inspect link, got %q", body)
+	}
+	if !strings.Contains(body, "/forms/items") {
+		t.Fatalf("expected rewritten inventory form action, got %q", body)
 	}
 }
