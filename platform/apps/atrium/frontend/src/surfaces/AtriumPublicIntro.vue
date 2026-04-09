@@ -45,10 +45,10 @@ defineProps({
           <p class="mt-3 text-sm text-white/60 leading-6">
             {{ description }}
           </p>
-          <p v-if="helpText" class="mt-3 text-xs text-white/45 leading-5">
+          <p v-if="helpText" class="mt-3 text-xs core-kv-label leading-5">
             {{ helpText }}
           </p>
-          <p class="mt-3 text-xs text-white/45 leading-5">
+          <p class="mt-3 text-xs core-kv-label leading-5">
             {{ trustNote }}
           </p>
           <div class="guest-notes mt-4">

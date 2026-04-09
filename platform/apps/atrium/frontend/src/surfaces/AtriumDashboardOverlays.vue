@@ -306,7 +306,7 @@ const {
         <button class="btn btn-ghost text-xs self-start" @click="toggleInlineEditAdvanced">
           {{ inlineEditAdvanced ? t("editor.hideAdvanced") : t("editor.showAdvanced") }}
         </button>
-        <p class="text-[11px] text-white/45 leading-5">
+        <p class="text-[11px] core-kv-label leading-5">
           {{ t("editor.advancedHint") }}
         </p>
         <div v-if="inlineEditAdvanced" class="grid grid-cols-4 gap-2">

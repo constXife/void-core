@@ -1,3 +1,5 @@
+@reference "../app.css";
+
 .empty-workspace-container {
   @apply relative z-10 min-h-screen flex items-center justify-center px-6;
 }

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AppLayout from "../layouts/AppLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
+import AtriumCalendarPage from "../pages/AtriumCalendarPage.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
@@ -29,6 +30,18 @@ const routes = [
         name: "privacy",
         component: AtriumPrivacyRoute,
         meta: { publicPage: true }
+      }
+    ]
+  },
+  {
+    path: "/calendar",
+    component: AuthLayout,
+    children: [
+      {
+        path: "",
+        name: "calendar",
+        component: AtriumCalendarPage,
+        meta: { authRequired: true }
       }
     ]
   },

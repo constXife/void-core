@@ -112,7 +112,7 @@ const emit = defineEmits([
           <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.backgroundUrl") }}</label>
           <input v-model="newSpace.backgroundUrl" class="input" :placeholder="t('admin.spaces.placeholder.backgroundUrl')" />
         </div>
-        <div class="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <div class="space-y-2 rounded-2xl border border-white/10 bg-white/3 p-3">
           <div class="text-[11px] uppercase tracking-wider text-white/40">{{ t("admin.spaces.field.publicEntry") }}</div>
           <div>
             <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryTitle") }}</label>
@@ -286,7 +286,7 @@ const emit = defineEmits([
           <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.backgroundUrl") }}</label>
           <input v-model="editSpace.backgroundUrl" class="input" />
         </div>
-        <div class="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <div class="space-y-2 rounded-2xl border border-white/10 bg-white/3 p-3">
           <div class="text-[11px] uppercase tracking-wider text-white/40">{{ t("admin.spaces.field.publicEntry") }}</div>
           <div>
             <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.publicEntryTitle") }}</label>

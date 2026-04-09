@@ -463,7 +463,7 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
                 <div v-else class="core-empty">{{ t("dashboard.inventorySummary.missing") }}</div>
               </div>
               <div v-else-if="blockTypeIs(block, blockTypes.text)" class="dashboard-text">
-                <div v-if="block.config?.text" class="text-white/80 whitespace-pre-wrap">
+                <div v-if="block.config?.text" class="core-kv-value whitespace-pre-wrap">
                   {{ block.config.text }}
                 </div>
                 <div v-else class="core-empty">{{ t("dashboard.empty.body") }}</div>
@@ -505,7 +505,7 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
               <button class="btn btn-ghost text-xs self-start" @click="toggleDashboardEditAdvanced">
                 {{ dashboardEditAdvanced ? t("editor.hideAdvanced") : t("editor.showAdvanced") }}
               </button>
-              <p class="text-[11px] text-white/45 leading-5">
+              <p class="text-[11px] core-kv-label leading-5">
                 {{ t("editor.advancedHint") }}
               </p>
               <div v-if="dashboardEditAdvanced" class="grid grid-cols-4 gap-2">
