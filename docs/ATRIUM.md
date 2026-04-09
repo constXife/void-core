@@ -43,6 +43,9 @@ The `Atrium` source tree may contain:
 - local development assets and build scripts required to evolve the shell;
 - public docs for shell behavior and integration.
 
+It may also contain reusable host or session plumbing needed by downstream products,
+but not the product-specific implementation of those downstream hosts.
+
 ## What Does Not Belong In Atrium
 
 The `Atrium` source tree should not become the place for:
@@ -50,6 +53,7 @@ The `Atrium` source tree should not become the place for:
 - client-specific inventory, secrets, or runtime data;
 - vertical business logic that belongs to official products;
 - product bundles that are specific to one segment only.
+- product-specific host surfaces such as downstream calendar, inventory, or finance UIs.
 
 Those concerns belong in `void`, client deployment repositories, or future product layers.
 

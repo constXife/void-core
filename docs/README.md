@@ -7,6 +7,7 @@ If you are new here, read the documents in this order.
 ## Start here
 
 - `TRUST_MODEL.md` — what `void-core` is meant to protect, and what it must not own
+- `PUBLIC_SCOPE.md` — the explicit allowlist-style scope of what may live in the public foundation
 - `DISTRIBUTION_BASELINE.md` — the expected self-hosted, NixOS-first distribution model
 - `FOUNDATION_COMPONENTS.md` — the current foundation building blocks and their boundaries
 - `FOUNDATION_MODULES.md` — the current module scaffold and first implementation priorities

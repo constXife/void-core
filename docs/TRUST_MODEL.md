@@ -15,7 +15,7 @@ This document defines the trust boundary of `void-core`.
 `void-core` must not become:
 - a hidden SaaS control plane;
 - a home for client-specific runtime state;
-- a place where closed product behavior leaks into the public foundation.
+- a place where closed or downstream product behavior leaks into the public foundation.
 
 ## Ownership boundary
 
@@ -25,4 +25,6 @@ It does not own:
 - client secrets;
 - client host inventory;
 - client-specific overlays;
-- domain-specific product logic.
+- client runtime data;
+- domain-specific product logic;
+- downstream product-host code.

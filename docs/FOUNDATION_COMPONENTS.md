@@ -71,6 +71,7 @@ The inventory above should be interpreted with these rules:
 2. `void-core` may ship reference defaults and integration seams.
 3. `void-core` must not own client inventory, secrets, or runtime data.
 4. Products built above the foundation may compose these primitives differently, but should not redefine their core contracts casually.
+5. This component inventory is an explicit scope boundary: code that cannot be justified by these documented foundation responsibilities should live downstream, not in `void-core`.
 
 ## Relationship to products
 

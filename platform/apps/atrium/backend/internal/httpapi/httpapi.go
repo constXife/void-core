@@ -199,36 +199,6 @@ func Handler(deps Deps) http.Handler {
 		}
 		handler(w, r)
 	})
-	mux.HandleFunc("/api/calendar/events", func(w http.ResponseWriter, r *http.Request) {
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleCalendarEvents(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-	mux.HandleFunc("/api/calendar/upcoming", func(w http.ResponseWriter, r *http.Request) {
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleCalendarUpcoming(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
-	mux.HandleFunc("/api/calendar/feed.ics", func(w http.ResponseWriter, r *http.Request) {
-		handler := func(w http.ResponseWriter, r *http.Request) {
-			handleCalendarFeed(w, r, deps)
-		}
-		if deps.Auth != nil {
-			deps.Auth.Middleware(http.HandlerFunc(handler)).ServeHTTP(w, r)
-			return
-		}
-		handler(w, r)
-	})
 	mux.HandleFunc("/inventory/", func(w http.ResponseWriter, r *http.Request) {
 		if publishedKnowledgeSurfaceFromHost(r) == "inventory" {
 			http.NotFound(w, r)
