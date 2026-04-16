@@ -21,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: on-failure
     environment:
       DATABASE_URL: postgres://atrium:atrium@db:5432/atrium?sslmode=disable
       MIGRATIONS_DIR: /app/migrations
@@ -39,7 +40,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   db_data:
