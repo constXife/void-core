@@ -1,0 +1,186 @@
+/* ============================================
+   VOID LAYOUT SYSTEM
+   Shell grid, adaptive panels, bento dashboard
+   ============================================ */
+
+/* ---- Shell: outer page container ---- */
+
+.shell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.shell--with-sidebar {
+  grid-template-columns: var(--sidebar-width, 260px) 1fr;
+  grid-template-rows: auto 1fr;
+}
+
+.shell--sidebar-collapsed {
+  grid-template-columns: 56px 1fr;
+}
+
+@media (max-width: 1024px) {
+  .shell--with-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Panel Group: composable multi-pane layouts ---- */
+
+.panel-group {
+  display: grid;
+  gap: var(--density-gap, 16px);
+  min-height: 0;
+  height: 100%;
+}
+
+/* Three-pane: sidebar | main | detail (Calendar, Inventory detail) */
+.panel-group--sidebar-main-detail {
+  grid-template-columns:
+    var(--panel-sidebar, 260px)
+    minmax(0, 1fr)
+    var(--panel-detail, 320px);
+}
+
+/* Two-pane: main | detail (Finance statements, Inventory list) */
+.panel-group--main-detail {
+  grid-template-columns: minmax(0, 1fr) var(--panel-detail, 380px);
+}
+
+/* Single pane */
+.panel-group--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Panel as container query context */
+.panel {
+  container-type: inline-size;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Panel scrollbar hide */
+.panel--no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.panel--no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sticky panel (e.g. sidebar, detail inspector) */
+.panel--sticky {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100dvh;
+  overflow-y: auto;
+}
+
+/* Responsive collapse: stack on narrow viewports */
+@media (max-width: 1024px) {
+  .panel-group--sidebar-main-detail,
+  .panel-group--main-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel--hide-narrow {
+    display: none;
+  }
+}
+
+/* Container query helpers for panel-internal adaptation */
+@container (max-width: 400px) {
+  .panel-compact-stack {
+    flex-direction: column;
+  }
+
+  .panel-compact-hide {
+    display: none;
+  }
+}
+
+@container (max-width: 280px) {
+  .panel-minimal-hide {
+    display: none;
+  }
+}
+
+/* ---- Bento Grid: auto-fit dashboard blocks ---- */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: var(--density-gap, 16px);
+}
+
+.bento-item--wide {
+  grid-column: span 2;
+}
+
+.bento-item--tall {
+  grid-row: span 2;
+}
+
+.bento-item--hero {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .bento-item--wide {
+    grid-column: span 1;
+  }
+
+  .bento-item--hero {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- Bottom Navigation (mobile product switcher) ---- */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  justify-content: space-around;
+  align-items: center;
+  padding: var(--space-2, 8px) 0 env(safe-area-inset-bottom, 0px);
+  background: var(--surface-raised, #131920);
+  border-top: 1px solid var(--border-muted, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 40;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+  }
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  color: var(--ink-muted, #484f58);
+  font-size: var(--text-2xs, 9px);
+  text-decoration: none;
+  transition: color var(--duration-fast, 150ms) var(--ease-default);
+}
+
+.bottom-nav-item--active {
+  color: var(--accent-primary, #58a6ff);
+}
+
+.bottom-nav-item:hover {
+  color: var(--ink-primary, #e6edf3);
+}

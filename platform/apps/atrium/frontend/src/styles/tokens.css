@@ -1,0 +1,213 @@
+/* ============================================
+   VOID DESIGN TOKENS
+   Primitive palette + semantic tokens + density + typography
+   ============================================ */
+
+@theme {
+  /* ---- Primitive palette (never use directly in components) ---- */
+  --color-gray-950: #0a0e14;
+  --color-gray-900: #131920;
+  --color-gray-800: #1a222c;
+  --color-gray-700: #242d3a;
+  --color-gray-600: #30363d;
+  --color-gray-500: #484f58;
+  --color-gray-400: #7d8590;
+  --color-gray-300: #9ca3af;
+  --color-gray-200: #c9d1d9;
+  --color-gray-100: #e6edf3;
+  --color-gray-50: #f0f6fc;
+
+  /* ---- Status palette ---- */
+  --color-green-500: #3fb950;
+  --color-red-500: #f85149;
+  --color-yellow-500: #d29922;
+  --color-blue-500: #58a6ff;
+  --color-blue-600: #388bfd;
+  --color-blue-400: #79b8ff;
+  --color-cyan-500: #39d5ff;
+  --color-purple-500: #a371f7;
+
+  /* ---- Avatar palette ---- */
+  --color-avatar-blue: #3b82f6;
+  --color-avatar-purple: #8b5cf6;
+  --color-avatar-pink: #ec4899;
+  --color-avatar-red: #ef4444;
+  --color-avatar-orange: #f97316;
+  --color-avatar-yellow: #eab308;
+  --color-avatar-green: #22c55e;
+  --color-avatar-teal: #14b8a6;
+  --color-avatar-cyan: #06b6d4;
+  --color-avatar-indigo: #6366f1;
+
+  /* ---- Fonts ---- */
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: JetBrains Mono, monospace;
+
+  /* ---- Backdrop blur primitives ---- */
+  --backdrop-blur-xs: 2px;
+}
+
+/* ============================================
+   SEMANTIC TOKENS — dark theme (default)
+   ============================================ */
+:root,
+[data-theme="dark"] {
+  /* Surface */
+  --surface-base: var(--color-gray-950);
+  --surface-raised: var(--color-gray-900);
+  --surface-overlay: var(--color-gray-800);
+  --surface-interactive: var(--color-gray-700);
+
+  /* Ink */
+  --ink-primary: var(--color-gray-100);
+  --ink-secondary: var(--color-gray-400);
+  --ink-muted: var(--color-gray-500);
+
+  /* Border */
+  --border-default: var(--color-gray-600);
+  --border-muted: rgba(255, 255, 255, 0.06);
+  --border-accent: var(--color-blue-500);
+
+  /* Status */
+  --status-online: var(--color-green-500);
+  --status-offline: var(--color-red-500);
+  --status-warning: var(--color-yellow-500);
+  --status-pending: var(--color-blue-500);
+
+  /* Accent */
+  --accent-primary: var(--color-blue-500);
+  --accent-cyan: var(--color-cyan-500);
+  --accent-purple: var(--color-purple-500);
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-hover: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+
+  /* Shadows */
+  --shadow-glow-online: 0 0 8px 2px rgba(63, 185, 80, 0.5);
+  --shadow-glow-offline: 0 0 8px 2px rgba(248, 81, 73, 0.4);
+  --shadow-glow-pending: 0 0 8px 2px rgba(88, 166, 255, 0.4);
+  --shadow-glow-accent: 0 0 20px rgba(88, 166, 255, 0.2);
+}
+
+/* ============================================
+   SEMANTIC TOKENS — light theme
+   ============================================ */
+[data-theme="light"] {
+  /* Surface */
+  --surface-base: var(--color-gray-50);
+  --surface-raised: #ffffff;
+  --surface-overlay: var(--color-gray-100);
+  --surface-interactive: var(--color-gray-200);
+
+  /* Ink */
+  --ink-primary: var(--color-gray-950);
+  --ink-secondary: var(--color-gray-500);
+  --ink-muted: var(--color-gray-400);
+
+  /* Border */
+  --border-default: var(--color-gray-200);
+  --border-muted: rgba(0, 0, 0, 0.06);
+  --border-accent: var(--color-blue-600);
+
+  /* Status (same values, different shadows) */
+  --status-online: var(--color-green-500);
+  --status-offline: var(--color-red-500);
+  --status-warning: var(--color-yellow-500);
+  --status-pending: var(--color-blue-500);
+
+  /* Accent */
+  --accent-primary: var(--color-blue-600);
+  --accent-cyan: var(--color-cyan-500);
+  --accent-purple: var(--color-purple-500);
+
+  /* Glass — inverted for light */
+  --glass-bg: rgba(0, 0, 0, 0.03);
+  --glass-bg-hover: rgba(0, 0, 0, 0.06);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-hover: rgba(0, 0, 0, 0.14);
+
+  /* Shadows */
+  --shadow-glow-online: 0 0 8px 2px rgba(63, 185, 80, 0.3);
+  --shadow-glow-offline: 0 0 8px 2px rgba(248, 81, 73, 0.3);
+  --shadow-glow-pending: 0 0 8px 2px rgba(88, 166, 255, 0.3);
+  --shadow-glow-accent: 0 0 20px rgba(88, 166, 255, 0.15);
+}
+
+/* ============================================
+   DENSITY VARIANTS
+   ============================================ */
+:root,
+[data-density="default"] {
+  --density-gap: 16px;
+  --density-gap-sm: 12px;
+  --density-padding: 20px;
+  --density-padding-sm: 16px;
+  --density-radius: 16px;
+  --density-radius-sm: 12px;
+  --density-radius-pill: 999px;
+  --density-row-height: 48px;
+  --density-card-min-height: 120px;
+}
+
+[data-density="compact"] {
+  --density-gap: 8px;
+  --density-gap-sm: 6px;
+  --density-padding: 12px;
+  --density-padding-sm: 8px;
+  --density-radius: 10px;
+  --density-radius-sm: 8px;
+  --density-radius-pill: 999px;
+  --density-row-height: 36px;
+  --density-card-min-height: 80px;
+}
+
+/* ============================================
+   FLUID TYPOGRAPHY SCALE
+   ============================================ */
+:root {
+  --text-2xs: clamp(0.5625rem, 0.54rem + 0.1vw, 0.625rem);       /* 9-10px */
+  --text-xs: clamp(0.625rem, 0.6rem + 0.15vw, 0.6875rem);         /* 10-11px */
+  --text-sm: clamp(0.75rem, 0.7rem + 0.2vw, 0.8125rem);           /* 12-13px */
+  --text-base: clamp(0.8125rem, 0.78rem + 0.2vw, 0.9375rem);      /* 13-15px */
+  --text-lg: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);             /* 16-18px */
+  --text-xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);             /* 20-24px */
+  --text-2xl: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);                /* 24-32px */
+  --text-3xl: clamp(1.875rem, 1.6rem + 1.1vw, 2.5rem);            /* 30-40px */
+}
+
+/* ============================================
+   SPACING SCALE (8px base)
+   ============================================ */
+:root {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+}
+
+/* ============================================
+   MOTION TOKENS
+   ============================================ */
+:root {
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-enter: 300ms;
+  --duration-exit: 200ms;
+
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

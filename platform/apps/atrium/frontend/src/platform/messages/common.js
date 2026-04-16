@@ -1,0 +1,42 @@
+export const commonMessages = {
+  en: {
+    "app.loading": "Loading",
+    "app.login": "Login",
+    "app.logout": "Log out",
+    "app.apps": "Apps",
+    "app.back": "Back",
+    "app.close": "Close",
+    "app.language": "Language",
+    "app.settings": "Settings",
+    "app.theme": "Theme",
+    "app.themeDark": "Dark",
+    "app.themeLight": "Light",
+    "app.themeAuto": "Auto",
+    "language.en": "English",
+    "language.ru": "Русский",
+    "product.atrium": "Atrium",
+    "product.calendar": "Calendar",
+    "product.finance": "Finance",
+    "product.inventory": "Inventory"
+  },
+  ru: {
+    "app.loading": "Загрузка",
+    "app.login": "Войти",
+    "app.logout": "Выйти",
+    "app.apps": "Приложения",
+    "app.back": "Назад",
+    "app.close": "Закрыть",
+    "app.language": "Язык",
+    "app.settings": "Настройки",
+    "app.theme": "Тема",
+    "app.themeDark": "Тёмная",
+    "app.themeLight": "Светлая",
+    "app.themeAuto": "Авто",
+    "language.en": "English",
+    "language.ru": "Русский",
+    "product.atrium": "Atrium",
+    "product.calendar": "Календарь",
+    "product.finance": "Финансы",
+    "product.inventory": "Инвентарь"
+  }
+};

@@ -1,0 +1,227 @@
+@reference "../app.css";
+
+.empty-workspace-container {
+  @apply relative z-10 min-h-screen flex items-center justify-center px-6;
+}
+
+.empty-workspace-hero {
+  @apply text-center max-w-lg p-10;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  backdrop-filter: blur(var(--fx-blur-strong));
+  -webkit-backdrop-filter: blur(var(--fx-blur-strong));
+}
+
+.empty-workspace-icon {
+  @apply inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6;
+  background: rgba(88, 166, 255, 0.15);
+  border: 1px solid rgba(88, 166, 255, 0.25);
+}
+
+.empty-workspace-title {
+  @apply text-2xl font-semibold text-white mb-3;
+}
+
+.empty-workspace-description {
+  @apply text-sm text-white/60 mb-8;
+}
+
+.empty-workspace-presets {
+  @apply flex justify-center gap-4;
+}
+
+.preset-card {
+  @apply flex flex-col items-center gap-2 p-5 rounded-2xl cursor-pointer transition-all;
+  min-width: 120px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preset-card:hover {
+  background: rgba(88, 166, 255, 0.1);
+  border-color: rgba(88, 166, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.preset-icon {
+  @apply text-3xl;
+}
+
+.preset-title {
+  @apply text-sm font-semibold text-white/90;
+}
+
+.preset-desc {
+  @apply text-xs text-white/50;
+}
+
+.empty-workspace-hints {
+  @apply mt-4;
+}
+
+.guest-hero {
+  @apply max-w-3xl;
+}
+
+.guest-notes {
+  @apply grid gap-3 mb-2;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.guest-note-card {
+  @apply text-left rounded-2xl p-4;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guest-note-label {
+  @apply text-[11px] uppercase tracking-[0.24em] text-white/40 mb-2;
+}
+
+.guest-note-body {
+  @apply text-sm text-white/60 leading-6;
+}
+
+.admin-section {
+  @apply fixed inset-0 flex z-40;
+  background: linear-gradient(135deg, #0a0e14 0%, #0f1419 50%, #0a0e14 100%);
+}
+
+.admin-sidebar {
+  @apply w-64 flex flex-col border-r border-white/5;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(var(--fx-blur-strong));
+  -webkit-backdrop-filter: blur(var(--fx-blur-strong));
+}
+
+.admin-sidebar-header {
+  @apply p-4 border-b border-white/5;
+}
+
+.admin-back-btn {
+  @apply flex items-center gap-2 px-3 py-2 text-sm text-white/60 rounded-lg transition-all duration-200;
+  @apply hover:text-white hover:bg-white/5;
+}
+
+.admin-nav {
+  @apply flex-1 py-4 space-y-1 px-3 overflow-y-auto;
+}
+
+.admin-nav-item {
+  @apply flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/60 rounded-lg transition-all duration-200;
+  @apply hover:text-white hover:bg-white/5;
+}
+
+.admin-nav-item.active {
+  @apply text-white bg-blue-500/20;
+  box-shadow: inset 0 0 0 1px rgba(88, 166, 255, 0.3);
+}
+
+.admin-nav-badge {
+  @apply ml-auto px-2 py-0.5 text-[10px] font-medium rounded-full;
+  background: rgba(88, 166, 255, 0.2);
+  color: #58a6ff;
+}
+
+.admin-nav-badge.muted {
+  @apply bg-white/10 text-white/40;
+}
+
+.admin-sidebar-footer {
+  @apply p-4 border-t border-white/5;
+}
+
+.admin-content {
+  @apply flex-1 flex flex-col overflow-hidden;
+}
+
+.admin-content-header {
+  @apply px-8 py-6 border-b border-white/5 flex items-start justify-between gap-4;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.admin-content-heading {
+  @apply min-w-0;
+}
+
+.admin-content-actions {
+  @apply flex items-center gap-2;
+}
+
+.admin-content-title {
+  @apply text-2xl font-semibold text-white;
+}
+
+.admin-content-subtitle {
+  @apply mt-1 text-sm text-white/40;
+}
+
+.admin-content-body {
+  @apply flex-1 overflow-y-auto p-8;
+}
+
+.admin-grid-2 {
+  @apply grid gap-6 lg:grid-cols-2;
+}
+
+.admin-card {
+  @apply p-6 rounded-2xl;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(var(--fx-blur));
+}
+
+.admin-list-item {
+  @apply flex items-center justify-between py-3 border-b border-white/5 last:border-0;
+}
+
+.admin-empty-state {
+  @apply flex flex-col items-center justify-center py-16 text-center;
+}
+
+.admin-empty-state p {
+  @apply mt-4 text-white/60 font-medium;
+}
+
+@media (max-width: 768px) {
+  .admin-sidebar {
+    @apply w-16;
+  }
+
+  .admin-sidebar-header {
+    @apply p-2;
+  }
+
+  .admin-back-btn span {
+    @apply hidden;
+  }
+
+  .admin-nav-item span:not(.admin-nav-badge) {
+    @apply hidden;
+  }
+
+  .admin-nav-item {
+    @apply justify-center px-0 relative;
+  }
+
+  .admin-nav-badge {
+    @apply absolute -top-1 -right-1;
+  }
+
+  .admin-sidebar-footer {
+    @apply hidden;
+  }
+
+  .admin-content-header {
+    @apply px-4 py-4;
+  }
+
+  .admin-content-body {
+    @apply p-4;
+  }
+
+  .admin-grid-2 {
+    @apply grid-cols-1;
+  }
+}

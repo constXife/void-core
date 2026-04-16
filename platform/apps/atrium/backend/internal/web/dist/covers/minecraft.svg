@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8fd3ff"/>
+      <stop offset="100%" stop-color="#c9f0ff"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#39b54a"/>
+      <stop offset="100%" stop-color="#1f7a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#sky)"/>
+  <rect y="260" width="800" height="190" fill="url(#grass)"/>
+  <rect x="120" y="220" width="120" height="120" fill="#7a4a2b"/>
+  <rect x="240" y="220" width="120" height="120" fill="#8b5a3c"/>
+  <rect x="360" y="220" width="120" height="120" fill="#7a4a2b"/>
+  <rect x="160" y="180" width="80" height="80" fill="#9fd36b"/>
+  <rect x="480" y="180" width="120" height="120" fill="#9fd36b"/>
+  <text x="400" y="120" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="48" fill="#ffffff" opacity="0.9">MINECRAFT</text>
+</svg>

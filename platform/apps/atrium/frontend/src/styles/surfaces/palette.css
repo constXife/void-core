@@ -1,0 +1,164 @@
+/* ============================================
+   COMMAND PALETTE — Modern Cmd+K overlay
+   Extends existing palette-* utilities from app.css
+   ============================================ */
+
+.command-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: min(15vh, 120px);
+  padding-inline: var(--space-6, 24px);
+  background: rgba(8, 10, 16, 0.7);
+  backdrop-filter: blur(var(--fx-blur-strong, 20px));
+  -webkit-backdrop-filter: blur(var(--fx-blur-strong, 20px));
+}
+
+.command-palette-panel {
+  width: 100%;
+  max-width: 640px;
+  border-radius: var(--density-radius, 16px);
+  padding: var(--density-padding, 20px);
+  background: var(--surface-overlay, #1a222c);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  box-shadow:
+    0 calc(30px * var(--fx-shadow-strong, 1)) calc(90px * var(--fx-shadow-strong, 1)) rgba(0, 0, 0, 0.55);
+}
+
+.command-palette-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding-bottom: var(--space-4, 16px);
+  border-bottom: 1px solid var(--border-muted, rgba(255, 255, 255, 0.06));
+}
+
+.command-palette-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--text-lg, 1.125rem);
+  color: var(--ink-primary, #e6edf3);
+}
+
+.command-palette-field::placeholder {
+  color: var(--ink-muted, #484f58);
+}
+
+.command-palette-hint {
+  font-size: var(--text-2xs, 10px);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted, #484f58);
+  white-space: nowrap;
+}
+
+.command-palette-results {
+  margin-top: var(--space-4, 16px);
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+.command-palette-section-title {
+  font-size: var(--text-2xs, 10px);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted, #484f58);
+  padding: var(--space-2, 8px) 0 var(--space-1, 4px);
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--density-radius-sm, 12px);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms) var(--ease-default);
+}
+
+.command-palette-item:hover,
+.command-palette-item--active {
+  background: var(--glass-bg-hover, rgba(255, 255, 255, 0.1));
+  border-color: var(--glass-border, rgba(255, 255, 255, 0.12));
+}
+
+.command-palette-item-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--ink-secondary, #7d8590);
+}
+
+.command-palette-item-label {
+  flex: 1;
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--ink-primary, #e6edf3);
+}
+
+.command-palette-item-meta {
+  font-size: var(--text-xs, 0.6875rem);
+  color: var(--ink-muted, #484f58);
+}
+
+.command-palette-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-3, 12px);
+  font-size: var(--text-2xs, 10px);
+  color: var(--ink-muted, #484f58);
+}
+
+.command-palette-kbd {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs, 10px);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  color: var(--ink-secondary, #7d8590);
+}
+
+/* Product switcher row inside palette */
+.command-palette-products {
+  display: flex;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px) 0;
+  border-bottom: 1px solid var(--border-muted, rgba(255, 255, 255, 0.06));
+}
+
+.command-palette-product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border-radius: var(--density-radius-sm, 12px);
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--ink-secondary, #7d8590);
+  background: transparent;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: all var(--duration-fast, 150ms) var(--ease-default);
+}
+
+.command-palette-product:hover {
+  background: var(--glass-bg-hover, rgba(255, 255, 255, 0.1));
+  color: var(--ink-primary, #e6edf3);
+}
+
+.command-palette-product--active {
+  background: rgba(88, 166, 255, 0.12);
+  border-color: rgba(88, 166, 255, 0.3);
+  color: var(--accent-primary, #58a6ff);
+}
