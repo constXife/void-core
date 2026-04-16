@@ -24,7 +24,6 @@ services:
     environment:
       DATABASE_URL: postgres://atrium:atrium@db:5432/atrium?sslmode=disable
       MIGRATIONS_DIR: /app/migrations
-      SERVICES_YAML: /app/configs/services.yaml
       AUTH_DISABLED: "0"
       AUTH_LOCAL_ENABLED: "1"
       AUTH_LOCAL_ADMIN_EMAIL: "admin@example.com"
@@ -41,8 +40,6 @@ services:
       - "8080:8080"
     depends_on:
       - db
-    volumes:
-      - ./backend/configs/services.yaml:/app/configs/services.yaml:ro
 
 volumes:
   db_data:

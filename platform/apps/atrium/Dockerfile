@@ -7,8 +7,8 @@ WORKDIR /app/frontend
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=bun /usr/local/bin/bunx /usr/local/bin/bunx
 
-COPY frontend/package*.json ./
-RUN if [ -f bun.lockb ]; then /usr/local/bin/bun install --frozen-lockfile; else /usr/local/bin/bun install; fi
+COPY frontend/package.json frontend/bun.lock ./
+RUN /usr/local/bin/bun install --frozen-lockfile
 
 COPY frontend ./ 
 RUN /usr/local/bin/bun run build
@@ -32,7 +32,6 @@ WORKDIR /app
 
 COPY --from=build /out/server ./server
 COPY backend/migrations ./migrations
-COPY backend/configs ./configs
 
 EXPOSE 8080
 
