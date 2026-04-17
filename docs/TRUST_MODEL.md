@@ -40,9 +40,9 @@ The canonical deployment and integration model of `void-core` is Nix/NixOS-first
 That means:
 - NixOS modules and flake outputs define the canonical deployment posture;
 - reference profiles and client-owned deployment repositories are expected to compose the foundation through Nix;
-- Docker or other container packaging may exist as a secondary convenience, demo, or app-packaging path.
+- other packaging paths may exist later as secondary convenience or app-packaging layers.
 
-Container paths must not redefine the public foundation model.
+Those secondary paths must not redefine the public foundation model.
 They may help people evaluate or package one application, but they are not the source of truth for the baseline distribution posture of `void-core`.
 
 ## Ownership boundary

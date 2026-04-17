@@ -68,8 +68,8 @@ the public foundation boundary.
 
 For Atrium specifically:
 - the canonical foundation integration path is the Nix package expression plus the NixOS module;
-- container packaging may exist as a secondary convenience or demo path;
-- Docker must not redefine how the Atrium foundation shell is distributed or integrated into the `void-core` baseline.
+- the repository does not currently ship a maintained container-compose path for Atrium;
+- if container packaging returns later, it must remain secondary to the canonical Nix/NixOS integration path.
 
 Current flake package outputs are expected to expose:
 - `atrium-source` for the app source tree;

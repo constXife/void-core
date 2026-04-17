@@ -26,26 +26,30 @@ Current `v0` is intentionally narrow:
 - multi-space/family-facing expansion remains future work rather than a current promise.
 
 ## Quick start
-1) Start Postgres and app:
-   `task compose-up`
-2) Visit:
+1) Enter the repository shell:
+   `nix develop`
+2) Install frontend dependencies:
+   `task frontend-install`
+3) Start the fixture-backed dev stack:
+   `task fixture-dev`
+4) Visit:
    `http://localhost:8080/health`
 
 ## Local dev
 - Enter the repository shell: `nix develop`
 - Copy env file: `cp .env.example .env` and adjust as needed
 - Install frontend deps: `task frontend-install`
-- Start only Postgres: `task compose-db`
-- Stop local compose services: `task compose-down`
 - Run migrations: `task migrate`
-- Run backend dev server with env: `task backend-dev`
+- Run backend dev server with env and an external database: `task backend-dev`
+- Run backend dev server in no-db fixture mode: `task backend-fixture-dev`
 - Run frontend dev server: `task frontend-dev`
-- Run full local stack (db + backend + frontend): `task dev`
+- Run backend + frontend with an external database: `task dev`
+- Run backend + frontend in no-db fixture mode: `task fixture-dev`
 - Run backend tests: `task test`
 - Run frontend unit tests: `task frontend-test`
 - Run all tests: `task test-all`
 - Run smoke checks against a running backend: `task smoke`
-- Run fixture-backed dev mode: `task backend-dev PROFILE=family` (also `hotel`, `stress`)
+- Override the fixture profile: `task fixture-dev PROFILE=family` (also `hotel`, `stress`)
 
 Fixture profiles still seed into Postgres; they are not a separate in-memory runtime mode.
 When `PROFILE` is set, the backend seeds the selected fixture into the local runtime. This path
@@ -54,8 +58,8 @@ full admin CRUD flows.
 
 ## Deployment boundary
 - Canonical foundation integration is Nix/NixOS-first via `platform/packages/atrium` and `platform/nixos/modules/shell/atrium.nix`.
-- Container packaging is a secondary convenience/demo path for quick evaluation or app-level packaging.
-- Docker should not be treated as the canonical distribution model of Atrium inside `void-core`.
+- This repository does not currently ship a maintained container-compose path for Atrium.
+- If container packaging returns later, it should remain secondary to the canonical Nix/NixOS integration path.
 
 ## Provisioning (Grafana-style)
 On startup Atrium reads a provisioning file and reconciles DB state.
