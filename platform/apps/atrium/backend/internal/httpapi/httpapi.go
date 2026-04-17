@@ -10,8 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"atrium/internal/auth"
 	"atrium/internal/directory"
+	"atrium/internal/foundation/webauth"
+	"atrium/internal/foundation/webhttp"
 	"atrium/internal/memberships"
 	"atrium/internal/portal"
 	"atrium/internal/roles"
@@ -59,34 +60,21 @@ type Deps struct {
 
 func Handler(deps Deps) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
+	webhttp.InstallHealth(mux)
 	if deps.Auth != nil {
-		mux.HandleFunc("/auth/login", deps.Auth.LoginHandler)
-		mux.HandleFunc("/auth/callback", deps.Auth.CallbackHandler)
-		mux.HandleFunc("/auth/logout", deps.Auth.LogoutHandler)
+		webhttp.InstallAuthRoutes(mux, webhttp.AuthRoutes{
+			Login:    deps.Auth.LoginHandler,
+			Callback: deps.Auth.CallbackHandler,
+			Logout:   deps.Auth.LogoutHandler,
+		})
 	}
-	mux.HandleFunc("/api/auth/modes", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		payload := map[string]bool{
-			"oidc":  false,
-			"local": false,
-		}
-		if deps.Auth != nil {
-			payload["oidc"] = deps.Auth.OIDCEnabled()
-			payload["local"] = deps.Auth.LocalEnabled()
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(payload)
+	webhttp.InstallAuthModes(mux, webhttp.AuthModes{
+		OIDC:  deps.Auth != nil && deps.Auth.OIDCEnabled(),
+		Local: deps.Auth != nil && deps.Auth.LocalEnabled(),
 	})
 	mux.HandleFunc("/api/v1/workspace", func(w http.ResponseWriter, r *http.Request) {
 		if deps.Auth != nil {
-			deps.Auth.OptionalMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			webhttp.WithOptionalAuth(deps.Auth, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				handleSpacesWorkspace(w, r, deps)
 			})).ServeHTTP(w, r)
 			return
@@ -99,7 +87,7 @@ func Handler(deps Deps) http.Handler {
 			return
 		}
 		if deps.Auth != nil {
-			deps.Auth.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			webhttp.WithRequiredAuth(deps.Auth, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				handleConfigReload(w, r, deps)
 			})).ServeHTTP(w, r)
 			return
@@ -108,14 +96,14 @@ func Handler(deps Deps) http.Handler {
 	})
 	mux.HandleFunc("/api/widgets", func(w http.ResponseWriter, r *http.Request) {
 		if deps.Auth != nil {
-			deps.Auth.OptionalMiddleware(http.HandlerFunc(handleWidgets)).ServeHTTP(w, r)
+			webhttp.WithOptionalAuth(deps.Auth, http.HandlerFunc(handleWidgets)).ServeHTTP(w, r)
 			return
 		}
 		handleWidgets(w, r)
 	})
 	mux.HandleFunc("/api/widgets/note", func(w http.ResponseWriter, r *http.Request) {
 		if deps.Auth != nil {
-			deps.Auth.OptionalMiddleware(http.HandlerFunc(handleNote)).ServeHTTP(w, r)
+			webhttp.WithOptionalAuth(deps.Auth, http.HandlerFunc(handleNote)).ServeHTTP(w, r)
 			return
 		}
 		handleNote(w, r)
@@ -125,7 +113,7 @@ func Handler(deps Deps) http.Handler {
 			http.Error(w, "auth not configured", http.StatusNotFound)
 			return
 		}
-		deps.Auth.OptionalMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		webhttp.WithOptionalAuth(deps.Auth, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handleMe(w, r, deps)
 		})).ServeHTTP(w, r)
 	})
@@ -545,11 +533,8 @@ func readNoteFile(path string) ([]byte, error) {
 
 func handleMe(w http.ResponseWriter, r *http.Request, deps Deps) {
 	session, ok := auth.UserFromContext(r.Context())
-	w.Header().Set("Content-Type", "application/json")
 	if !ok {
-		if err := json.NewEncoder(w).Encode(nil); err != nil {
-			http.Error(w, "failed to encode anonymous session", http.StatusInternalServerError)
-		}
+		webhttp.WriteJSON(w, nil)
 		return
 	}
 	permissions := []string{"view"}
@@ -564,26 +549,10 @@ func handleMe(w http.ResponseWriter, r *http.Request, deps Deps) {
 			segment = value
 		}
 	}
-	payload := struct {
-		Email       string   `json:"email"`
-		Role        string   `json:"role"`
-		AuthSubject string   `json:"auth_subject,omitempty"`
-		Segment     string   `json:"segment,omitempty"`
-		StayID      string   `json:"stay_id,omitempty"`
-		ExpiresAt   int64    `json:"expires_at"`
-		Permissions []string `json:"permissions"`
-	}{
-		Email:       session.Email,
-		Role:        session.Role,
-		AuthSubject: session.AuthSubject,
-		Segment:     segment,
-		StayID:      session.StayID,
-		ExpiresAt:   session.ExpiresAt,
-		Permissions: permissions,
-	}
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		http.Error(w, "failed to encode session", http.StatusInternalServerError)
-	}
+	payload := webhttp.NewSessionPayload(session)
+	payload.Segment = segment
+	payload.Permissions = permissions
+	webhttp.WriteJSON(w, payload)
 }
 
 func handleCategories(w http.ResponseWriter, r *http.Request, deps Deps) {

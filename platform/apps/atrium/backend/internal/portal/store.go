@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 )
 
 type templateRecord struct {

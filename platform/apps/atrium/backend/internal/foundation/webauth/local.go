@@ -86,7 +86,7 @@ func (m *Manager) handleLocalLogin(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	next := sanitizeNext(input.Next)
+	next := SanitizeNext(input.Next)
 	if next == "" {
 		next = "/"
 	}

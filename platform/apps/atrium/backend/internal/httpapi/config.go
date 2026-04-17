@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 )
 
 func handleConfigReload(w http.ResponseWriter, r *http.Request, deps Deps) {

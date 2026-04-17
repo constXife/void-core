@@ -1,12 +1,13 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"atrium/internal/foundation/webhttp"
 )
 
 func parseSpaceIDQuery(r *http.Request) (int, error) {
@@ -18,10 +19,7 @@ func parseSpaceIDQuery(r *http.Request) (int, error) {
 }
 
 func writeJSON(w http.ResponseWriter, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-	}
+	webhttp.WriteJSON(w, payload)
 }
 
 func parseTime(value string) (*time.Time, error) {

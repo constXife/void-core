@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 )
 
 type SpaceWorkspace struct {

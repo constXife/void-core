@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webcfg"
+	"atrium/internal/foundation/webauth"
 	"atrium/internal/configstore"
 	"atrium/internal/directory"
 	"atrium/internal/fixtures"
@@ -92,7 +93,7 @@ func main() {
 
 	var authManager *auth.Manager
 	if !isAuthDisabled() {
-		roleMapExact, roleMapDomain := parseRoleMap(os.Getenv("AUTH_ROLE_MAP"))
+		roleMapExact, roleMapDomain := webcfg.ParseRoleMap(os.Getenv("AUTH_ROLE_MAP"))
 		manager, err := auth.NewManager(ctx, db, auth.Config{
 			Issuer:        os.Getenv("OIDC_ISSUER"),
 			ClientID:      os.Getenv("OIDC_CLIENT_ID"),
@@ -101,16 +102,16 @@ func main() {
 			LocalEnabled:  isLocalEnabled(),
 			CookieSecret:  os.Getenv("AUTH_COOKIE_SECRET"),
 			CookieName:    os.Getenv("AUTH_COOKIE_NAME"),
-			AllowedEmails: splitCSV(os.Getenv("AUTH_ALLOWED_EMAILS")),
-			AdminEmails:   splitCSV(os.Getenv("AUTH_ADMIN_EMAILS")),
+			AllowedEmails: webcfg.SplitCSV(os.Getenv("AUTH_ALLOWED_EMAILS")),
+			AdminEmails:   webcfg.SplitCSV(os.Getenv("AUTH_ADMIN_EMAILS")),
 			RoleMapExact:  roleMapExact,
 			RoleMapDomain: roleMapDomain,
-			SubjectMap:    parseExactMap(os.Getenv("AUTH_SUBJECT_MAP")),
+			SubjectMap:    webcfg.ParseExactMap(os.Getenv("AUTH_SUBJECT_MAP")),
 			DefaultRole:   os.Getenv("AUTH_DEFAULT_ROLE"),
 			GuestEnabled:  isGuestEnabled(),
 			CookieSecure:  os.Getenv("AUTH_COOKIE_SECURE") == "1",
 			CookieDomain:  os.Getenv("AUTH_COOKIE_DOMAIN"),
-			RedirectHosts: splitCSV(os.Getenv("AUTH_REDIRECT_HOSTS")),
+			RedirectHosts: webcfg.SplitCSV(os.Getenv("AUTH_REDIRECT_HOSTS")),
 		})
 		if err != nil {
 			log.Fatalf("init auth: %v", err)
@@ -125,8 +126,8 @@ func main() {
 				}
 			}
 			devLocalEmails := append(
-				splitCSV(os.Getenv("AUTH_ALLOWED_EMAILS")),
-				splitCSV(os.Getenv("AUTH_ADMIN_EMAILS"))...,
+				webcfg.SplitCSV(os.Getenv("AUTH_ALLOWED_EMAILS")),
+				webcfg.SplitCSV(os.Getenv("AUTH_ADMIN_EMAILS"))...,
 			)
 			if err := authManager.EnsureLocalUsers(ctx, devLocalEmails, adminPassword); err != nil {
 				log.Fatalf("init local users: %v", err)
@@ -249,12 +250,7 @@ func main() {
 	handler := httpapi.Handler(deps)
 
 	addr := strings.TrimSpace(os.Getenv("LISTEN_ADDR"))
-	if addr == "" {
-		addr = strings.TrimSpace(os.Getenv("ATRIUM_LISTEN_ADDR"))
-	}
-	if addr == "" {
-		addr = ":8080"
-	}
+	addr = webcfg.ResolveListenAddr("", "", []string{"LISTEN_ADDR", "ATRIUM_LISTEN_ADDR"}, "", "8080")
 	log.Printf("atrium server starting on %s", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatalf("server stopped: %v", err)
@@ -279,13 +275,7 @@ func runNoDBFixtureServer(_ context.Context, profile string) {
 
 	handler := httpapi.Handler(deps)
 
-	addr := strings.TrimSpace(os.Getenv("LISTEN_ADDR"))
-	if addr == "" {
-		addr = strings.TrimSpace(os.Getenv("ATRIUM_LISTEN_ADDR"))
-	}
-	if addr == "" {
-		addr = ":8080"
-	}
+	addr := webcfg.ResolveListenAddr("", "", []string{"LISTEN_ADDR", "ATRIUM_LISTEN_ADDR"}, "", "8080")
 	log.Printf("atrium no-db fixture mode enabled with profile=%s", strings.TrimSpace(profile))
 	log.Printf("atrium server starting on %s", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
@@ -293,96 +283,20 @@ func runNoDBFixtureServer(_ context.Context, profile string) {
 	}
 }
 
-func splitCSV(value string) []string {
-	if value == "" {
-		return nil
-	}
-	parts := strings.Split(value, ",")
-	out := make([]string, 0, len(parts))
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		out = append(out, part)
-	}
-	return out
-}
-
-func parseExactMap(value string) map[string]string {
-	if strings.TrimSpace(value) == "" {
-		return nil
-	}
-	result := map[string]string{}
-	for _, item := range strings.Split(value, ",") {
-		parts := strings.SplitN(item, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		key := strings.ToLower(strings.TrimSpace(parts[0]))
-		mapped := strings.TrimSpace(parts[1])
-		if key == "" || mapped == "" {
-			continue
-		}
-		result[key] = mapped
-	}
-	return result
-}
-
 func defaultString(value, fallback string) string {
-	if value == "" {
-		return fallback
-	}
-	return value
-}
-
-func parseRoleMap(value string) (map[string]string, map[string]string) {
-	exact := map[string]string{}
-	domain := map[string]string{}
-	if value == "" {
-		return exact, domain
-	}
-	entries := strings.Split(value, ",")
-	for _, entry := range entries {
-		entry = strings.TrimSpace(entry)
-		if entry == "" {
-			continue
-		}
-		parts := strings.SplitN(entry, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		key := strings.ToLower(strings.TrimSpace(parts[0]))
-		role := strings.ToLower(strings.TrimSpace(parts[1]))
-		if key == "" || role == "" {
-			continue
-		}
-		if strings.HasPrefix(key, "*@") {
-			domain[strings.TrimPrefix(key, "*@")] = role
-			continue
-		}
-		if strings.HasPrefix(key, "@") {
-			domain[strings.TrimPrefix(key, "@")] = role
-			continue
-		}
-		exact[key] = role
-	}
-	return exact, domain
+	return webcfg.DefaultString(value, fallback)
 }
 
 func isGuestEnabled() bool {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("AUTH_GUEST_ENABLED")))
-	return !(value == "0" || value == "false" || value == "no")
+	return webcfg.IsEnabledUnlessFalseEnv("AUTH_GUEST_ENABLED")
 }
 
 func isLocalEnabled() bool {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("AUTH_LOCAL_ENABLED")))
-	return value == "1" || value == "true" || value == "yes"
+	return webcfg.IsTruthyEnv("AUTH_LOCAL_ENABLED")
 }
 
 func isAuthDisabled() bool {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("AUTH_DISABLED")))
-	return value == "1" || value == "true" || value == "yes"
+	return webcfg.IsTruthyEnv("AUTH_DISABLED")
 }
 
 func watchProvisioning(ctx context.Context, path string, reload func(context.Context) error) error {

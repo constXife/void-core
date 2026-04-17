@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 	"atrium/internal/portal"
 	"atrium/internal/workspace"
 )

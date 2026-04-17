@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 	"atrium/internal/configstore"
 	"atrium/internal/directory"
 	"atrium/internal/portal"

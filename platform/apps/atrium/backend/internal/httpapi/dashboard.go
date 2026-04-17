@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 	"atrium/internal/portal"
 )
 

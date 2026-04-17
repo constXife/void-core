@@ -3,7 +3,7 @@ package portal
 import (
 	"context"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 )
 
 func WithRoleOverride(ctx context.Context, role string) context.Context {

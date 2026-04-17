@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 )
 
 const knowledgeAuthSubjectHeader = "X-Void-Auth-Subject"

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 )
 
 func withRoleOverride(ctx context.Context, r *http.Request, session auth.Session) context.Context {

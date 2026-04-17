@@ -76,6 +76,11 @@ type statePayload struct {
 	ExpiresAt int64  `json:"expires_at"`
 }
 
+const (
+	DefaultSessionCookieName = "atrium_session"
+	OIDCStateCookieName      = "atrium_oidc_state"
+)
+
 func NewManager(ctx context.Context, db *sql.DB, cfg Config) (*Manager, error) {
 	if cfg.CookieSecret == "" {
 		return nil, fmt.Errorf("missing cookie secret")
@@ -133,7 +138,7 @@ func NewManager(ctx context.Context, db *sql.DB, cfg Config) (*Manager, error) {
 		subjectMap:    normalizeSubjectMap(cfg.SubjectMap),
 		defaultRole:   normalizeRole(cfg.DefaultRole, "user"),
 		guestEnabled:  cfg.GuestEnabled,
-		cookieName:    defaultString(cfg.CookieName, "atrium_session"),
+		cookieName:    defaultString(cfg.CookieName, DefaultSessionCookieName),
 		cookieSecret:  []byte(cfg.CookieSecret),
 		cookieSecure:  cfg.CookieSecure,
 		cookieDomain:  strings.TrimSpace(cfg.CookieDomain),
@@ -168,7 +173,7 @@ func (m *Manager) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	next := sanitizeNext(r.URL.Query().Get("next"))
+	next := SanitizeNext(r.URL.Query().Get("next"))
 	payload := statePayload{
 		State:     state,
 		Nonce:     nonce,
@@ -182,7 +187,7 @@ func (m *Manager) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "atrium_oidc_state",
+		Name:     OIDCStateCookieName,
 		Value:    encoded,
 		Path:     "/",
 		HttpOnly: true,
@@ -206,7 +211,7 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stateCookie, err := r.Cookie("atrium_oidc_state")
+	stateCookie, err := r.Cookie(OIDCStateCookieName)
 	if err != nil {
 		http.Error(w, "missing login state", http.StatusBadRequest)
 		return
@@ -538,7 +543,7 @@ func (m *Manager) EncodeForTests(value any) (string, error) {
 	return m.encode(value)
 }
 
-func sanitizeNext(value string) string {
+func SanitizeNext(value string) string {
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return ""

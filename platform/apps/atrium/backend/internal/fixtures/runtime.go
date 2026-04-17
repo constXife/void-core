@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"atrium/internal/auth"
+	"atrium/internal/foundation/webauth"
 	"atrium/internal/directory"
 	"atrium/internal/portal"
 	"atrium/internal/spaces"
