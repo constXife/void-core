@@ -192,11 +192,11 @@ func (m *Manager) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   m.cookieSecure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: oidcStateCookieSameSite(m.cookieSecure),
 	})
 
 	oauth2Config := m.oauth2ConfigForRequest(r)
-	http.Redirect(w, r, oauth2Config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusFound)
+	http.Redirect(w, r, oauth2Config.AuthCodeURL(state, oidc.Nonce(nonce)), http.StatusTemporaryRedirect)
 }
 
 func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -310,12 +310,11 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "atrium_oidc_state",
 		Value:    "",
-		Domain:   m.cookieDomain,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   m.cookieSecure,
 		MaxAge:   -1,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: oidcStateCookieSameSite(m.cookieSecure),
 	})
 
 	redirectTo := payload.Next
@@ -323,6 +322,13 @@ func (m *Manager) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		redirectTo = "/"
 	}
 	http.Redirect(w, r, redirectTo, http.StatusFound)
+}
+
+func oidcStateCookieSameSite(cookieSecure bool) http.SameSite {
+	if cookieSecure {
+		return http.SameSiteNoneMode
+	}
+	return http.SameSiteLaxMode
 }
 
 func (m *Manager) LogoutHandler(w http.ResponseWriter, r *http.Request) {

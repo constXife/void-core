@@ -51,6 +51,34 @@ func TestInstallAuthModes(t *testing.T) {
 	}
 }
 
+func TestInstallAuthModesKeepsFalseDevLoginField(t *testing.T) {
+	mux := http.NewServeMux()
+	InstallAuthModes(mux, AuthModes{
+		OIDC:     true,
+		Local:    false,
+		DevLogin: false,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/modes", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var payload map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode auth modes: %v", err)
+	}
+	if _, ok := payload["dev_login"]; !ok {
+		t.Fatalf("expected dev_login key to be present, got %#v", payload)
+	}
+	if payload["dev_login"] != false {
+		t.Fatalf("expected dev_login=false, got %#v", payload["dev_login"])
+	}
+}
+
 func TestWithOptionalAuthPassesThroughWithoutManager(t *testing.T) {
 	called := false
 	handler := WithOptionalAuth(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

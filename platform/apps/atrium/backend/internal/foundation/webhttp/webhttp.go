@@ -27,7 +27,7 @@ type AuthRoutes struct {
 type AuthModes struct {
 	OIDC     bool `json:"oidc"`
 	Local    bool `json:"local"`
-	DevLogin bool `json:"dev_login,omitempty"`
+	DevLogin bool `json:"dev_login"`
 }
 
 type SessionPayload struct {
