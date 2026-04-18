@@ -210,10 +210,6 @@ func main() {
 		ShoppingAPIBaseURL:       strings.TrimSpace(os.Getenv("KNOWLEDGE_API_BASE_URL")),
 		ShoppingAPIToken:         strings.TrimSpace(os.Getenv("KNOWLEDGE_API_TOKEN")),
 		ShoppingHTTPClient:       &http.Client{Timeout: 15 * time.Second},
-		KnowledgeProxyBaseURL:    strings.TrimSpace(os.Getenv("KNOWLEDGE_PROXY_BASE_URL")),
-		KnowledgeProxyToken:      strings.TrimSpace(os.Getenv("KNOWLEDGE_PROXY_TOKEN")),
-		KnowledgeProxyHTTPClient: &http.Client{Timeout: 15 * time.Second},
-		InventoryDefaultSlice:    defaultString(strings.TrimSpace(os.Getenv("INVENTORY_DEFAULT_SLICE")), "pantry"),
 	}
 
 	if configFirst {
@@ -270,7 +266,6 @@ func runNoDBFixtureServer(_ context.Context, profile string) {
 		LoadDashboard:         runtimeState.LoadDashboard,
 		LoadBlocksData:        runtimeState.LoadBlocksData,
 		ListDirectory:         runtimeState.ListDirectory,
-		InventoryDefaultSlice: defaultString(strings.TrimSpace(os.Getenv("INVENTORY_DEFAULT_SLICE")), "pantry"),
 	}
 
 	handler := httpapi.Handler(deps)
