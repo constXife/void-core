@@ -132,6 +132,15 @@ func Handler(deps Deps) http.Handler {
 			handleProvisioningSummary(w, r, deps)
 		}))).ServeHTTP(w, r)
 	})
+	mux.HandleFunc("/api/provisioning/catalog", func(w http.ResponseWriter, r *http.Request) {
+		if deps.Auth == nil {
+			http.Error(w, "auth not configured", http.StatusNotFound)
+			return
+		}
+		deps.Auth.Middleware(auth.RequireRole("admin", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handleProvisioningCatalog(w, r, deps)
+		}))).ServeHTTP(w, r)
+	})
 	mux.HandleFunc("/api/shopping/runs", func(w http.ResponseWriter, r *http.Request) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			handleShoppingRuns(w, r, deps)

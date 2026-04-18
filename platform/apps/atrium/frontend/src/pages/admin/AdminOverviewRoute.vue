@@ -18,6 +18,9 @@ const adminSpace = computed(() => {
 const provisioningSummary = ref(null);
 const provisioningSummaryError = ref("");
 const provisioningSummaryLoading = ref(false);
+const provisioningCatalog = ref(null);
+const provisioningCatalogError = ref("");
+const provisioningCatalogLoading = ref(false);
 
 const provisioningCopy = computed(() => ({
     title: "Provisioning Read Path",
@@ -32,7 +35,16 @@ const provisioningCopy = computed(() => ({
     roles: "Roles",
     templates: "Templates",
     spaces: "Spaces",
-    directoryItems: "Directory items"
+    directoryItems: "Directory items",
+    provisionedRoles: "Provisioned roles",
+    provisionedTemplates: "Provisioned templates",
+    provisionedSpaces: "Provisioned spaces",
+    noCatalog: "Provisioning catalog is not available.",
+    builtin: "builtin",
+    custom: "custom",
+    permissions: "permissions",
+    template: "template",
+    items: "items"
   }));
 
 const provisioningStats = computed(() => {
@@ -48,6 +60,9 @@ const provisioningStats = computed(() => {
 
 const activeSpaceIDs = computed(() => provisioningSummary.value?.summary?.active_space_ids || []);
 const provisioningSummaryPath = computed(() => provisioningSummary.value?.path || "");
+const catalogRoles = computed(() => provisioningCatalog.value?.catalog?.roles || []);
+const catalogTemplates = computed(() => provisioningCatalog.value?.catalog?.templates || []);
+const catalogSpaces = computed(() => provisioningCatalog.value?.catalog?.spaces || []);
 
 const loadProvisioningSummary = async () => {
   provisioningSummaryLoading.value = true;
@@ -62,6 +77,19 @@ const loadProvisioningSummary = async () => {
   }
 };
 
+const loadProvisioningCatalog = async () => {
+  provisioningCatalogLoading.value = true;
+  provisioningCatalogError.value = "";
+  try {
+    provisioningCatalog.value = await fetchJSON("/api/provisioning/catalog");
+  } catch (error) {
+    provisioningCatalog.value = null;
+    provisioningCatalogError.value = String(error?.message || provisioningCopy.value.noCatalog);
+  } finally {
+    provisioningCatalogLoading.value = false;
+  }
+};
+
 watch(
   () => adminSpace.value?.id || "",
   (spaceID) => {
@@ -69,9 +97,13 @@ watch(
       provisioningSummary.value = null;
       provisioningSummaryError.value = "";
       provisioningSummaryLoading.value = false;
+      provisioningCatalog.value = null;
+      provisioningCatalogError.value = "";
+      provisioningCatalogLoading.value = false;
       return;
     }
     void loadProvisioningSummary();
+    void loadProvisioningCatalog();
   },
   { immediate: true }
 );
@@ -134,6 +166,98 @@ watch(
           </p>
         </div>
       </template>
+    </div>
+
+    <div class="grid gap-4 xl:grid-cols-3">
+      <div class="admin-card">
+        <div class="section-title">{{ provisioningCopy.provisionedRoles }}</div>
+        <div v-if="provisioningCatalogLoading" class="text-sm text-white/50 mt-3">
+          {{ provisioningCopy.loading }}
+        </div>
+        <div v-else-if="provisioningCatalogError" class="text-sm text-rose-300 mt-3">
+          {{ provisioningCatalogError }}
+        </div>
+        <div v-else-if="catalogRoles.length === 0" class="text-sm text-white/50 mt-3">
+          {{ provisioningCopy.noCatalog }}
+        </div>
+        <div v-else class="mt-3 space-y-3">
+          <div
+            v-for="role in catalogRoles"
+            :key="role.key"
+            class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="font-medium text-white">{{ role.name || role.key }}</div>
+              <div class="text-[11px] uppercase tracking-wider text-white/50">
+                {{ role.is_builtin ? provisioningCopy.builtin : provisioningCopy.custom }}
+              </div>
+            </div>
+            <div class="mt-1 text-xs text-white/60">{{ role.key }}</div>
+            <div class="mt-2 text-sm text-white/70">
+              {{ role.permissions_count }} {{ provisioningCopy.permissions }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="section-title">{{ provisioningCopy.provisionedTemplates }}</div>
+        <div v-if="provisioningCatalogLoading" class="text-sm text-white/50 mt-3">
+          {{ provisioningCopy.loading }}
+        </div>
+        <div v-else-if="provisioningCatalogError" class="text-sm text-rose-300 mt-3">
+          {{ provisioningCatalogError }}
+        </div>
+        <div v-else-if="catalogTemplates.length === 0" class="text-sm text-white/50 mt-3">
+          {{ provisioningCopy.noCatalog }}
+        </div>
+        <div v-else class="mt-3 space-y-3">
+          <div
+            v-for="template in catalogTemplates"
+            :key="template.key"
+            class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+          >
+            <div class="font-medium text-white">{{ template.key }}</div>
+            <div class="mt-2 text-sm text-white/70">
+              v{{ template.version }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="section-title">{{ provisioningCopy.provisionedSpaces }}</div>
+        <div v-if="provisioningCatalogLoading" class="text-sm text-white/50 mt-3">
+          {{ provisioningCopy.loading }}
+        </div>
+        <div v-else-if="provisioningCatalogError" class="text-sm text-rose-300 mt-3">
+          {{ provisioningCatalogError }}
+        </div>
+        <div v-else-if="catalogSpaces.length === 0" class="text-sm text-white/50 mt-3">
+          {{ provisioningCopy.noCatalog }}
+        </div>
+        <div v-else class="mt-3 space-y-3">
+          <div
+            v-for="space in catalogSpaces"
+            :key="space.id"
+            class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="font-medium text-white">{{ space.title || space.id }}</div>
+              <div class="text-[11px] uppercase tracking-wider text-white/50">
+                {{ space.state || "unknown" }}
+              </div>
+            </div>
+            <div class="mt-1 text-xs text-white/60">{{ space.id }}</div>
+            <div class="mt-2 text-sm text-white/70">
+              {{ provisioningCopy.template }}: {{ space.dashboard_template || "none" }}
+            </div>
+            <div class="mt-1 text-sm text-white/70">
+              {{ space.directory_item_count }} {{ provisioningCopy.items }}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <AtriumSpaceDashboard :space="adminSpace" />

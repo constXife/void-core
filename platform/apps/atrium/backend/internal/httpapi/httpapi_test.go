@@ -375,3 +375,91 @@ func TestProvisioningSummaryRouteProxiesConfiguredRequest(t *testing.T) {
 		t.Fatalf("expected role_count 3, got %d", payload.Summary.RoleCount)
 	}
 }
+
+func TestProvisioningCatalogRouteReturnsServiceUnavailableWhenNotConfigured(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/provisioning/catalog", nil)
+	rec := httptest.NewRecorder()
+
+	handleProvisioningCatalog(rec, req, Deps{})
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", rec.Code)
+	}
+}
+
+func TestProvisioningCatalogRouteProxiesConfiguredRequest(t *testing.T) {
+	var gotAuth string
+
+	req := httptest.NewRequest(http.MethodGet, "/api/provisioning/catalog", nil)
+	rec := httptest.NewRecorder()
+
+	handleProvisioningCatalog(rec, req, Deps{
+		ShoppingAPIBaseURL: "https://api.example.test/knowledge/v1",
+		ShoppingAPIToken:   "void_ak_test",
+		ShoppingHTTPClient: &http.Client{
+			Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				if r.URL.Path != "/knowledge/v1/atrium/provisioning/catalog" {
+					t.Fatalf("expected upstream path /knowledge/v1/atrium/provisioning/catalog, got %q", r.URL.Path)
+				}
+				gotAuth = r.Header.Get("Authorization")
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
+					Body: io.NopCloser(strings.NewReader(`{"configured":true,"exists":true,"path":"/etc/atrium/provisioning-load.yaml","catalog":{"roles":[{"key":"admin","name":"Admin","permissions_count":2,"is_builtin":true}],"templates":[{"key":"admin-default","version":1}],"spaces":[{"id":"admin","title":"Admin","state":"active","space_type":"staff","dashboard_template":"admin-default","access_mode":"private","layout_mode":"grid","visibility_groups":["admin"],"directory_item_count":1}]}}`)),
+				}, nil
+			}),
+		},
+	})
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if gotAuth != "Bearer void_ak_test" {
+		t.Fatalf("expected bearer token to be forwarded, got %q", gotAuth)
+	}
+
+	var payload struct {
+		Configured bool   `json:"configured"`
+		Exists     bool   `json:"exists"`
+		Path       string `json:"path"`
+		Catalog    struct {
+			Roles []struct {
+				Key              string `json:"key"`
+				PermissionsCount int    `json:"permissions_count"`
+			} `json:"roles"`
+			Templates []struct {
+				Key string `json:"key"`
+			} `json:"templates"`
+			Spaces []struct {
+				ID                 string `json:"id"`
+				DirectoryItemCount int    `json:"directory_item_count"`
+			} `json:"spaces"`
+		} `json:"catalog"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode provisioning catalog response: %v", err)
+	}
+	if !payload.Configured || !payload.Exists {
+		t.Fatalf("expected configured existing catalog, got %+v", payload)
+	}
+	if payload.Path != "/etc/atrium/provisioning-load.yaml" {
+		t.Fatalf("expected provisioning load path, got %q", payload.Path)
+	}
+	if len(payload.Catalog.Roles) != 1 || payload.Catalog.Roles[0].Key != "admin" {
+		t.Fatalf("expected one admin role, got %+v", payload.Catalog.Roles)
+	}
+	if len(payload.Catalog.Templates) != 1 || payload.Catalog.Templates[0].Key != "admin-default" {
+		t.Fatalf("expected one admin-default template, got %+v", payload.Catalog.Templates)
+	}
+	if len(payload.Catalog.Spaces) != 1 || payload.Catalog.Spaces[0].ID != "admin" {
+		t.Fatalf("expected one admin space, got %+v", payload.Catalog.Spaces)
+	}
+	if payload.Catalog.Spaces[0].DirectoryItemCount != 1 {
+		t.Fatalf(
+			"expected admin space directory_item_count 1, got %d",
+			payload.Catalog.Spaces[0].DirectoryItemCount,
+		)
+	}
+}
