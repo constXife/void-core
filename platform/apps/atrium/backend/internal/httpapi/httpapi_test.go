@@ -309,3 +309,69 @@ func TestShoppingSummaryRouteProxiesConfiguredRequest(t *testing.T) {
 		t.Fatalf("expected need_to_buy_count 2, got %d", payload["need_to_buy_count"])
 	}
 }
+
+func TestProvisioningSummaryRouteReturnsServiceUnavailableWhenNotConfigured(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/provisioning/summary", nil)
+	rec := httptest.NewRecorder()
+
+	handleProvisioningSummary(rec, req, Deps{})
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", rec.Code)
+	}
+}
+
+func TestProvisioningSummaryRouteProxiesConfiguredRequest(t *testing.T) {
+	var gotAuth string
+
+	req := httptest.NewRequest(http.MethodGet, "/api/provisioning/summary", nil)
+	rec := httptest.NewRecorder()
+
+	handleProvisioningSummary(rec, req, Deps{
+		ShoppingAPIBaseURL: "https://api.example.test/knowledge/v1",
+		ShoppingAPIToken:   "void_ak_test",
+		ShoppingHTTPClient: &http.Client{
+			Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				if r.URL.Path != "/knowledge/v1/atrium/provisioning/summary" {
+					t.Fatalf("expected upstream path /knowledge/v1/atrium/provisioning/summary, got %q", r.URL.Path)
+				}
+				gotAuth = r.Header.Get("Authorization")
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
+					Body: io.NopCloser(strings.NewReader(`{"configured":true,"exists":true,"path":"/etc/atrium/provisioning-load.yaml","summary":{"role_count":3}}`)),
+				}, nil
+			}),
+		},
+	})
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if gotAuth != "Bearer void_ak_test" {
+		t.Fatalf("expected bearer token to be forwarded, got %q", gotAuth)
+	}
+
+	var payload struct {
+		Configured bool `json:"configured"`
+		Exists     bool `json:"exists"`
+		Path       string `json:"path"`
+		Summary    struct {
+			RoleCount int `json:"role_count"`
+		} `json:"summary"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode provisioning summary response: %v", err)
+	}
+	if !payload.Configured || !payload.Exists {
+		t.Fatalf("expected configured existing summary, got %+v", payload)
+	}
+	if payload.Path != "/etc/atrium/provisioning-load.yaml" {
+		t.Fatalf("expected provisioning load path, got %q", payload.Path)
+	}
+	if payload.Summary.RoleCount != 3 {
+		t.Fatalf("expected role_count 3, got %d", payload.Summary.RoleCount)
+	}
+}

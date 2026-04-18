@@ -1335,6 +1335,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     ensureWorkspaceReady,
     error,
     eventStatusClass,
+    fetchJSON,
     formatEndpointLine,
     formatNotifTime,
     globalWidgets,

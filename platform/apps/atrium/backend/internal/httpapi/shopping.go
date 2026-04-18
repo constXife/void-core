@@ -26,7 +26,7 @@ func handleShoppingSummary(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func handleShoppingRuns(w http.ResponseWriter, r *http.Request, deps Deps) {
@@ -40,7 +40,7 @@ func handleShoppingRuns(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func handleShoppingIntents(w http.ResponseWriter, r *http.Request, deps Deps) {
@@ -54,7 +54,7 @@ func handleShoppingIntents(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func handleShoppingIntent(w http.ResponseWriter, r *http.Request, deps Deps) {
@@ -74,7 +74,7 @@ func handleShoppingIntent(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func handleShoppingRun(w http.ResponseWriter, r *http.Request, deps Deps) {
@@ -94,7 +94,7 @@ func handleShoppingRun(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func handleShoppingItems(w http.ResponseWriter, r *http.Request, deps Deps) {
@@ -108,7 +108,7 @@ func handleShoppingItems(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func handleShoppingItem(w http.ResponseWriter, r *http.Request, deps Deps) {
@@ -128,7 +128,7 @@ func handleShoppingItem(w http.ResponseWriter, r *http.Request, deps Deps) {
 		http.Error(w, "invalid shopping api url", http.StatusInternalServerError)
 		return
 	}
-	proxyShoppingRequest(w, r, deps, target)
+	proxyKnowledgeRequest(w, r, deps, target)
 }
 
 func shoppingTargetURL(baseURL string, suffix string) (*url.URL, error) {
@@ -142,7 +142,7 @@ func shoppingTargetURL(baseURL string, suffix string) (*url.URL, error) {
 	return target, nil
 }
 
-func proxyShoppingRequest(w http.ResponseWriter, r *http.Request, deps Deps, target *url.URL) {
+func proxyKnowledgeRequest(w http.ResponseWriter, r *http.Request, deps Deps, target *url.URL) {
 	token := strings.TrimSpace(deps.ShoppingAPIToken)
 	if strings.TrimSpace(deps.ShoppingAPIBaseURL) == "" || token == "" {
 		http.Error(w, "shopping api not configured", http.StatusServiceUnavailable)
