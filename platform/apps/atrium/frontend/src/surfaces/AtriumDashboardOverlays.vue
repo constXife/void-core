@@ -11,6 +11,8 @@ const {
   dashboardAddOpen,
   dashboardEditorBlocks,
   dashboardEditorSaving,
+  dashboardEditorProvisioningLoading,
+  dashboardEditorProvisioningSnapshot,
   dashboardEditorSpace,
   dashboardPreviewRole,
   inlineAddForm,
@@ -29,6 +31,7 @@ const {
 const {
   addBlockFromPicker,
   addDashboardBlock,
+  applyProvisioningSnapshotToEditor,
   blockDataCount,
   blockTypeCards,
   blockTypeLabel,
@@ -37,6 +40,7 @@ const {
   blockOrderMapFromBlocks,
   blockStyle,
   blockTitle,
+  canEditDashboardSpace,
   closeAddBlockPicker,
   closeDashboardEditor,
   closeInlineEdit,
@@ -47,6 +51,7 @@ const {
   hotkeys,
   isResourcesBlock,
   onDashboardPreviewRoleChange,
+  resetDashboardEditorDraft,
   saveBlockSettings,
   saveDashboardEditor,
   saveInlineContent,
@@ -131,6 +136,52 @@ const {
       </div>
       <div class="dashboard-editor">
         <div class="dashboard-editor-preview">
+          <div class="card-glass mb-3 p-3 text-xs text-white/65 space-y-2">
+            <div class="flex items-center justify-between gap-3">
+              <div class="font-semibold">{{ t("editor.canonicalSnapshot") }}</div>
+              <div v-if="dashboardEditorProvisioningSnapshot?.template" class="text-white/40">
+                {{ dashboardEditorProvisioningSnapshot.template.key }} · v{{ dashboardEditorProvisioningSnapshot.template.version }}
+              </div>
+            </div>
+            <div v-if="dashboardEditorProvisioningLoading" class="text-white/45">
+              {{ t("editor.canonicalLoading") }}
+            </div>
+            <div v-else-if="dashboardEditorProvisioningSnapshot" class="space-y-2">
+              <div class="flex flex-wrap gap-x-3 gap-y-1 text-white/45">
+                <span>{{ t("editor.canonicalBlocks") }}: {{ dashboardEditorProvisioningSnapshot.blocks_count ?? 0 }}</span>
+                <span>{{ t("editor.editableBlocks") }}: {{ dashboardEditorBlocks.length }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  class="btn btn-ghost text-xs"
+                  :disabled="!dashboardEditorProvisioningSnapshot.blocks?.length"
+                  @click="applyProvisioningSnapshotToEditor"
+                >
+                  {{ t("editor.useCanonicalDraft") }}
+                </button>
+              </div>
+              <div v-if="dashboardEditorProvisioningSnapshot.block_types?.length" class="text-white/45">
+                {{ dashboardEditorProvisioningSnapshot.block_types.join(", ") }}
+              </div>
+              <div
+                v-if="dashboardEditorProvisioningSnapshot.blocks?.length"
+                class="space-y-1 text-[11px] text-white/50"
+              >
+                <div
+                  v-for="block in dashboardEditorProvisioningSnapshot.blocks"
+                  :key="`canonical-${block.id}-${block.type}`"
+                >
+                  {{ block.id || "block" }} · {{ block.type || "unknown" }}
+                </div>
+              </div>
+              <div class="text-white/35">
+                {{ t("editor.compareHint") }}
+              </div>
+            </div>
+            <div v-else class="text-white/45">
+              {{ t("editor.canonicalUnavailable") }}
+            </div>
+          </div>
           <div class="dashboard-grid">
             <div
               v-for="block in dashboardEditorBlocks"
@@ -153,15 +204,28 @@ const {
         <div class="dashboard-editor-controls">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-semibold">{{ t("admin.dashboard.blocks") }}</div>
-            <button class="btn btn-ghost text-xs" @click="addDashboardBlock">
+            <button
+              class="btn btn-ghost text-xs"
+              :disabled="!canEditDashboardSpace(dashboardEditorSpace)"
+              @click="addDashboardBlock"
+            >
               {{ t("app.addBlock") }}
             </button>
           </div>
           <div class="space-y-3">
             <div v-for="block in dashboardEditorBlocks" :key="block.id" class="card-glass dashboard-editor-block">
               <div class="flex items-center justify-between gap-2 mb-3">
-                <input v-model="block.title" class="input text-xs" placeholder="Block title" />
-                <select v-model="block.type" class="select text-xs">
+                <input
+                  v-model="block.title"
+                  class="input text-xs"
+                  placeholder="Block title"
+                  :disabled="!canEditDashboardSpace(dashboardEditorSpace)"
+                />
+                <select
+                  v-model="block.type"
+                  class="select text-xs"
+                  :disabled="!canEditDashboardSpace(dashboardEditorSpace)"
+                >
                   <option v-for="opt in blockTypeOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
                   </option>
@@ -169,34 +233,45 @@ const {
               </div>
               <div class="grid grid-cols-4 gap-2 text-xs">
                 <label class="text-white/50">x
-                  <input v-model.number="block.layout.lg.x" type="number" min="1" max="12" class="input text-xs mt-1" />
+                  <input v-model.number="block.layout.lg.x" type="number" min="1" max="12" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
                 <label class="text-white/50">y
-                  <input v-model.number="block.layout.lg.y" type="number" min="1" class="input text-xs mt-1" />
+                  <input v-model.number="block.layout.lg.y" type="number" min="1" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
                 <label class="text-white/50">w
-                  <input v-model.number="block.layout.lg.w" type="number" min="1" max="12" class="input text-xs mt-1" />
+                  <input v-model.number="block.layout.lg.w" type="number" min="1" max="12" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
                 <label class="text-white/50">h
-                  <input v-model.number="block.layout.lg.h" type="number" min="1" class="input text-xs mt-1" />
+                  <input v-model.number="block.layout.lg.h" type="number" min="1" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
               </div>
               <div class="grid grid-cols-3 gap-2 text-xs mt-2">
                 <label class="text-white/50">order
-                  <input v-model.number="block.layout.xs.order" type="number" min="1" class="input text-xs mt-1" />
+                  <input v-model.number="block.layout.xs.order" type="number" min="1" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
                 <label class="text-white/50">limit
-                  <input v-model.number="block.config.limit" type="number" min="1" class="input text-xs mt-1" />
+                  <input v-model.number="block.config.limit" type="number" min="1" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
                 <label class="text-white/50">scope
-                  <input v-model="block.config.scope" type="text" class="input text-xs mt-1" />
+                  <input v-model="block.config.scope" type="text" class="input text-xs mt-1" :disabled="!canEditDashboardSpace(dashboardEditorSpace)" />
                 </label>
               </div>
             </div>
           </div>
           <div class="flex items-center gap-2 mt-4">
-            <button class="btn btn-primary flex-1" :disabled="dashboardEditorSaving" @click="saveDashboardEditor">
+            <button
+              class="btn btn-primary flex-1"
+              :disabled="dashboardEditorSaving || !canEditDashboardSpace(dashboardEditorSpace)"
+              @click="saveDashboardEditor"
+            >
               {{ dashboardEditorSaving ? `${t("app.save")}...` : t("app.saveDashboard") }}
+            </button>
+            <button
+              class="btn btn-ghost"
+              :disabled="dashboardEditorProvisioningLoading || dashboardEditorSaving"
+              @click="resetDashboardEditorDraft"
+            >
+              {{ t("editor.resetDraft") }}
             </button>
             <button class="btn btn-ghost" @click="closeDashboardEditor">{{ t("app.cancel") }}</button>
           </div>

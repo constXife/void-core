@@ -8,6 +8,8 @@ defineProps({
   enableResourceDetails: { type: Boolean, default: false },
   normalizeIconUrl: { type: Function, required: true },
   openServiceDetails: { type: Function, required: true },
+  provisioningDirectoryAdmin: { type: Array, required: true },
+  selectedContentSpace: { type: Object, default: null },
   spacesAdmin: { type: Array, required: true },
   t: { type: Function, required: true },
   updateDirectoryItem: { type: Function, required: true }
@@ -124,6 +126,76 @@ const onContentSpaceChange = (event) => {
           <input v-model="directoryForm.audienceGroups" class="input text-xs" placeholder="admin, user, guest" />
         </div>
         <button class="btn btn-primary w-full" @click="createDirectoryItem">{{ t("admin.common.create") }}</button>
+      </div>
+      <div
+        v-if="selectedContentSpace"
+        class="mt-8 border-t border-white/10 pt-6"
+      >
+        <h4 class="font-medium">{{ t("admin.content.provisionedDirectory") }}</h4>
+        <p class="mt-2 text-sm text-white/50">
+          {{ t("admin.content.provisionedDirectoryHint") }}
+        </p>
+        <div v-if="provisioningDirectoryAdmin.length === 0" class="text-white/30 text-sm py-4">
+          {{ t("admin.content.noneProvisionedDirectory") }}
+        </div>
+        <div v-else class="mt-4 space-y-2">
+          <div
+            v-for="item in provisioningDirectoryAdmin"
+            :key="`${item.space}:${item.key}`"
+            class="admin-list-item flex-col items-start"
+          >
+            <div class="flex items-center justify-between w-full gap-3">
+              <div>
+                <div class="font-medium text-sm truncate">{{ item.title || item.key }}</div>
+                <div class="text-[11px] text-white/30">{{ item.key }}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="chip chip-muted">{{ item.pinned ? t("admin.common.pinned") : t("admin.common.unpinned") }}</span>
+                <button
+                  v-if="enableResourceDetails"
+                  class="btn btn-ghost text-xs"
+                  @click="openServiceDetails(item)"
+                >
+                  {{ t("app.details") }}
+                </button>
+              </div>
+            </div>
+            <div v-if="item.description" class="mt-2 text-sm text-white/60">
+              {{ item.description }}
+            </div>
+            <div v-if="item.url" class="text-[11px] text-white/40 mt-1 truncate">{{ item.url }}</div>
+            <div class="flex flex-wrap items-center gap-2 mt-2 w-full">
+              <span class="chip chip-muted">{{ item.item_type || t("admin.common.none") }}</span>
+              <span v-if="item.service_type" class="chip chip-muted">{{ item.service_type }}</span>
+              <span v-if="item.tier" class="chip chip-muted">{{ item.tier }}</span>
+              <span v-if="item.lifecycle" class="chip chip-muted">{{ item.lifecycle }}</span>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-white/45">
+              <span>
+                {{ t("admin.common.audienceGroups") }}:
+                {{ item.audience_groups?.length ? item.audience_groups.join(", ") : t("admin.common.none") }}
+              </span>
+              <span>
+                {{ t("admin.common.tags") }}:
+                {{ item.tags?.length ? item.tags.join(", ") : t("admin.common.none") }}
+              </span>
+              <span>
+                {{ t("admin.common.accessPath") }}:
+                {{ item.access_path || t("admin.common.none") }}
+              </span>
+              <span>
+                {{ t("admin.common.classification") }}:
+                {{ item.classification || t("admin.common.none") }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 border-t border-white/10 pt-6">
+        <h4 class="font-medium">{{ t("admin.content.mutableDirectory") }}</h4>
+        <p class="mt-2 text-sm text-white/50">
+          {{ t("admin.content.mutableDirectoryHint") }}
+        </p>
       </div>
       <div v-if="directoryAdmin.length === 0" class="text-white/30 text-sm py-4">
         {{ t("admin.content.noneDirectory") }}

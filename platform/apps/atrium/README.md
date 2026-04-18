@@ -30,7 +30,7 @@ Current `v0` is intentionally narrow:
    `nix develop`
 2) Install frontend dependencies:
    `task frontend-install`
-3) Start the fixture-backed dev stack:
+3) Start the Rust-backed local dev stack:
    `task fixture-dev`
 4) Visit:
    `http://localhost:8080/health`
@@ -39,22 +39,20 @@ Current `v0` is intentionally narrow:
 - Enter the repository shell: `nix develop`
 - Copy env file: `cp .env.example .env` and adjust as needed
 - Install frontend deps: `task frontend-install`
-- Run migrations: `task migrate`
-- Run backend dev server with env and an external database: `task backend-dev`
-- Run backend dev server in no-db fixture mode: `task backend-fixture-dev`
+- Run the canonical Rust web host with env from `.env`: `task backend-dev`
+- Run the same host against the default canonical client root: `task backend-fixture-dev`
 - Run frontend dev server: `task frontend-dev`
 - Run backend + frontend with an external database: `task dev`
-- Run backend + frontend in no-db fixture mode: `task fixture-dev`
-- Run backend tests: `task test`
+- Run backend + frontend against the default canonical client root: `task fixture-dev`
+- Run Atrium tests: `task test`
 - Run frontend unit tests: `task frontend-test`
 - Run all tests: `task test-all`
 - Run smoke checks against a running backend: `task smoke`
-- Override the fixture profile: `task fixture-dev PROFILE=family` (also `hotel`, `stress`)
+- Override the client root explicitly: `ATRIUM_CLIENT_ROOT_PATH=/path/to/client-root task backend-dev`
 
-Fixture profiles still seed into Postgres; they are not a separate in-memory runtime mode.
-When `PROFILE` is set, the backend seeds the selected fixture into the local runtime. This path
-is useful for public/demo validation, but it still targets dashboard/resource behavior rather than
-full admin CRUD flows.
+Local dev is now Rust-host-first: the backend path runs `void-atrium-web` and points it at a
+canonical file-first client root. By default that root is `../void/atrium/defaults/profiles/default`.
+If you need a different declared baseline, override `ATRIUM_CLIENT_ROOT_PATH`.
 
 ## Deployment boundary
 - Canonical foundation integration is Nix/NixOS-first via `platform/packages/atrium` and `platform/nixos/modules/shell/atrium.nix`.
@@ -64,7 +62,7 @@ full admin CRUD flows.
 ## Provisioning (Grafana-style)
 On startup Atrium reads a provisioning file and reconciles DB state.
 Default path: `/etc/atrium/provisioning.yaml` (overridable via `PROVISIONING_PATH`).
-Widgets path: `/etc/atrium/widgets.yaml` (overridable via `WIDGETS_CONFIG_PATH`).
+Widgets path on the canonical runtime defaults to `/etc/atrium/widgets.yaml`.
 
 For the current public `v0`, the minimal foundation example is:
 - one provisioned `Admin` space;
@@ -173,11 +171,10 @@ Per-space lifecycle belongs in provisioning data, not in process-level toggles.
 Environment variables:
 - `CONFIG_FIRST` (`true`/`false`, default `false`)
 - `CONFIG_DIR` (when set, uses `provisioning.yaml` and `widgets.yaml` from that folder)
-- `CONFIG_RELOAD_MODE` (`manual`, `watch`, `both`; default `manual`)
+- `CONFIG_RELOAD_MODE` (`watch` to enable file watching; unset by default)
 - `CONFIG_PRESERVE_TEMPLATE_ON_RENAME` (`true`/`false`, default `true`)
 
-Reload endpoint (admin-only when auth is enabled):
-- `POST /api/config/reload`
+There is no public HTTP reload endpoint anymore. Reload now happens through watch mode or through canonical Atrium mutations on the Rust side.
 
 ## Personas matrix
 | Feature / Profile | Family | SMB | HOA | Hotel |
@@ -249,12 +246,16 @@ Use `auth.RequireRole("admin", handler)` for admin-only endpoints (e.g. provisio
 - `DELETE /api/categories/:id` - delete category (admin-only)
 
 ## Dashboard and workspace API
-- `GET /api/v1/workspace` - load the current workspace shell model
-- `GET /api/spaces/:id/dashboard` - load dashboard payload for a space
-- `PUT /api/spaces/:id/dashboard` - save dashboard blocks/preferences
-- `GET /api/spaces/:id/blocks/data` - resolve block data for dashboard blocks
-- `POST /api/actions/invoke` - invoke a directory-backed action in the current session
-- `GET /api/dashboard/templates` - list dashboard templates (admin-only)
+- `GET /atrium/workspace` - load the canonical workspace shell model
+- `GET /atrium/widgets` - load the canonical widgets payload
+- `GET /atrium/provisioning/dashboard?space_id=:id` - load the canonical provisioning dashboard snapshot for a provisioned space (admin-only)
+- `PUT /api/dashboard?space_id=:id` - save canonical dashboard blocks/preferences for a provisioning-backed space
+- `POST /atrium/dashboard/save?space_id=:id` - save canonical dashboard blocks/preferences for a provisioning-backed space
+- `POST /atrium/actions/invoke` - invoke a directory-backed action in the current session
+
+Compatibility note:
+- Legacy routes on `/api/spaces/:id/dashboard` and `/api/legacy/spaces/:id/...` have been removed.
+- Dashboard reads should use the canonical `/atrium/*` endpoints; `/api/dashboard` remains legacy mutation-only.
 
 ## Directory API
 - `GET /api/directory_items?space_id=:id` - list directory items for a space (admin-only)
@@ -263,19 +264,15 @@ Use `auth.RequireRole("admin", handler)` for admin-only endpoints (e.g. provisio
 - `DELETE /api/directory_items/:id` - delete a directory item (admin-only)
 
 ## Admin support API
-- `GET /api/roles` - list roles (admin-only)
-- `GET /api/memberships` - list memberships (admin-only)
-- `POST /api/memberships` - upsert membership (admin-only)
-- `POST /api/memberships/import` - import memberships (admin-only)
-- `DELETE /api/memberships/:principal_id/:space_id` - delete membership (admin-only)
-- `PATCH /api/users/:id` - update user segment (admin-only)
-- `POST /api/config/reload` - reload config-first state (admin-only when auth is enabled)
+- `GET /atrium/memberships` - list memberships (admin-only)
+- `POST /atrium/memberships` - upsert membership (admin-only)
+- `POST /atrium/memberships/import` - import memberships (admin-only)
+- `DELETE /atrium/memberships/:principal_id/:space_id` - delete membership (admin-only)
+- `PATCH /atrium/users/:id/segment` - update user segment (admin-only)
 
 ## Auxiliary read API
 - `GET /api/me` - current auth/session payload
 - `GET /api/auth/modes` - available auth modes
-- `GET /api/widgets` - auxiliary note/widget feed
-- `GET /api/widgets/note` - auxiliary note payload
 
 Not part of shipped `v0` API:
 - announcements CRUD;

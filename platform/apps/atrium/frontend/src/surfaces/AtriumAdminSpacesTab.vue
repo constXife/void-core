@@ -3,12 +3,13 @@ defineProps({
   archiveSpace: { type: Function, required: true },
   archivedSpacesAdmin: { type: Array, required: true },
   createSpace: { type: Function, required: true },
-  dashboardTemplates: { type: Array, required: true },
   deleteSpace: { type: Function, required: true },
   editDisplayConfig: { type: String, default: "" },
   editPersonalizationRules: { type: String, default: "" },
   editSpace: { type: Object, default: null },
   newSpace: { type: Object, required: true },
+  provisioningSpaceDetail: { type: Object, default: null },
+  provisioningSpaceDetailLoading: { type: Boolean, default: false },
   restoreSpace: { type: Function, required: true },
   spacesAdmin: { type: Array, required: true },
   startEditSpace: { type: Function, required: true },
@@ -62,15 +63,6 @@ const emit = defineEmits([
               </option>
             </select>
           </div>
-        </div>
-        <div>
-          <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.dashboardTemplate") }}</label>
-          <select v-model="newSpace.dashboardTemplateId" class="select w-full text-sm">
-            <option value="">{{ t("admin.spaces.option.templateAuto") }}</option>
-            <option v-for="tmpl in dashboardTemplates" :key="tmpl.id" :value="tmpl.id">
-              {{ tmpl.key }} (v{{ tmpl.version }})
-            </option>
-          </select>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -157,6 +149,29 @@ const emit = defineEmits([
           <div>
             <div class="font-medium text-sm">{{ space.title }}</div>
             <div class="text-[11px] text-white/30">{{ space.slug }}</div>
+            <div
+              v-if="space.provisioning_description"
+              class="mt-1 text-[11px] text-white/45"
+            >
+              {{ space.provisioning_description }}
+            </div>
+            <div
+              v-if="space.provisioning_dashboard_template || space.provisioning_visibility_groups?.length"
+              class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-white/35"
+            >
+              <span v-if="space.provisioning_dashboard_template">
+                {{ t("admin.spaces.field.dashboardTemplate") }}: {{ space.provisioning_dashboard_template }}
+              </span>
+              <span v-if="space.provisioning_access_mode">
+                {{ t("admin.spaces.field.accessMode") }}: {{ space.provisioning_access_mode }}
+              </span>
+              <span v-if="space.provisioning_layout_mode">
+                {{ t("admin.spaces.field.layoutMode") }}: {{ space.provisioning_layout_mode }}
+              </span>
+              <span v-if="space.provisioning_visibility_groups?.length">
+                {{ t("admin.spaces.field.visibilityGroups") }}: {{ space.provisioning_visibility_groups.join(", ") }}
+              </span>
+            </div>
           </div>
           <div class="flex items-center gap-1">
             <button class="btn btn-ghost text-xs" @click="startEditSpace(space)">
@@ -202,6 +217,60 @@ const emit = defineEmits([
     <div class="modal-content">
       <h4 class="font-medium mb-4">{{ t("admin.spaces.editTitle") }}</h4>
       <div class="space-y-3">
+        <div class="space-y-2 rounded-2xl border border-white/10 bg-white/3 p-3">
+          <div class="text-[11px] uppercase tracking-wider text-white/40">
+            {{ t("admin.spaces.provisionedDetail") }}
+          </div>
+          <div v-if="provisioningSpaceDetailLoading" class="text-sm text-white/50">
+            {{ t("app.loading") }}
+          </div>
+          <div
+            v-else-if="provisioningSpaceDetail?.space"
+            class="space-y-2 text-sm text-white/65"
+          >
+            <div>
+              {{ t("admin.spaces.field.slug") }}:
+              <span class="text-white">{{ provisioningSpaceDetail.space.id }}</span>
+            </div>
+            <div>
+              {{ t("admin.spaces.provisioningState") }}:
+              <span class="text-white">{{ provisioningSpaceDetail.space.state || t("admin.common.none") }}</span>
+            </div>
+            <div v-if="provisioningSpaceDetail.space.dashboard_template || provisioningSpaceDetail.template">
+              {{ t("admin.spaces.field.dashboardTemplate") }}:
+              <span class="text-white">
+                {{ provisioningSpaceDetail.space.dashboard_template || provisioningSpaceDetail.template?.key }}
+              </span>
+              <span v-if="provisioningSpaceDetail.template?.version" class="text-white/45">
+                (v{{ provisioningSpaceDetail.template.version }})
+              </span>
+            </div>
+            <div>
+              {{ t("admin.spaces.field.accessMode") }}:
+              <span class="text-white">{{ provisioningSpaceDetail.space.access_mode || t("admin.common.none") }}</span>
+            </div>
+            <div>
+              {{ t("admin.spaces.field.layoutMode") }}:
+              <span class="text-white">{{ provisioningSpaceDetail.space.layout_mode || t("admin.common.none") }}</span>
+            </div>
+            <div>
+              {{ t("admin.spaces.field.visibilityGroups") }}:
+              <span class="text-white">
+                {{ provisioningSpaceDetail.space.visibility_groups?.length ? provisioningSpaceDetail.space.visibility_groups.join(", ") : t("admin.common.none") }}
+              </span>
+            </div>
+            <div>
+              {{ t("admin.spaces.provisionedDirectoryItems") }}:
+              <span class="text-white">{{ provisioningSpaceDetail.directory_item_count ?? 0 }}</span>
+            </div>
+            <div v-if="provisioningSpaceDetail.space.description" class="text-white/50">
+              {{ provisioningSpaceDetail.space.description }}
+            </div>
+          </div>
+          <div v-else class="text-sm text-white/40">
+            {{ t("admin.spaces.noProvisionedDetail") }}
+          </div>
+        </div>
         <div>
           <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.title") }}</label>
           <input v-model="editSpace.title" class="input" />
@@ -236,15 +305,6 @@ const emit = defineEmits([
               </option>
             </select>
           </div>
-        </div>
-        <div>
-          <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.spaces.field.dashboardTemplate") }}</label>
-          <select v-model="editSpace.dashboardTemplateId" class="select w-full text-sm">
-            <option value="">{{ t("admin.spaces.option.templateAuto") }}</option>
-            <option v-for="tmpl in dashboardTemplates" :key="tmpl.id" :value="tmpl.id">
-              {{ tmpl.key }} (v{{ tmpl.version }})
-            </option>
-          </select>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>

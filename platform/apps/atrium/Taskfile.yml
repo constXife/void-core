@@ -2,25 +2,16 @@ version: "3"
 
 output: prefixed
 
-vars:
-  DATABASE_URL: '{{.DATABASE_URL | default "postgres://atrium:atrium@localhost:5432/atrium?sslmode=disable"}}'
-  MIGRATIONS_DIR: '{{.MIGRATIONS_DIR | default "backend/migrations"}}'
-
 tasks:
   run:
     desc: Run API server locally
     cmds:
-      - DATABASE_URL={{.DATABASE_URL}} MIGRATIONS_DIR={{.MIGRATIONS_DIR}} go run ./backend/cmd/server
-
-  migrate:
-    desc: Apply migrations locally
-    cmds:
-      - sh -c 'unset GOROOT; set -a; [ -f ./.env ] && . ./.env; set +a; MIGRATIONS_DIR=${MIGRATIONS_DIR#backend/}; go -C backend run ./cmd/migrate'
+      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void && pwd)}; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; exec nix develop "$void_repo_root#atrium" -c atrium_web_run'
 
   test:
-    desc: Run backend tests
+    desc: Run frontend unit tests
     cmds:
-      - go test ./backend/...
+      - (cd frontend && bun run test)
 
   frontend-test:
     desc: Run frontend unit tests
@@ -28,20 +19,9 @@ tasks:
       - (cd frontend && bun run test)
 
   test-all:
-    desc: Run backend and frontend tests
+    desc: Run all Atrium tests
     cmds:
       - task: test
-      - task: frontend-test
-
-  fmt:
-    desc: Format backend Go files
-    cmds:
-      - gofmt -w ./backend
-
-  tidy:
-    desc: Tidy Go modules
-    cmds:
-      - (cd backend && go mod tidy)
 
   smoke:
     desc: Run smoke checks against running server
@@ -61,15 +41,15 @@ tasks:
   backend-dev:
     desc: Run backend dev server with env
     cmds:
-      - sh -c 'unset GOROOT; set -a; . ./.env; set +a; MIGRATIONS_DIR=${MIGRATIONS_DIR#backend/}; PROVISIONING_PATH=${PROVISIONING_PATH#backend/}; FAMILY_NOTE_PATH=${FAMILY_NOTE_PATH:-./data/family_note.md}; if [ -f "$FAMILY_NOTE_PATH" ]; then FAMILY_NOTE_PATH="../${FAMILY_NOTE_PATH#./}"; fi; export FAMILY_NOTE_PATH; if [ -n "$WIDGETS_CONFIG_PATH" ] && [ -f "$WIDGETS_CONFIG_PATH" ]; then WIDGETS_CONFIG_PATH="../${WIDGETS_CONFIG_PATH#./}"; export WIDGETS_CONFIG_PATH; fi; FRONTEND_DEV_URL=http://localhost:5173 APP_ENV=dev PROFILE={{.PROFILE}} go -C backend run ./cmd/server'
+      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void && pwd)}; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; exec nix develop "$void_repo_root#atrium" -c atrium_backend_dev'
 
   backend-fixture-dev:
-    desc: Run backend dev server in no-db fixture mode
+    desc: Run backend dev server against the default canonical client root
     cmds:
-      - sh -c 'unset GOROOT; set -a; [ -f ./.env ] && . ./.env; set +a; unset DATABASE_URL; export ATRIUM_NO_DB_FIXTURE=${ATRIUM_NO_DB_FIXTURE:-${PROFILE:-family}}; PROVISIONING_PATH=${PROVISIONING_PATH#backend/}; FAMILY_NOTE_PATH=${FAMILY_NOTE_PATH:-./data/family_note.md}; if [ -f "$FAMILY_NOTE_PATH" ]; then FAMILY_NOTE_PATH="../${FAMILY_NOTE_PATH#./}"; fi; export FAMILY_NOTE_PATH; if [ -n "$WIDGETS_CONFIG_PATH" ] && [ -f "$WIDGETS_CONFIG_PATH" ]; then WIDGETS_CONFIG_PATH="../${WIDGETS_CONFIG_PATH#./}"; export WIDGETS_CONFIG_PATH; fi; FRONTEND_DEV_URL=http://localhost:5173 APP_ENV=dev go -C backend run ./cmd/server'
+      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void && pwd)}; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; unset DATABASE_URL; exec nix develop "$void_repo_root#atrium" -c atrium_backend_dev'
 
   frontend-build:
-    desc: Build frontend assets into the embedded dist
+    desc: Build frontend assets into frontend dist
     cmds:
       - (cd frontend && bun install && bun run build)
 
@@ -86,7 +66,7 @@ tasks:
       - frontend-dev
 
   fixture-dev:
-    desc: Run backend + frontend in parallel in no-db fixture mode
+    desc: Run backend + frontend in parallel against the default canonical client root
     deps:
       - backend-fixture-dev
       - frontend-dev

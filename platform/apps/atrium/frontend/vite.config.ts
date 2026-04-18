@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
       globals: true
     },
     build: {
-      outDir: "../backend/internal/web/dist",
+      outDir: "./dist",
       emptyOutDir: true
     }
   };

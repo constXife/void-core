@@ -28,7 +28,11 @@ const props = defineProps({
 const emit = defineEmits(["back", "navigate-tab"]);
 
 const navItems = computed(() => [
-  { key: "overview", label: props.t("admin.title.overview"), icon: Settings, badge: props.spacesCount }
+  { key: "overview", label: props.t("admin.title.overview"), icon: Settings, badge: null },
+  { key: "spaces", label: props.t("admin.title.spaces"), icon: Settings, badge: props.spacesCount },
+  { key: "members", label: props.t("admin.title.members"), icon: Settings, badge: null },
+  { key: "content", label: props.t("admin.title.content"), icon: Settings, badge: null },
+  { key: "dashboard", label: props.t("admin.title.dashboard"), icon: Settings, badge: null }
 ]);
 </script>
 

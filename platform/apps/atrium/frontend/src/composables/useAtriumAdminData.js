@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { spacePublicEntry } from "./useAtriumShellMeta.js";
 
 const createNewSpaceForm = () => ({
@@ -6,7 +6,6 @@ const createNewSpaceForm = () => ({
   slug: "",
   type: "audience",
   parentId: "",
-  dashboardTemplateId: "",
   visibilityGroups: "",
   layoutMode: "grid",
   backgroundUrl: "",
@@ -24,14 +23,14 @@ const createNewSpaceForm = () => ({
 
 const createMembershipForm = () => ({
   email: "",
-  roleId: "",
+  roleKey: "",
   validTo: "",
   userSegment: ""
 });
 
 const createMembershipBulkForm = () => ({
   emails: "",
-  roleId: "",
+  roleKey: "",
   validTo: ""
 });
 
@@ -122,6 +121,39 @@ const mapDirectoryItem = (item) => ({
   classification: item.classification || ""
 });
 
+const sortProvisioningDirectoryItems = (items) =>
+  items
+    .slice()
+    .sort((left, right) => {
+      const pinnedDelta = Number(!!right?.pinned) - Number(!!left?.pinned);
+      if (pinnedDelta !== 0) return pinnedDelta;
+      return String(left?.title || left?.key || "").localeCompare(
+        String(right?.title || right?.key || "")
+      );
+    });
+
+const mergeProvisioningSpace = (space, catalogSpace) => {
+  if (!catalogSpace) return space;
+  return {
+    ...space,
+    provisioning_space_id: catalogSpace.id || "",
+    provisioning_space_state: catalogSpace.state || "",
+    provisioning_description: catalogSpace.description || "",
+    provisioning_parent_slug: catalogSpace.parent || "",
+    provisioning_dashboard_template: catalogSpace.dashboard_template || "",
+    provisioning_access_mode: catalogSpace.access_mode || "",
+    provisioning_layout_mode: catalogSpace.layout_mode || "",
+    provisioning_background_url: catalogSpace.background_url || "",
+    provisioning_visibility_groups: Array.isArray(catalogSpace.visibility_groups)
+      ? catalogSpace.visibility_groups
+      : [],
+    provisioning_directory_item_count: Number(catalogSpace.directory_item_count || 0),
+    provisioning_is_default_public_entry: !!catalogSpace.is_default_public_entry,
+    provisioning_is_lockable:
+      typeof catalogSpace.is_lockable === "boolean" ? catalogSpace.is_lockable : true
+  };
+};
+
 const parseBulkEmails = (value) =>
   value
     .split(/[\n,;]+/)
@@ -144,8 +176,12 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const editSpace = ref(null);
   const editDisplayConfig = ref("");
   const editPersonalizationRules = ref("");
-  const dashboardTemplates = ref([]);
   const roles = ref([]);
+  const provisioningCatalog = ref(null);
+  const provisioningRoles = ref([]);
+  const provisioningDirectoryAdmin = ref([]);
+  const provisioningSpaceDetail = ref(null);
+  const provisioningSpaceDetailLoading = ref(false);
   const memberships = ref([]);
   const membershipSpaceId = ref("");
   const membershipForm = ref(createMembershipForm());
@@ -154,15 +190,31 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const directoryAdmin = ref([]);
   const directoryForm = ref(createDirectoryForm());
 
-  const setAdminSpaces = (items) => {
+  const selectedContentSpace = computed(() =>
+    spacesAdmin.value.find((item) => String(item.id) === String(contentSpaceId.value)) || null
+  );
+
+  const setAdminSpaces = (items, provisioningCatalog = null) => {
     const list = Array.isArray(items) ? items : [];
-    spacesAdmin.value = list.filter((item) => item?.is_provisioned !== false);
-    archivedSpacesAdmin.value = list.filter((item) => item?.is_provisioned === false);
+    const provisioningSpaces = Array.isArray(provisioningCatalog?.catalog?.spaces)
+      ? provisioningCatalog.catalog.spaces
+      : [];
+    const provisioningBySlug = new Map(
+      provisioningSpaces
+        .filter((item) => item?.id)
+        .map((item) => [String(item.id), item])
+    );
+    const merged = list.map((item) => {
+      const slug = String(item?.slug || "").trim();
+      return mergeProvisioningSpace(item, slug ? provisioningBySlug.get(slug) : null);
+    });
+    spacesAdmin.value = merged.filter((item) => item?.is_provisioned !== false);
+    archivedSpacesAdmin.value = merged.filter((item) => item?.is_provisioned === false);
   };
 
-  const reloadAdminSpaces = async () => {
-    const allSpaces = await fetchJSON("/api/spaces?include_archived=1");
-    setAdminSpaces(allSpaces);
+  const reloadAdminSpaces = async (provisioningCatalog = null) => {
+    const allSpaces = await fetchJSON("/atrium/spaces?include_archived=true");
+    setAdminSpaces(allSpaces, provisioningCatalog);
 
     if (
       !membershipSpaceId.value ||
@@ -184,7 +236,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       return;
     }
     try {
-      const items = await fetchJSON(`/api/memberships?space_id=${spaceId}`);
+      const items = await fetchJSON(`/atrium/memberships?space_id=${encodeURIComponent(spaceId)}`);
       memberships.value = items.map((item) => ({
         ...item,
         user_segment: item.user_segment || ""
@@ -207,8 +259,8 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     try {
       const payload = {
         email: membershipForm.value.email,
-        space_id: Number(membershipSpaceId.value),
-        role_id: Number(membershipForm.value.roleId) || 0,
+        space_id: membershipSpaceId.value,
+        role_key: membershipForm.value.roleKey || "",
         valid_to: membershipForm.value.validTo
           ? new Date(membershipForm.value.validTo).toISOString()
           : null
@@ -216,7 +268,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       if (membershipForm.value.userSegment?.trim()) {
         payload.user_segment = membershipForm.value.userSegment.trim();
       }
-      await fetchJSON("/api/memberships", {
+      await fetchJSON("/atrium/memberships", {
         method: "POST",
         body: JSON.stringify(payload)
       });
@@ -231,7 +283,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     if (!member?.principal_id) return;
     try {
       const payload = { user_segment: (member.user_segment || "").trim() };
-      await fetchJSON(`/api/users/${member.principal_id}`, {
+      await fetchJSON(`/atrium/users/${encodeURIComponent(member.principal_id)}/segment`, {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
@@ -249,14 +301,14 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     try {
       const emails = parseBulkEmails(membershipBulk.value.emails);
       const payload = {
-        space_id: Number(membershipSpaceId.value),
-        role_id: Number(membershipBulk.value.roleId) || 0,
+        space_id: membershipSpaceId.value,
+        role_key: membershipBulk.value.roleKey || "",
         emails,
         valid_to: membershipBulk.value.validTo
           ? new Date(membershipBulk.value.validTo).toISOString()
           : null
       };
-      const result = await fetchJSON("/api/memberships/import", {
+      const result = await fetchJSON("/atrium/memberships/import", {
         method: "POST",
         body: JSON.stringify(payload)
       });
@@ -273,9 +325,12 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
 
   const removeMembership = async (member) => {
     try {
-      await fetchJSON(`/api/memberships/${member.principal_id}/${member.space_id}`, {
+      await fetchJSON(
+        `/atrium/memberships/${encodeURIComponent(member.principal_id)}/${encodeURIComponent(member.space_id)}`,
+        {
         method: "DELETE"
-      });
+        }
+      );
       memberships.value = memberships.value.filter(
         (item) => !(item.principal_id === member.principal_id && item.space_id === member.space_id)
       );
@@ -287,7 +342,12 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const defaultAudienceForSpace = (spaceId) => {
     const space = spacesAdmin.value.find((item) => String(item.id) === String(spaceId));
     if (!space) return "";
-    return formatGroups(space.visibility_groups);
+    const groups =
+      Array.isArray(space.provisioning_visibility_groups) &&
+      space.provisioning_visibility_groups.length > 0
+        ? space.provisioning_visibility_groups
+        : space.visibility_groups;
+    return formatGroups(groups);
   };
 
   const loadContent = async (spaceId) => {
@@ -296,10 +356,49 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       return;
     }
     try {
-      const dir = await fetchJSON(`/api/directory_items?space_id=${spaceId}`);
+      const dir = await fetchJSON(`/atrium/directory-items?space_id=${encodeURIComponent(spaceId)}`);
       directoryAdmin.value = dir.map((item) => mapDirectoryItem(item));
     } catch (err) {
       error.value = err.message || "Content load failed";
+    }
+  };
+
+  const loadProvisioningDirectory = async (spaceSlug) => {
+    const normalizedSpaceSlug = String(spaceSlug || "").trim();
+    if (!normalizedSpaceSlug) {
+      provisioningDirectoryAdmin.value = [];
+      return;
+    }
+    try {
+      const items = await fetchJSON(
+        `/atrium/directory-items?space_id=${encodeURIComponent(normalizedSpaceSlug)}`
+      );
+      provisioningDirectoryAdmin.value = sortProvisioningDirectoryItems(Array.isArray(items) ? items : []);
+    } catch {
+      provisioningDirectoryAdmin.value = [];
+    }
+  };
+
+  const clearProvisioningSpaceDetail = () => {
+    provisioningSpaceDetail.value = null;
+    provisioningSpaceDetailLoading.value = false;
+  };
+
+  const loadProvisioningSpaceDetail = async (spaceSlug) => {
+    const normalizedSpaceSlug = String(spaceSlug || "").trim();
+    if (!normalizedSpaceSlug) {
+      clearProvisioningSpaceDetail();
+      return;
+    }
+    provisioningSpaceDetailLoading.value = true;
+    try {
+      provisioningSpaceDetail.value = await fetchJSON(
+        `/atrium/spaces/${encodeURIComponent(normalizedSpaceSlug)}`
+      );
+    } catch {
+      provisioningSpaceDetail.value = null;
+    } finally {
+      provisioningSpaceDetailLoading.value = false;
     }
   };
 
@@ -309,7 +408,15 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       ...directoryForm.value,
       audienceGroups: defaults
     };
-    await loadContent(contentSpaceId.value);
+    const spaceSlug = String(
+      selectedContentSpace.value?.provisioning_space_id ||
+        selectedContentSpace.value?.slug ||
+        ""
+    ).trim();
+    await Promise.all([
+      loadContent(contentSpaceId.value),
+      loadProvisioningDirectory(spaceSlug)
+    ]);
   };
 
   const normalizeIconUrl = (value) => resolveIconUrl(value);
@@ -324,7 +431,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       const links = parseJSONInputSafe(directoryForm.value.links, {}, "Links");
       const endpoints = parseJSONInputSafe(directoryForm.value.endpoints, [], "Endpoints");
       const payload = {
-        space_id: Number(contentSpaceId.value),
+        space_id: String(contentSpaceId.value),
         title: directoryForm.value.title,
         description: directoryForm.value.description,
         icon_url: normalizeIconUrl(directoryForm.value.iconUrl),
@@ -345,7 +452,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
         classification: directoryForm.value.classification,
         depends_on: parseCommaList(directoryForm.value.dependsOn || "")
       };
-      const created = await fetchJSON("/api/directory_items", {
+      const created = await fetchJSON("/atrium/directory-items", {
         method: "POST",
         body: JSON.stringify(payload)
       });
@@ -384,7 +491,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
         classification: item.classification || "",
         depends_on: parseCommaList(item.dependsOnInput || "")
       };
-      const updated = await fetchJSON(`/api/directory_items/${item.id}`, {
+      const updated = await fetchJSON(`/atrium/directory-items/${encodeURIComponent(item.id)}`, {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
@@ -400,7 +507,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const deleteDirectoryItem = async (item) => {
     if (!confirm(translate("admin.content.confirmDeleteDirectory", { title: item.title }))) return;
     try {
-      await fetchJSON(`/api/directory_items/${item.id}`, { method: "DELETE" });
+      await fetchJSON(`/atrium/directory-items/${encodeURIComponent(item.id)}`, { method: "DELETE" });
       directoryAdmin.value = directoryAdmin.value.filter((entry) => entry.id !== item.id);
       notify(translate("admin.content.deletedDirectory"), "success");
     } catch (err) {
@@ -418,13 +525,23 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       await onContentSpaceChange();
     } else {
       directoryAdmin.value = [];
+      provisioningDirectoryAdmin.value = [];
     }
   };
 
   const loadAdminSeams = async () => {
-    await reloadAdminSpaces();
-    dashboardTemplates.value = await fetchJSON("/api/dashboard/templates");
-    roles.value = await fetchJSON("/api/roles");
+    const provisioningCatalog = await fetchJSON("/atrium/provisioning/catalog").catch(() => null);
+    await reloadAdminSpaces(provisioningCatalog);
+    provisioningCatalog.value = provisioningCatalog;
+    provisioningRoles.value = Array.isArray(provisioningCatalog?.catalog?.roles)
+      ? provisioningCatalog.catalog.roles
+      : [];
+    roles.value = provisioningRoles.value.map((role) => ({
+      id: role.key,
+      key: role.key,
+      name: role.name || role.key,
+      permissions: Array.isArray(role.permissions) ? role.permissions : []
+    }));
     await refreshAdminDataAfterSpaceChange();
   };
 
@@ -437,15 +554,13 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       } else {
         delete displayConfig.description;
       }
-      const parentId = Number(newSpace.value.parentId) || null;
-      const dashboardTemplateId = Number(newSpace.value.dashboardTemplateId) || null;
+      const parentId = String(newSpace.value.parentId || "").trim() || null;
       const visibilityGroups = parseVisibilityGroups(newSpace.value.visibilityGroups || "");
       const payload = {
         title: newSpace.value.title,
         slug: newSpace.value.slug,
         type: newSpace.value.type,
         parent_id: parentId,
-        dashboard_template_id: dashboardTemplateId,
         access_mode: newSpace.value.accessMode || "private",
         is_default_public_entry:
           (newSpace.value.accessMode || "private") === "public_readonly" &&
@@ -458,7 +573,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
         personalization_rules: personalizationRules,
         public_entry: buildPublicEntry(newSpace.value)
       };
-      await fetchJSON("/api/spaces", {
+      await fetchJSON("/atrium/spaces", {
         method: "POST",
         body: JSON.stringify(payload)
       });
@@ -469,13 +584,12 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     }
   };
 
-  const startEditSpace = (space) => {
-    const description = space?.display_config?.description || "";
+  const startEditSpace = async (space) => {
+    const description = space?.provisioning_description || space?.display_config?.description || "";
     editSpace.value = {
       ...space,
       type: space?.type || "audience",
       parentId: space?.parent_id ? String(space.parent_id) : "",
-      dashboardTemplateId: space?.dashboard_template_id ? String(space.dashboard_template_id) : "",
       visibilityGroups: Array.isArray(space?.visibility_groups)
         ? space.visibility_groups.join(", ")
         : "",
@@ -493,6 +607,8 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     editSpace.value.publicEntryContact = publicEntry?.contact || "";
     editDisplayConfig.value = JSON.stringify(space.display_config || {}, null, 2);
     editPersonalizationRules.value = JSON.stringify(space.personalization_rules || {}, null, 2);
+    const spaceSlug = String(space?.provisioning_space_id || space?.slug || "").trim();
+    await loadProvisioningSpaceDetail(spaceSlug);
   };
 
   const updateSpace = async () => {
@@ -504,15 +620,13 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       } else {
         delete displayConfig.description;
       }
-      const parentId = Number(editSpace.value.parentId) || null;
-      const dashboardTemplateId = Number(editSpace.value.dashboardTemplateId) || null;
+      const parentId = String(editSpace.value.parentId || "").trim() || null;
       const visibilityGroups = parseVisibilityGroups(editSpace.value.visibilityGroups || "");
       const payload = {
         title: editSpace.value.title,
         slug: editSpace.value.slug,
         type: editSpace.value.type,
         parent_id: parentId,
-        dashboard_template_id: dashboardTemplateId,
         access_mode: editSpace.value.accessMode || "private",
         is_default_public_entry:
           (editSpace.value.accessMode || "private") === "public_readonly" &&
@@ -525,7 +639,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
         personalization_rules: personalizationRules,
         public_entry: buildPublicEntry(editSpace.value)
       };
-      await fetchJSON(`/api/spaces/${editSpace.value.id}`, {
+      await fetchJSON(`/atrium/spaces/${encodeURIComponent(editSpace.value.id)}`, {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
@@ -533,6 +647,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
       editSpace.value = null;
       editDisplayConfig.value = "";
       editPersonalizationRules.value = "";
+      clearProvisioningSpaceDetail();
     } catch (err) {
       error.value = err.message || "Space update failed";
     }
@@ -541,7 +656,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const deleteSpace = async (space) => {
     if (!confirm(translate("admin.spaces.confirmDelete", { title: space.title }))) return;
     try {
-      await fetchJSON(`/api/spaces/${space.id}`, {
+      await fetchJSON(`/atrium/spaces/${encodeURIComponent(space.id)}`, {
         method: "DELETE"
       });
       await loadAdminSeams();
@@ -553,7 +668,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const archiveSpace = async (space) => {
     if (!confirm(translate("admin.spaces.confirmArchive", { title: space.title }))) return;
     try {
-      await fetchJSON(`/api/spaces/${space.id}/archive`, {
+      await fetchJSON(`/atrium/spaces/${encodeURIComponent(space.id)}/archive`, {
         method: "POST"
       });
       await loadAdminSeams();
@@ -566,7 +681,7 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
   const restoreSpace = async (space) => {
     if (!confirm(translate("admin.spaces.confirmRestore", { title: space.title }))) return;
     try {
-      await fetchJSON(`/api/spaces/${space.id}/restore`, {
+      await fetchJSON(`/atrium/spaces/${encodeURIComponent(space.id)}/restore`, {
         method: "POST"
       });
       await loadAdminSeams();
@@ -582,7 +697,6 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     contentSpaceId,
     createDirectoryItem,
     createSpace,
-    dashboardTemplates,
     deleteDirectoryItem,
     deleteSpace,
     directoryAdmin,
@@ -600,12 +714,19 @@ export function useAtriumAdminData({ fetchJSON, error, notify, translate }) {
     normalizeIconUrl,
     onContentSpaceChange,
     onMembershipSpaceChange,
+    provisioningCatalog,
+    provisioningDirectoryAdmin,
+    provisioningSpaceDetail,
+    provisioningSpaceDetailLoading,
     reloadAdminSpaces,
     removeMembership,
     restoreSpace,
+    provisioningRoles,
     roles,
+    selectedContentSpace,
     spacesAdmin,
     startEditSpace,
+    clearProvisioningSpaceDetail,
     updateDirectoryItem,
     updateMemberSegment,
     updateSpace,

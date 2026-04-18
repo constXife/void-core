@@ -41,9 +41,9 @@ const onMembershipSpaceChange = (event) => {
         </div>
         <div>
           <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.role") }}</label>
-          <select v-model="membershipForm.roleId" class="select w-full text-sm">
+          <select v-model="membershipForm.roleKey" class="select w-full text-sm">
             <option value="">{{ t("admin.common.selectRole") }}</option>
-            <option v-for="role in roles" :key="role.id" :value="role.id">
+            <option v-for="role in roles" :key="role.key" :value="role.key">
               {{ role.name }} ({{ role.key }})
             </option>
           </select>
@@ -69,9 +69,9 @@ const onMembershipSpaceChange = (event) => {
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-[11px] text-white/40 uppercase tracking-wider mb-1.5">{{ t("admin.common.role") }}</label>
-            <select v-model="membershipBulk.roleId" class="select w-full text-sm">
+            <select v-model="membershipBulk.roleKey" class="select w-full text-sm">
               <option value="">{{ t("admin.common.selectRole") }}</option>
-              <option v-for="role in roles" :key="role.id" :value="role.id">
+              <option v-for="role in roles" :key="role.key" :value="role.key">
                 {{ role.name }} ({{ role.key }})
               </option>
             </select>

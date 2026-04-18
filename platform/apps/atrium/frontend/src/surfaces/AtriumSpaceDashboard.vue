@@ -42,6 +42,7 @@ const {
   blockTypeOptions,
   blockTypes,
   blocksForSpace,
+  canEditDashboardSpace,
   canOpenResourceDetails,
   clearDashboardEditSelection,
   closeResourcePopover,
@@ -70,6 +71,51 @@ const {
 } = appStore;
 
 const blockInspectHref = (block) => resolveBlockInspectHref(block);
+const summaryFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit"
+});
+
+const blockPayloadFor = (block) => {
+  const payload = blockDataFor(props.space.id, block.id);
+  return payload && typeof payload === "object" && !Array.isArray(payload) ? payload : null;
+};
+
+const calendarSummaryFor = (block) => blockPayloadFor(block)?.summary || null;
+const calendarItemsFor = (block) =>
+  Array.isArray(blockPayloadFor(block)?.items) ? blockPayloadFor(block).items : [];
+const inventorySummaryFor = (block) => blockPayloadFor(block)?.summary || null;
+const inventoryAttentionItemsFor = (block) => {
+  const items = inventorySummaryFor(block)?.attention?.items;
+  return Array.isArray(items) ? items : [];
+};
+const inventoryBucketCountsFor = (block) => {
+  const items = inventorySummaryFor(block)?.bucket_counts;
+  return Array.isArray(items) ? items : [];
+};
+const formatSummaryDateTime = (value) => {
+  if (!value) return "";
+  try {
+    return summaryFormatter.format(new Date(value));
+  } catch {
+    return String(value);
+  }
+};
+const calendarItemMeta = (item) =>
+  [
+    formatSummaryDateTime(item?.scheduled_at),
+    item?.status ? String(item.status) : "",
+    item?.location_text ? String(item.location_text) : "",
+    item?.channel ? String(item.channel) : ""
+  ]
+    .filter(Boolean)
+    .join(" • ");
+const inventoryAttentionMeta = (item) =>
+  [item?.status ? String(item.status) : "", item?.storage_zone ? String(item.storage_zone) : ""]
+    .filter(Boolean)
+    .join(" • ");
 </script>
 
 <template>
@@ -78,7 +124,7 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
       <div class="flex items-center gap-2">
         <span v-if="dashboardLoading[props.space.id]" class="chip chip-muted">{{ t("app.loading") }}</span>
         <button
-          v-if="enableV0Editor && canManage && !isMobile && isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space)"
+          v-if="enableV0Editor && canManage && !isMobile && isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space) && canEditDashboardSpace(props.space)"
           class="btn"
           :class="dashboardEditDirty ? 'btn-primary' : 'btn-ghost'"
           :disabled="dashboardEditorSaving || !dashboardEditDirty"
@@ -87,14 +133,14 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
           {{ dashboardEditorSaving ? `${t("app.save")}...` : t("app.save") }}
         </button>
         <button
-          v-if="enableV0Editor && canManage && !isMobile && isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space)"
+          v-if="enableV0Editor && canManage && !isMobile && isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space) && canEditDashboardSpace(props.space)"
           class="btn btn-ghost"
           @click="openAddBlockPicker"
         >
           {{ t("app.addBlock") }}
         </button>
         <button
-          v-if="enableV0Editor && canManage && !isMobile && isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space)"
+          v-if="enableV0Editor && canManage && !isMobile && isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space) && canEditDashboardSpace(props.space)"
           class="btn btn-ghost"
           @click="stopDashboardEdit"
         >
@@ -436,6 +482,37 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
                 <div class="text-sm leading-6 text-white/70">
                   {{ t("dashboard.calendarUpcoming.body") }}
                 </div>
+                <div
+                  v-if="calendarSummaryFor(block)"
+                  class="flex flex-wrap gap-2"
+                >
+                  <span class="chip chip-muted">
+                    {{ t("dashboard.summary.visible") }}: {{ calendarSummaryFor(block)?.visible_count ?? 0 }}
+                  </span>
+                  <span class="chip chip-muted">
+                    {{ t("dashboard.summary.events") }}: {{ calendarSummaryFor(block)?.event_count ?? 0 }}
+                  </span>
+                  <span class="chip chip-muted">
+                    {{ t("dashboard.summary.reminders") }}: {{ calendarSummaryFor(block)?.reminder_count ?? 0 }}
+                  </span>
+                </div>
+                <div
+                  v-if="calendarItemsFor(block).length"
+                  class="w-full space-y-2"
+                >
+                  <div
+                    v-for="item in calendarItemsFor(block)"
+                    :key="item.entry_id || item.id || item.title"
+                    class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                  >
+                    <div class="text-sm font-medium text-white">
+                      {{ item.title || item.entry_id || "Calendar item" }}
+                    </div>
+                    <div class="mt-1 text-xs text-white/60">
+                      {{ calendarItemMeta(item) }}
+                    </div>
+                  </div>
+                </div>
                 <a
                   v-if="blockInspectHref(block)"
                   class="btn btn-ghost text-xs"
@@ -450,6 +527,46 @@ const blockInspectHref = (block) => resolveBlockInspectHref(block);
               <div v-else-if="blockTypeIs(block, blockTypes.inventorySummary)" class="flex flex-col items-start gap-3">
                 <div class="text-sm leading-6 text-white/70">
                   {{ t("dashboard.inventorySummary.body") }}
+                </div>
+                <div
+                  v-if="inventorySummaryFor(block)"
+                  class="flex flex-wrap gap-2"
+                >
+                  <span class="chip chip-muted">
+                    {{ t("dashboard.summary.totalItems") }}: {{ inventorySummaryFor(block)?.total_count ?? 0 }}
+                  </span>
+                  <span class="chip chip-muted">
+                    {{ t("dashboard.summary.attention") }}: {{ inventorySummaryFor(block)?.attention?.count ?? 0 }}
+                  </span>
+                </div>
+                <div
+                  v-if="inventoryBucketCountsFor(block).length"
+                  class="flex flex-wrap gap-2"
+                >
+                  <span
+                    v-for="bucket in inventoryBucketCountsFor(block)"
+                    :key="bucket.key || bucket.label"
+                    class="chip chip-muted"
+                  >
+                    {{ bucket.label || bucket.key }}: {{ bucket.count ?? 0 }}
+                  </span>
+                </div>
+                <div
+                  v-if="inventoryAttentionItemsFor(block).length"
+                  class="w-full space-y-2"
+                >
+                  <div
+                    v-for="item in inventoryAttentionItemsFor(block)"
+                    :key="item.instance_id || item.id || item.title"
+                    class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                  >
+                    <div class="text-sm font-medium text-white">
+                      {{ item.title || item.instance_id || "Inventory item" }}
+                    </div>
+                    <div v-if="inventoryAttentionMeta(item)" class="mt-1 text-xs text-white/60">
+                      {{ inventoryAttentionMeta(item) }}
+                    </div>
+                  </div>
                 </div>
                 <a
                   v-if="blockInspectHref(block)"

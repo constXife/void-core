@@ -217,7 +217,7 @@ export function useAtriumResources({
       return;
     }
     try {
-      await fetchJSON(withRoleOverride("/api/actions/invoke"), {
+      await fetchJSON(withRoleOverride("/atrium/actions/invoke"), {
         method: "POST",
         body: JSON.stringify({
           action_key: actionKey,

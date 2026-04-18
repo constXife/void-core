@@ -9,11 +9,12 @@ const appStore = useAtriumAppStore();
 
 const {
   archivedSpacesAdmin,
-  dashboardTemplates,
   editDisplayConfig,
   editPersonalizationRules,
   editSpace,
   newSpace,
+  provisioningSpaceDetail,
+  provisioningSpaceDetailLoading,
   spacesAdmin
 } = storeToRefs(appStore);
 const { t } = appStore;
@@ -24,12 +25,13 @@ const { t } = appStore;
     :archive-space="adminStore.archiveSpace"
     :archived-spaces-admin="archivedSpacesAdmin"
     :create-space="adminStore.createSpace"
-    :dashboard-templates="dashboardTemplates"
     :delete-space="adminStore.deleteSpace"
     :edit-display-config="editDisplayConfig"
     :edit-personalization-rules="editPersonalizationRules"
     :edit-space="editSpace"
     :new-space="newSpace"
+    :provisioning-space-detail="provisioningSpaceDetail"
+    :provisioning-space-detail-loading="provisioningSpaceDetailLoading"
     :restore-space="adminStore.restoreSpace"
     :spaces-admin="spacesAdmin"
     :start-edit-space="adminStore.startEditSpace"

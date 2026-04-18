@@ -1,11 +1,19 @@
 import { computed } from "vue";
 
 const ADMIN_TAB_TITLES = {
-  overview: "admin.title.overview"
+  overview: "admin.title.overview",
+  spaces: "admin.title.spaces",
+  members: "admin.title.members",
+  content: "admin.title.content",
+  dashboard: "admin.title.dashboard"
 };
 
 const ADMIN_TAB_SUBTITLES = {
-  overview: "admin.subtitle.overview"
+  overview: "admin.subtitle.overview",
+  spaces: "admin.subtitle.spaces",
+  members: "admin.subtitle.members",
+  content: "admin.subtitle.content",
+  dashboard: "admin.subtitle.dashboard"
 };
 
 export const spacePublicEntry = (space) => {

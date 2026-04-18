@@ -719,7 +719,10 @@
               provisioningPath = lib.mkOption {
                 type = nixosTypes.absoluteRuntimePath;
                 default = "/etc/atrium/provisioning.yaml";
-                description = "Runtime path for the Atrium provisioning file.";
+                description = ''
+                  Runtime path for the Atrium compatibility provisioning input consumed by the
+                  current shell backend. This is not the canonical generated read artifact.
+                '';
               };
               provisioningText = lib.mkOption {
                 type = lib.types.lines;
@@ -729,7 +732,20 @@
               provisioningFile = lib.mkOption {
                 type = lib.types.nullOr lib.types.path;
                 default = null;
-                description = "Optional source file for Atrium provisioning content.";
+                description = "Optional source file for the Atrium compatibility provisioning input.";
+              };
+              provisioningLoadPath = lib.mkOption {
+                type = lib.types.nullOr nixosTypes.absoluteRuntimePath;
+                default = null;
+                description = ''
+                  Optional runtime path for the generated Atrium provisioning read artifact used
+                  by Rust-backed read surfaces.
+                '';
+              };
+              provisioningLoadFile = lib.mkOption {
+                type = lib.types.nullOr lib.types.path;
+                default = null;
+                description = "Optional source file for the generated Atrium provisioning read artifact.";
               };
             };
           };
@@ -871,8 +887,7 @@
       foundation-options-doc = (mkFoundationOptionsDoc pkgs).optionsCommonMark;
       atrium-source = atrium.source;
       atrium-frontend-dist = atrium.frontendDist;
-      atrium-server = atrium.server;
-      atrium = atrium.default;
+      atrium = atrium.frontendDist;
     });
 
     apps = forAllSystems (pkgs: {

@@ -6,7 +6,11 @@ import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
 import AtriumShoppingPage from "../pages/AtriumShoppingPage.vue";
+import AdminContentRoute from "../pages/admin/AdminContentRoute.vue";
+import AdminDashboardRoute from "../pages/admin/AdminDashboardRoute.vue";
+import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
 import AdminOverviewRoute from "../pages/admin/AdminOverviewRoute.vue";
+import AdminSpacesRoute from "../pages/admin/AdminSpacesRoute.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 const routes = [
@@ -77,6 +81,26 @@ const routes = [
         path: "overview",
         name: "admin-overview",
         component: AdminOverviewRoute
+      },
+      {
+        path: "spaces",
+        name: "admin-spaces",
+        component: AdminSpacesRoute
+      },
+      {
+        path: "members",
+        name: "admin-members",
+        component: AdminMembersRoute
+      },
+      {
+        path: "content",
+        name: "admin-content",
+        component: AdminContentRoute
+      },
+      {
+        path: "dashboard",
+        name: "admin-dashboard",
+        component: AdminDashboardRoute
       }
     ]
   },

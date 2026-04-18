@@ -36,7 +36,7 @@ import { createAtriumSettings } from "../lib/atrium-settings.js";
 import { staffMetrics, staffQueue, staffQuickActions } from "../mocks/staff.js";
 import { useToastStore } from "./toast.js";
 
-const ADMIN_TABS = new Set(["overview"]);
+const ADMIN_TABS = new Set(["overview", "spaces", "members", "content", "dashboard"]);
 
 const createFallbackRoute = () => ({
   name: "home",
@@ -99,7 +99,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   const isMobile = ref(false);
   const isPageVisible = ref(typeof document === "undefined" ? true : !document.hidden);
   const businessNotifications = ref([]);
-  const reloadConfigPending = ref(false);
   const serviceDetailsOpen = ref(false);
   const serviceDetailsItem = ref(null);
   const userMenuRef = ref(null);
@@ -111,7 +110,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   let clockTimer = null;
 
   const routeState = computed(() => routeStateFromRoute(currentRoute.value));
-  const adminTab = computed(() => routeState.value.tab || "spaces");
+  const adminTab = computed(() => routeState.value.tab || "overview");
   const isLoginPage = computed(() => routeState.value.view === "login");
   const isPrivacyPage = computed(() => routeState.value.view === "privacy");
   const showAdmin = computed(() => routeState.value.view === "admin");
@@ -282,7 +281,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     shoppingSummaryLoading.value = true;
     shoppingSummaryError.value = "";
     try {
-      shoppingSummary.value = await fetchJSON("/api/shopping/summary");
+      shoppingSummary.value = await fetchJSON("/api/knowledge/v1/shopping/summary");
     } catch (err) {
       shoppingSummary.value = null;
       shoppingSummaryError.value = String(err?.message || "");
@@ -329,7 +328,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   const ensureActiveShoppingRun = async () => {
     const currentRun = activeShoppingRun();
     if (currentRun?.run_id) return currentRun;
-    const payload = await fetchJSON("/api/shopping/runs", {
+    const payload = await fetchJSON("/api/knowledge/v1/shopping/runs", {
       method: "POST",
       body: JSON.stringify({
         title: defaultShoppingRunTitle(),
@@ -348,7 +347,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
 
     return runShoppingMutation(`shopping-need:${intentID}`, async () => {
       const run = await ensureActiveShoppingRun();
-      return fetchJSON("/api/shopping/items", {
+      return fetchJSON("/api/knowledge/v1/shopping/items", {
         method: "POST",
         body: JSON.stringify({
           run_id: run?.run_id,
@@ -390,7 +389,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     }
 
     return runShoppingMutation("shopping-intent:create", async () =>
-      fetchJSON("/api/shopping/intents", {
+      fetchJSON("/api/knowledge/v1/shopping/intents", {
         method: "POST",
         body: JSON.stringify(payload)
       })
@@ -422,7 +421,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     }
 
     return runShoppingMutation(`shopping-intent:${normalizedIntentID}`, async () =>
-      fetchJSON(`/api/shopping/intents/${encodeURIComponent(normalizedIntentID)}`, {
+      fetchJSON(`/api/knowledge/v1/shopping/intents/${encodeURIComponent(normalizedIntentID)}`, {
         method: "PATCH",
         body: JSON.stringify(payload)
       })
@@ -435,7 +434,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
 
     return runShoppingMutation("shopping-manual-item", async () => {
       const run = await ensureActiveShoppingRun();
-      return fetchJSON("/api/shopping/items", {
+      return fetchJSON("/api/knowledge/v1/shopping/items", {
         method: "POST",
         body: JSON.stringify({
           run_id: run?.run_id,
@@ -455,7 +454,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     if (!normalizedItemID || !normalizedStatus) return null;
 
     return runShoppingMutation(`shopping-item:${normalizedItemID}:${normalizedStatus}`, async () =>
-      fetchJSON(`/api/shopping/items/${encodeURIComponent(normalizedItemID)}`, {
+      fetchJSON(`/api/knowledge/v1/shopping/items/${encodeURIComponent(normalizedItemID)}`, {
         method: "PATCH",
         body: JSON.stringify({ status: normalizedStatus })
       })
@@ -474,7 +473,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     }
 
     return runShoppingMutation(`shopping-run:${targetRunID}:completed`, async () =>
-      fetchJSON(`/api/shopping/runs/${encodeURIComponent(targetRunID)}`, {
+      fetchJSON(`/api/knowledge/v1/shopping/runs/${encodeURIComponent(targetRunID)}`, {
         method: "PATCH",
         body: JSON.stringify(payload)
       })
@@ -494,10 +493,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     fetchJSON,
     fetchMaybeJSON,
     getRouteState: () => routeState.value,
-    hasDashboard: (...args) => hasDashboard(...args),
     loadAdminSeams: (...args) => loadAdminSeams(...args),
     loadAuthModes: (...args) => loadAuthModes(...args),
-    loadDashboard: (...args) => loadDashboard(...args),
+    loadDashboardReadModel: (...args) => loadDashboardReadModel(...args),
     loadSession,
     loading,
     me,
@@ -520,7 +518,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     contentSpaceId,
     createDirectoryItem,
     createSpace,
-    dashboardTemplates,
     deleteDirectoryItem,
     deleteSpace,
     directoryAdmin,
@@ -538,11 +535,18 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     normalizeIconUrl,
     onContentSpaceChange,
     onMembershipSpaceChange,
+    provisioningCatalog,
+    provisioningDirectoryAdmin,
+    provisioningSpaceDetail,
+    provisioningSpaceDetailLoading,
     removeMembership,
     restoreSpace,
+    provisioningRoles,
     roles,
+    selectedContentSpace,
     spacesAdmin,
     startEditSpace,
+    clearProvisioningSpaceDetail,
     updateDirectoryItem,
     updateMemberSegment,
     updateSpace
@@ -573,6 +577,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     loadAll,
     me,
     navigateHome,
+    provisioningRoles,
     roles,
     settingsStore,
     showAdmin,
@@ -680,6 +685,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
 
   const closeEditSpace = () => {
     editSpace.value = null;
+    clearProvisioningSpaceDetail();
   };
 
   const membershipSegmentOptions = computed(() => {
@@ -704,19 +710,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   const handleContentSpaceChange = async (value) => {
     contentSpaceId.value = value;
     await onContentSpaceChange();
-  };
-
-  const reloadConfig = async () => {
-    if (reloadConfigPending.value) return;
-    reloadConfigPending.value = true;
-    try {
-      await fetchJSON("/api/config/reload", { method: "POST" });
-      notify(t("admin.reloadDone"), "success");
-    } catch (err) {
-      notify(err.message || t("admin.reloadFailed"), "error");
-    } finally {
-      reloadConfigPending.value = false;
-    }
   };
 
   const openServiceDetails = (item) => {
@@ -756,6 +749,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   const {
     addBlockFromPicker,
     addDashboardBlock,
+    canEditDashboardSpace,
+    applyProvisioningSnapshotToEditor,
+    resetDashboardEditorDraft,
     applyDashboardEditForm,
     blockDataCount,
     blockDataFor,
@@ -783,13 +779,14 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     dashboardEditorBlocks,
     dashboardEditorOrder,
     dashboardEditorSaving,
+    dashboardEditorProvisioningLoading,
+    dashboardEditorProvisioningSnapshot,
     dashboardEditorSpace,
     dashboardLoading,
     dashboardPreviewRole,
     dashboards,
     deleteDashboardBlockDraft,
     deleteInlineItem,
-    discardDashboardChanges,
     disposeDashboard,
     hasDashboard,
     inlineAddForm,
@@ -799,7 +796,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     inlineEditPopover,
     isDashboardEditing,
     isResourcesBlock,
-    loadDashboard,
+    loadDashboardReadModel,
     onPreviewRoleChange,
     openAddBlockPicker,
     openBlockAddContent,
@@ -1017,6 +1014,12 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
 
   const closeDashboardEditor = () => {
     showDashboardEditor.value = false;
+    dashboardEditorSpace.value = null;
+    dashboardEditorBlocks.value = [];
+    dashboardEditorOrder.value = [];
+    dashboardPreviewRole.value = "admin";
+    dashboardEditorProvisioningSnapshot.value = null;
+    dashboardEditorProvisioningLoading.value = false;
   };
 
   const setDashboardPreviewRole = (value) => {
@@ -1237,6 +1240,8 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     actualRole,
     addBlockFromPicker,
     addDashboardBlock,
+    applyProvisioningSnapshotToEditor,
+    resetDashboardEditorDraft,
     addManualShoppingItem,
     addMembership,
     addShoppingNeedToRun,
@@ -1274,6 +1279,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     calendarDateLabel,
     calendarEventsFor,
     calendarVariant,
+    canEditDashboardSpace,
     canManage,
     canOpenResourceDetails,
     clearDashboardEditSelection,
@@ -1309,10 +1315,11 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     dashboardEditSelectedId,
     dashboardEditorBlocks,
     dashboardEditorSaving,
+    dashboardEditorProvisioningLoading,
+    dashboardEditorProvisioningSnapshot,
     dashboardEditorSpace,
     dashboardLoading,
     dashboardPreviewRole,
-    dashboardTemplates,
     dashboards,
     deleteDashboardBlockDraft,
     deleteDirectoryItem,
@@ -1321,7 +1328,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     devLoginEmails,
     directoryAdmin,
     directoryForm,
-    discardDashboardChanges,
     editDisplayConfig,
     editPersonalizationRules,
     editSpace,
@@ -1408,9 +1414,11 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     patchShoppingItemStatus,
     prevSpace,
     privacyDocumentHtml,
+    provisioningCatalog,
+    provisioningDirectoryAdmin,
+    provisioningSpaceDetail,
+    provisioningSpaceDetailLoading,
     recentResourcesBySpace,
-    reloadConfig,
-    reloadConfigPending,
     rememberResourceVisit,
     removeMembership,
     restoreSpace,
@@ -1450,6 +1458,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     shoppingSummary,
     shoppingSummaryError,
     shoppingSummaryLoading,
+    selectedContentSpace,
     spaceDescription,
     spaceIconLabel,
     spaceMetaLabel,

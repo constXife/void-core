@@ -11,6 +11,8 @@ const {
   contentSpaceId,
   directoryAdmin,
   directoryForm,
+  provisioningDirectoryAdmin,
+  selectedContentSpace,
   spacesAdmin
 } = storeToRefs(appStore);
 const { enableV0ResourceDetails, t } = appStore;
@@ -26,6 +28,8 @@ const { enableV0ResourceDetails, t } = appStore;
     :enable-resource-details="enableV0ResourceDetails"
     :normalize-icon-url="adminStore.normalizeIconUrl"
     :open-service-details="adminStore.openServiceDetails"
+    :provisioning-directory-admin="provisioningDirectoryAdmin"
+    :selected-content-space="selectedContentSpace"
     :spaces-admin="spacesAdmin"
     :t="t"
     :update-directory-item="adminStore.updateDirectoryItem"

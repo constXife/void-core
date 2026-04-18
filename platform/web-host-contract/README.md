@@ -28,13 +28,9 @@ The current contract does not cover:
 
 ## Canonical foundation implementations
 
-The current Go implementation lives in these foundation packages:
-
-- `platform/apps/atrium/backend/internal/foundation/webcfg`
-- `platform/apps/atrium/backend/internal/foundation/webauth`
-- `platform/apps/atrium/backend/internal/foundation/webhttp`
-
-This document describes the contract those packages are expected to expose and preserve.
+This document is now the canonical contract. The active implementation lives in downstream Rust
+web hosts, and parity should be measured against this contract rather than against any old
+Atrium Go foundation package layout.
 
 ## Canonical routes
 
@@ -50,15 +46,7 @@ All private web hosts are expected to reserve these standard routes:
 | `/api/auth/modes` | returns enabled login modes |
 | `/api/me` | returns current session payload or `null` for anonymous access |
 
-In Go, the canonical route names are exported from:
-
-- `webhttp.PathHealth`
-- `webhttp.PathAuthLogin`
-- `webhttp.PathAuthCallback`
-- `webhttp.PathAuthLogout`
-- `webhttp.PathAuthDevLogin`
-- `webhttp.PathAuthModes`
-- `webhttp.PathMe`
+Implementations should keep these route names stable even if the underlying host language changes.
 
 ## Auth environment contract
 
@@ -83,13 +71,8 @@ The current first-wave host contract recognizes these env variables:
 | `AUTH_LOCAL_ADMIN_EMAIL` | bootstrap local admin email |
 | `AUTH_LOCAL_ADMIN_PASSWORD` | bootstrap local admin password |
 
-The canonical parsing semantics currently live in:
-
-- `webcfg.SplitCSV`
-- `webcfg.ParseExactMap`
-- `webcfg.ParseRoleMap`
-- `webcfg.IsTruthyEnv`
-- `webcfg.IsEnabledUnlessFalseEnv`
+Implementations should preserve these parsing semantics even if helpers live in a different host
+runtime.
 
 ## Session cookie contract
 
@@ -102,10 +85,7 @@ The canonical session cookie expectations are:
 - secure flag follows `AUTH_COOKIE_SECURE`;
 - optional domain follows `AUTH_COOKIE_DOMAIN`.
 
-The canonical Go symbols are:
-
-- `webauth.DefaultSessionCookieName`
-- `webauth.OIDCStateCookieName`
+Implementations should preserve these cookie semantics even if symbol names differ across runtimes.
 
 ## Redirect contract
 
@@ -121,9 +101,7 @@ The current contract rejects:
 - absolute URLs containing `://`
 - values containing backslashes
 
-The canonical Go helper is:
-
-- `webauth.SanitizeNext`
+Implementations should preserve the same `next` sanitization behavior across runtimes.
 
 ## Session payload contract
 
@@ -148,7 +126,7 @@ Notes:
 - `permissions` is host-defined but must always be a JSON array when present;
 - anonymous callers receive `null`, not an empty object.
 
-The canonical Go shape is `webhttp.SessionPayload`.
+The exact type name may vary across runtimes, but the JSON contract must stay stable.
 
 ## Foundation boundary
 
@@ -173,5 +151,5 @@ It must not absorb:
 Rust hosts in downstream repositories should implement this contract, not copy behavior from one
 specific Go handler.
 
-Parity should be measured against this contract and the foundation packages above, not against
-client-owned overlays.
+Parity should be measured against this contract, not against client-owned overlays or removed
+historical Go packages.

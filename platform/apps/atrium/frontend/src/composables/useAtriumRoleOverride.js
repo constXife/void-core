@@ -4,6 +4,7 @@ export function useAtriumRoleOverride({
   loadAll,
   me,
   navigateHome,
+  provisioningRoles,
   roles,
   settingsStore,
   showAdmin,
@@ -21,16 +22,37 @@ export function useAtriumRoleOverride({
     actualIsAdmin.value &&
     !!roleOverride.value &&
     roleOverride.value !== actualRole.value &&
-    roleOverride.value !== "admin"
+      roleOverride.value !== "admin"
   );
+
+  const parsePermissions = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((entry) => String(entry || "").trim()).filter(Boolean);
+    }
+    if (typeof value !== "string" || !value.trim()) return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed)
+        ? parsed.map((entry) => String(entry || "").trim()).filter(Boolean)
+        : [];
+    } catch {
+      return [];
+    }
+  };
 
   const effectivePermissions = computed(() => {
     if (!me.value) return [];
     const roleKey = effectiveRole.value;
-    const fromRole = Array.isArray(roles.value)
+    const fromProvisioningRole = Array.isArray(provisioningRoles?.value)
+      ? provisioningRoles.value.find((role) => role.key === roleKey)?.permissions
+      : null;
+    const fromLegacyRole = Array.isArray(roles.value)
       ? roles.value.find((role) => role.key === roleKey)?.permissions
       : null;
-    if (Array.isArray(fromRole) && fromRole.length > 0) return fromRole;
+    const normalizedProvisioning = parsePermissions(fromProvisioningRole);
+    if (normalizedProvisioning.length > 0) return normalizedProvisioning;
+    const normalizedLegacy = parsePermissions(fromLegacyRole);
+    if (normalizedLegacy.length > 0) return normalizedLegacy;
     if (roleOverrideActive.value) {
       return roleKey === "admin" ? ["view", "manage"] : ["view"];
     }
@@ -86,9 +108,13 @@ export function useAtriumRoleOverride({
 
   const roleOptions = computed(() => {
     const defaults = ["guest", "user", "admin"];
-    const roleKeys = Array.isArray(roles.value)
+    const provisioningRoleKeys = Array.isArray(provisioningRoles?.value)
+      ? provisioningRoles.value.map((role) => role.key).filter(Boolean)
+      : [];
+    const legacyRoleKeys = Array.isArray(roles.value)
       ? roles.value.map((role) => role.key).filter(Boolean)
       : [];
+    const roleKeys = [...provisioningRoleKeys, ...legacyRoleKeys];
     const next = [...new Set([...roleKeys, ...defaults])];
     return next.sort((a, b) => a.localeCompare(b));
   });

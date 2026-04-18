@@ -9,10 +9,9 @@ export function useAtriumWorkspaceBootstrap({
   fetchJSON,
   fetchMaybeJSON,
   getRouteState,
-  hasDashboard,
   loadAdminSeams,
   loadAuthModes,
-  loadDashboard,
+  loadDashboardReadModel,
   loadSession,
   loading,
   me,
@@ -40,8 +39,8 @@ export function useAtriumWorkspaceBootstrap({
       syncRoleOverride();
       syncLangFromContext();
 
-      const payload = await fetchJSON(withRoleOverride("/api/v1/workspace"));
-      spaces.value = payload.spaces || [];
+      const payload = await fetchJSON(withRoleOverride("/atrium/workspace"));
+      spaces.value = payload?.workspace?.spaces || [];
       if (spaces.value.length > 0) {
         let nextIndex = 0;
         let matchedRoute = false;
@@ -64,13 +63,12 @@ export function useAtriumWorkspaceBootstrap({
       }
       syncLangFromContext();
       const shouldLoadAllDashboards = canManage();
-      const targetSpaces = shouldLoadAllDashboards
-        ? spaces.value
-        : spaces.value.filter((space) => hasDashboard(space));
-      await Promise.all(targetSpaces.map((space) => loadDashboard(space, shouldLoadAllDashboards)));
+      await Promise.all(
+        spaces.value.map((space) => loadDashboardReadModel(space, shouldLoadAllDashboards))
+      );
 
       try {
-        widgets.value = await fetchJSON("/api/widgets");
+        widgets.value = await fetchJSON("/atrium/widgets");
       } catch {
         widgets.value = [];
       }

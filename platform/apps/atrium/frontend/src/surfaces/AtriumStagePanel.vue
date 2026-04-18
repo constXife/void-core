@@ -50,6 +50,7 @@ const {
   calendarDateLabel,
   calendarEventsFor,
   calendarVariant,
+  canEditDashboardSpace,
   canOpenResourceDetails,
   clearDashboardEditSelection,
   clockDateFor,
@@ -106,7 +107,7 @@ const {
       </div>
       <div class="flex items-center gap-2">
         <button
-          v-if="enableV0Editor && canManage && !isMobile && !isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space)"
+          v-if="enableV0Editor && canManage && !isMobile && !isDashboardEditing(props.space) && !isPublicReadonlySpace(props.space) && canEditDashboardSpace(props.space)"
           class="btn btn-ghost"
           @click="toggleDashboardEdit(props.space)"
         >

@@ -3,8 +3,8 @@
   src,
 }:
 pkgs.runCommand "atrium-frontend-dist" {} ''
-  test -f ${src}/backend/internal/web/dist/index.html
+  test -f ${src}/frontend/dist/index.html
 
   mkdir -p "$out"
-  cp -R ${src}/backend/internal/web/dist/. "$out"/
+  cp -R ${src}/frontend/dist/. "$out"/
 ''

@@ -74,5 +74,4 @@ For Atrium specifically:
 Current flake package outputs are expected to expose:
 - `atrium-source` for the app source tree;
 - `atrium-frontend-dist` for the compiled embedded frontend assets;
-- `atrium-server` for the backend binary with embedded frontend assets;
-- `atrium` as the default shipping server package.
+- `atrium` as the default compiled frontend artifact for downstream host packages.
