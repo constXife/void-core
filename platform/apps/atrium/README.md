@@ -20,8 +20,8 @@ The intended split is:
 Current `v0` is intentionally narrow:
 - the shipped product surface is `Admin`-first and operator-facing;
 - the default dashboard is resource-first and built around pinned directory resources;
-- spaces are declarative and reconciled from provisioning;
-- archived spaces stay in provisioning but are removed from the active runtime/UI;
+- spaces are declarative and reconciled from the client-owned Atrium root;
+- archived spaces stay in declared state but are removed from the active runtime/UI;
 - announcements CRUD, service catalog CRUD, service placements, and `/ws` live transport are not part of the shipped `v0` surface;
 - multi-space/family-facing expansion remains future work rather than a current promise.
 
@@ -30,14 +30,16 @@ Current `v0` is intentionally narrow:
    `nix develop`
 2) Install frontend dependencies:
    `task frontend-install`
-3) Start the Rust-backed local dev stack:
+3) Ensure a sibling `../void` checkout exists, or export `VOID_REPO_ROOT=/path/to/void`
+4) Start the Rust-backed local dev stack:
    `task fixture-dev`
-4) Visit:
+5) Visit:
    `http://localhost:8080/health`
 
 ## Local dev
 - Enter the repository shell: `nix develop`
 - Copy env file: `cp .env.example .env` and adjust as needed
+- Ensure a sibling `../void` checkout exists, or export `VOID_REPO_ROOT=/path/to/void`
 - Install frontend deps: `task frontend-install`
 - Run the canonical Rust web host with env from `.env`: `task backend-dev`
 - Run the same host against the default canonical client root: `task backend-fixture-dev`
@@ -53,19 +55,22 @@ Current `v0` is intentionally narrow:
 Local dev is now Rust-host-first: the backend path runs `void-atrium-web` and points it at a
 canonical file-first client root. By default that root is `../void/atrium/defaults/profiles/default`.
 If you need a different declared baseline, override `ATRIUM_CLIENT_ROOT_PATH`.
+`void-core` by itself does not ship the Rust host binary; the local dev entrypoints shell out to
+the sibling `void` repository unless `VOID_REPO_ROOT` says otherwise.
 
 ## Deployment boundary
 - Canonical foundation integration is Nix/NixOS-first via `platform/packages/atrium` and `platform/nixos/modules/shell/atrium.nix`.
 - This repository does not currently ship a maintained container-compose path for Atrium.
 - If container packaging returns later, it should remain secondary to the canonical Nix/NixOS integration path.
 
-## Provisioning (Grafana-style)
-On startup Atrium reads a provisioning file and reconciles DB state.
-Default path: `/etc/atrium/provisioning.yaml` (overridable via `PROVISIONING_PATH`).
-Widgets path on the canonical runtime defaults to `/etc/atrium/widgets.yaml`.
+## Declared client root
+The canonical runtime now reads Atrium state from a client-owned root directory rather than a
+Go-era provisioning file. The expected runtime inputs are:
+- `/etc/atrium/client-root` for declared Atrium content and mutations
+- `/etc/atrium/widgets.yaml` for widgets payload consumed by the Rust host/runtime
 
 For the current public `v0`, the minimal foundation example is:
-- one provisioned `Admin` space;
+- one declared `Admin` space;
 - one dashboard template with `core.resources_pinned`;
 - one resource catalog backed by `directory_items`.
 
@@ -113,8 +118,9 @@ directory_items:
     audience_groups: ["admin"]
 ```
 
-Local development in this repository no longer ships a bundled provisioning fixture.
-Without an explicit `PROVISIONING_PATH` or `CONFIG_DIR`, Atrium starts without preloaded provisioned state.
+Local development in this repository no longer ships a bundled compatibility provisioning fixture.
+Without an explicit `ATRIUM_CLIENT_ROOT_PATH`, the dev flow uses the default client root from the
+sibling `void` checkout.
 
 ## Space display_config (UI behavior)
 Supported keys (frontend):
@@ -150,31 +156,6 @@ Modes:
 - `time`: re-evaluate every minute using `when.from/to`.
 - `random`: choose a random background per `background_rotate_minutes` window.
 - `rotate`: cycle backgrounds every `background_rotate_minutes` minutes.
-
-## Config-first mode
-Enable config-first to make YAML the source of truth for spaces, dashboard templates,
-directory items, and widgets. Admin changes write back to the provisioning file and
-trigger a reload into the DB.
-
-In current `v0`, config-first write-back should be read as an operator convenience for
-the narrow `Admin` resource catalog flow, not as a generic topology editor or a broader
-service-catalog authoring model.
-
-Space lifecycle in config-first mode should be read as:
-- add a space: add its declaration to `provisioning.yaml`;
-- archive a space: keep the declaration, but set its state to `archived`;
-- delete a space: remove its declaration from `provisioning.yaml` so the next reconcile removes it from the active product UI.
-
-The product contract should not rely on a global env flag as the main way to archive one specific space.
-Per-space lifecycle belongs in provisioning data, not in process-level toggles.
-
-Environment variables:
-- `CONFIG_FIRST` (`true`/`false`, default `false`)
-- `CONFIG_DIR` (when set, uses `provisioning.yaml` and `widgets.yaml` from that folder)
-- `CONFIG_RELOAD_MODE` (`watch` to enable file watching; unset by default)
-- `CONFIG_PRESERVE_TEMPLATE_ON_RENAME` (`true`/`false`, default `true`)
-
-There is no public HTTP reload endpoint anymore. Reload now happens through watch mode or through canonical Atrium mutations on the Rust side.
 
 ## Personas matrix
 | Feature / Profile | Family | SMB | HOA | Hotel |
@@ -234,34 +215,29 @@ export AUTH_COOKIE_SECURE=0
 ```
 
 ## Admin gating
-Use `auth.RequireRole("admin", handler)` for admin-only endpoints (e.g. provisioning, templates).
+Admin-only routes require an authenticated Atrium admin session from the Rust web host.
 
 ## Spaces API
-- `GET /api/categories` - list categories (auth if enabled)
-- `GET /api/spaces?include_archived=1` - list active + archived spaces for admin UI
-- `POST /api/categories` - create category (admin-only)
-- `PATCH /api/categories/:id` - update category (admin-only)
-- `POST /api/spaces/:id/archive` - archive a provisioned space (admin-only)
-- `POST /api/spaces/:id/restore` - restore an archived provisioned space (admin-only)
-- `DELETE /api/categories/:id` - delete category (admin-only)
+- `GET /atrium/spaces` - list active spaces for the current shell
+- `POST /atrium/spaces` - create a space (admin-only)
+- `GET /atrium/spaces/:id` - load one space
+- `PATCH /atrium/spaces/:id` - update a space (admin-only)
+- `POST /atrium/spaces/:id/archive` - archive a space (admin-only)
+- `POST /atrium/spaces/:id/restore` - restore an archived space (admin-only)
+- `DELETE /atrium/spaces/:id` - delete a space (admin-only)
 
 ## Dashboard and workspace API
 - `GET /atrium/workspace` - load the canonical workspace shell model
 - `GET /atrium/widgets` - load the canonical widgets payload
 - `GET /atrium/provisioning/dashboard?space_id=:id` - load the canonical provisioning dashboard snapshot for a provisioned space (admin-only)
-- `PUT /api/dashboard?space_id=:id` - save canonical dashboard blocks/preferences for a provisioning-backed space
 - `POST /atrium/dashboard/save?space_id=:id` - save canonical dashboard blocks/preferences for a provisioning-backed space
 - `POST /atrium/actions/invoke` - invoke a directory-backed action in the current session
 
-Compatibility note:
-- Legacy routes on `/api/spaces/:id/dashboard` and `/api/legacy/spaces/:id/...` have been removed.
-- Dashboard reads should use the canonical `/atrium/*` endpoints; `/api/dashboard` remains legacy mutation-only.
-
 ## Directory API
-- `GET /api/directory_items?space_id=:id` - list directory items for a space (admin-only)
-- `POST /api/directory_items` - create a directory item (admin-only)
-- `PATCH /api/directory_items/:id` - update a directory item (admin-only)
-- `DELETE /api/directory_items/:id` - delete a directory item (admin-only)
+- `GET /atrium/directory-items?space_id=:id` - list directory items for a space (admin-only)
+- `POST /atrium/directory-items` - create a directory item (admin-only)
+- `PATCH /atrium/directory-items/:id` - update a directory item (admin-only)
+- `DELETE /atrium/directory-items/:id` - delete a directory item (admin-only)
 
 ## Admin support API
 - `GET /atrium/memberships` - list memberships (admin-only)

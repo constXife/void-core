@@ -716,36 +716,36 @@
                 default = 8080;
                 description = "HTTP port exposed by Atrium.";
               };
-              provisioningPath = lib.mkOption {
+              clientRootPath = lib.mkOption {
                 type = nixosTypes.absoluteRuntimePath;
-                default = "/etc/atrium/provisioning.yaml";
+                default = "/etc/atrium/client-root";
                 description = ''
-                  Runtime path for the Atrium compatibility provisioning input consumed by the
-                  current shell backend. This is not the canonical generated read artifact.
+                  Runtime path for the canonical Atrium client root directory consumed by the
+                  Rust web host and graph runtime.
                 '';
               };
-              provisioningText = lib.mkOption {
+              clientRootSource = lib.mkOption {
+                type = lib.types.nullOr lib.types.path;
+                default = null;
+                description = "Optional source directory for the canonical Atrium client root.";
+              };
+              widgetsPath = lib.mkOption {
+                type = nixosTypes.absoluteRuntimePath;
+                default = "/etc/atrium/widgets.yaml";
+                description = ''
+                  Runtime path for the canonical Atrium widgets payload consumed by the
+                  Rust web host and graph runtime.
+                '';
+              };
+              widgetsText = lib.mkOption {
                 type = lib.types.lines;
                 default = "";
-                description = "Inline provisioning payload rendered for Atrium.";
+                description = "Inline widgets payload rendered for Atrium.";
               };
-              provisioningFile = lib.mkOption {
+              widgetsFile = lib.mkOption {
                 type = lib.types.nullOr lib.types.path;
                 default = null;
-                description = "Optional source file for the Atrium compatibility provisioning input.";
-              };
-              provisioningLoadPath = lib.mkOption {
-                type = lib.types.nullOr nixosTypes.absoluteRuntimePath;
-                default = null;
-                description = ''
-                  Optional runtime path for the generated Atrium provisioning read artifact used
-                  by Rust-backed read surfaces.
-                '';
-              };
-              provisioningLoadFile = lib.mkOption {
-                type = lib.types.nullOr lib.types.path;
-                default = null;
-                description = "Optional source file for the generated Atrium provisioning read artifact.";
+                description = "Optional source file for the canonical Atrium widgets payload.";
               };
             };
           };

@@ -4,9 +4,9 @@ output: prefixed
 
 tasks:
   run:
-    desc: Run API server locally
+    desc: Run Atrium web host locally (requires ../void or VOID_REPO_ROOT)
     cmds:
-      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void && pwd)}; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; exec nix develop "$void_repo_root#atrium" -c atrium_web_run'
+      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void 2>/dev/null && pwd)}; [ -n "$void_repo_root" ] || { echo "Set VOID_REPO_ROOT or clone ../void next to void-core." >&2; exit 1; }; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; exec nix develop "$void_repo_root#atrium" -c atrium_web_run'
 
   test:
     desc: Run frontend unit tests
@@ -39,14 +39,14 @@ tasks:
       - (cd frontend && bun run dev)
 
   backend-dev:
-    desc: Run backend dev server with env
+    desc: Run Rust web host with env from .env (requires ../void or VOID_REPO_ROOT)
     cmds:
-      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void && pwd)}; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; exec nix develop "$void_repo_root#atrium" -c atrium_backend_dev'
+      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void 2>/dev/null && pwd)}; [ -n "$void_repo_root" ] || { echo "Set VOID_REPO_ROOT or clone ../void next to void-core." >&2; exit 1; }; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; exec nix develop "$void_repo_root#atrium" -c atrium_backend_dev'
 
   backend-fixture-dev:
-    desc: Run backend dev server against the default canonical client root
+    desc: Run Rust web host against the default canonical client root (requires ../void or VOID_REPO_ROOT)
     cmds:
-      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void && pwd)}; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; unset DATABASE_URL; exec nix develop "$void_repo_root#atrium" -c atrium_backend_dev'
+      - sh -c 'void_repo_root=${VOID_REPO_ROOT:-$(cd ../../../../void 2>/dev/null && pwd)}; [ -n "$void_repo_root" ] || { echo "Set VOID_REPO_ROOT or clone ../void next to void-core." >&2; exit 1; }; export VOID_REPO_ROOT="$void_repo_root"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; unset DATABASE_URL; exec nix develop "$void_repo_root#atrium" -c atrium_backend_dev'
 
   frontend-build:
     desc: Build frontend assets into frontend dist
