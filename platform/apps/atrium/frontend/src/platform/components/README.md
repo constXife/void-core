@@ -67,9 +67,6 @@ The contract is composition-first:
   `Atrium`-specific center content for the shell header.
   This stays outside foundation because it depends on `Atrium` space/runtime state.
 
-- `PlatformHeader.vue`
-  Secondary generic consumer of the same primitives for bar-style headers.
-
 - `UserDropdown.vue`
   Secondary generic consumer for anchor + trigger + dropdown panel composition.
 
@@ -80,6 +77,7 @@ The contract is composition-first:
 - Prefer extracting small structural primitives over introducing parallel wrappers.
 - If a new product needs a different center section, create a product component for it rather than growing `PlatformHeaderFrame`.
 - If a new capability is reusable across products, add it here and migrate existing consumers to it.
+- Downstream product-level header wrappers belong in product repositories, not in this foundation directory.
 
 ## Recommended Assembly
 
