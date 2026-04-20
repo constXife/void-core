@@ -132,8 +132,7 @@ onBeforeUnmount(() => {
       ref="tooltipRef"
       class="tooltip-bubble"
       role="tooltip"
-      v-html="content"
       :style="style"
-    ></div>
+    >{{ content }}</div>
   </Teleport>
 </template>

@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { FALLBACK_LANG, LANG_STORAGE_KEY, MESSAGES } from "../atrium-config.js";
-import { marked } from "../lib/atrium-markdown.js";
+import { renderMarkdown } from "../lib/atrium-markdown.js";
 
 const normalizeLang = (value) => {
   const raw = String(value || "").trim().toLowerCase();
@@ -104,7 +104,7 @@ export function useAtriumI18n({
   };
 
   const privacyDocumentHtml = computed(() =>
-    marked.parse(privacyDocuments[currentLang.value] || privacyDocuments[FALLBACK_LANG] || "")
+    renderMarkdown(privacyDocuments[currentLang.value] || privacyDocuments[FALLBACK_LANG] || "")
   );
 
   return {

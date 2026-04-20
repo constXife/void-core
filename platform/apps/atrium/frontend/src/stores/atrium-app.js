@@ -31,7 +31,7 @@ import {
 import privacyDocumentEn from "../content/privacy.en.md?raw";
 import privacyDocumentRu from "../content/privacy.ru.md?raw";
 import { createAtriumApi } from "../lib/atrium-api.js";
-import { marked } from "../lib/atrium-markdown.js";
+import { renderMarkdown } from "../lib/atrium-markdown.js";
 import { createAtriumSettings } from "../lib/atrium-settings.js";
 import { staffMetrics, staffQueue, staffQuickActions } from "../mocks/staff.js";
 import { useToastStore } from "./toast.js";
@@ -726,7 +726,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
 
   const widgetHtml = (content) => {
     if (!content) return "";
-    return marked.parse(content);
+    return renderMarkdown(content);
   };
 
   const isKidsSpace = (space) =>

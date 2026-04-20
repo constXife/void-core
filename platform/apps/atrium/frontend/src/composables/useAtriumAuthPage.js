@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { sanitizeNextPath } from "../platform/auth.js";
 
 const devEnvPresent =
   typeof __ATRIUM_DEV_ENV_PRESENT__ !== "undefined" && __ATRIUM_DEV_ENV_PRESENT__;
@@ -70,9 +71,10 @@ export function useAtriumAuthPage(fetchJSON, t) {
   };
 
   const setLoginTarget = (next) => {
-    loginUrl.value = `/auth/login?next=${encodeURIComponent(next)}`;
-    loginPageUrl.value = `/login?next=${encodeURIComponent(next)}`;
-    loginNext.value = next;
+    const sanitizedNext = sanitizeNextPath(next);
+    loginUrl.value = `/auth/login?next=${encodeURIComponent(sanitizedNext)}`;
+    loginPageUrl.value = `/login?next=${encodeURIComponent(sanitizedNext)}`;
+    loginNext.value = sanitizedNext;
   };
 
   const submitLocalLogin = async () => {
@@ -94,7 +96,10 @@ export function useAtriumAuthPage(fetchJSON, t) {
         throw new Error(message || t("auth.loginFailed"));
       }
       const payload = await res.json().catch(() => null);
-      const redirectTo = payload?.redirect_to || loginNext.value || "/";
+      const redirectTo = sanitizeNextPath(
+        payload?.redirect_to,
+        loginNext.value || "/"
+      );
       window.location.assign(redirectTo);
     } catch (err) {
       loginError.value = err.message || t("auth.loginFailed");

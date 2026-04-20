@@ -11,12 +11,12 @@ tasks:
   test:
     desc: Run frontend unit tests
     cmds:
-      - (cd frontend && bun run test)
+      - (cd frontend && npm test)
 
   frontend-test:
     desc: Run frontend unit tests
     cmds:
-      - (cd frontend && bun run test)
+      - (cd frontend && npm test)
 
   test-all:
     desc: Run all Atrium tests
@@ -31,12 +31,12 @@ tasks:
   frontend-install:
     desc: Install frontend dependencies
     cmds:
-      - (cd frontend && bun install)
+      - (cd frontend && npm ci)
 
   frontend-dev:
     desc: Run frontend dev server
     cmds:
-      - (cd frontend && bun run dev)
+      - (cd frontend && npm run dev)
 
   backend-dev:
     desc: Run Rust web host with env from .env (requires ../void or VOID_REPO_ROOT)
@@ -51,7 +51,7 @@ tasks:
   frontend-build:
     desc: Build frontend assets into frontend dist
     cmds:
-      - (cd frontend && bun install && bun run build)
+      - (cd frontend && npm ci && npm run build)
 
   dev:
     desc: Run backend + frontend in parallel with an external database

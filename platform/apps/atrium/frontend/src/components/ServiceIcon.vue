@@ -60,21 +60,10 @@ const localIcon = computed(() => {
   return `/icons/${iconKey.value}.svg`;
 });
 
-const domain = computed(() => {
-  try {
-    return new URL(props.service?.url || "").hostname;
-  } catch {
-    return "";
-  }
-});
-
 const sources = computed(() => {
   const list = [];
   if (localIcon.value) list.push(localIcon.value);
   if (props.service?.icon_url) list.push(props.service.icon_url);
-  if (domain.value) {
-    list.push(`https://www.google.com/s2/favicons?domain=${domain.value}&sz=128`);
-  }
   return list;
 });
 

@@ -2,9 +2,18 @@
   pkgs,
   src,
 }:
-pkgs.runCommand "atrium-frontend-dist" {} ''
-  test -f ${src}/frontend/dist/index.html
+pkgs.buildNpmPackage {
+  pname = "atrium-frontend-dist";
+  version = "0.1.0";
+  src = src + "/frontend";
+  npmDepsHash = "sha256-BzY20S1Akxr9VsDelvdPgyP49TQ4aW7K1GdlZrF/OXY=";
 
-  mkdir -p "$out"
-  cp -R ${src}/frontend/dist/. "$out"/
-''
+  npmBuildScript = "build";
+
+  installPhase = ''
+    runHook preInstall
+    mkdir -p "$out"
+    cp -R dist/. "$out"/
+    runHook postInstall
+  '';
+}
