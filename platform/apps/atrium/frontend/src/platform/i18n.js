@@ -1,11 +1,9 @@
 import { ref } from "vue";
-
-const normalizeLang = (value) => {
-  const raw = String(value || "").trim().toLowerCase();
-  if (!raw) return "";
-  const base = raw.split(/[_-]/)[0];
-  return ["en", "ru"].includes(base) ? base : "";
-};
+import {
+  PLATFORM_FALLBACK_LANG,
+  normalizePlatformLang,
+  resolveSupportedPlatformLangs
+} from "./i18n/index.js";
 
 export function mergeMessages(...sources) {
   const result = {};
@@ -17,8 +15,20 @@ export function mergeMessages(...sources) {
   return result;
 }
 
-export function createI18n(messages, fallbackLang = "ru") {
-  const currentLang = ref(fallbackLang);
+export function createI18n(messages, options = {}) {
+  const resolvedOptions = typeof options === "string"
+    ? { fallbackLang: options }
+    : options;
+  const fallbackLang = normalizePlatformLang(resolvedOptions.fallbackLang)
+    || PLATFORM_FALLBACK_LANG;
+  const supportedLangs = resolveSupportedPlatformLangs(
+    resolvedOptions.supportedLangs || Object.keys(messages),
+    fallbackLang
+  );
+  const isSupportedLang = (value) => supportedLangs.includes(value);
+  const currentLang = ref(
+    isSupportedLang(fallbackLang) ? fallbackLang : supportedLangs[0] || fallbackLang
+  );
 
   const t = (key, vars = {}) => {
     const msgs = messages[currentLang.value] || messages[fallbackLang] || {};
@@ -33,18 +43,20 @@ export function createI18n(messages, fallbackLang = "ru") {
   };
 
   const setLang = (lang) => {
-    const normalized = normalizeLang(lang);
-    if (normalized) currentLang.value = normalized;
+    const normalized = normalizePlatformLang(lang);
+    if (normalized && isSupportedLang(normalized)) currentLang.value = normalized;
   };
 
   const resolveLangFromUrl = () => {
     if (typeof window === "undefined") return "";
-    return normalizeLang(new URLSearchParams(window.location.search).get("lang"));
+    const normalized = normalizePlatformLang(new URLSearchParams(window.location.search).get("lang"));
+    return isSupportedLang(normalized) ? normalized : "";
   };
 
   const resolveLangFromStorage = (storageKey = "void:lang") => {
     if (typeof localStorage === "undefined") return "";
-    return normalizeLang(localStorage.getItem(storageKey) || "");
+    const normalized = normalizePlatformLang(localStorage.getItem(storageKey) || "");
+    return isSupportedLang(normalized) ? normalized : "";
   };
 
   const initLang = (storageKey = "void:lang") => {

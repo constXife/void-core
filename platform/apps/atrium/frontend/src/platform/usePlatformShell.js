@@ -1,6 +1,12 @@
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { createI18n } from "./i18n.js";
+import {
+  PLATFORM_FALLBACK_LANG,
+  resolvePlatformDirection,
+  resolvePlatformLocale,
+  resolveSupportedPlatformLangs
+} from "./i18n/index.js";
 
 const THEME_MODES = new Set(["dark", "light", "auto"]);
 
@@ -25,23 +31,31 @@ const resolveDomain = () => {
 export function usePlatformShell({
   messages,
   loginRouteName,
-  fallbackLang = "ru",
+  fallbackLang = PLATFORM_FALLBACK_LANG,
+  supportedLangs,
   langStorageKey = "void:lang",
   themeStorageKey = "void:theme"
 }) {
   const route = useRoute();
-  const { currentLang, t, setLang, initLang, persistLang } = createI18n(messages, fallbackLang);
+  const languageOptions = resolveSupportedPlatformLangs(
+    supportedLangs || Object.keys(messages),
+    fallbackLang
+  );
+  const { currentLang, t, setLang, initLang, persistLang } = createI18n(messages, {
+    fallbackLang,
+    supportedLangs: languageOptions
+  });
 
   initLang(langStorageKey);
 
   const isLoginRoute = computed(() => route.name === loginRouteName);
-  const languageLabels = computed(() => ({
-    en: t("language.en"),
-    ru: t("language.ru")
-  }));
+  const languageLabels = computed(() =>
+    Object.fromEntries(languageOptions.map((lang) => [lang, t(`language.${lang}`)]))
+  );
   const theme = ref(readThemePreference(themeStorageKey));
   const resolvedTheme = computed(() => resolveTheme(theme.value));
-  const locale = computed(() => currentLang.value === "ru" ? "ru-RU" : "en-US");
+  const locale = computed(() => resolvePlatformLocale(currentLang.value, fallbackLang));
+  const direction = computed(() => resolvePlatformDirection(currentLang.value, fallbackLang));
   const domain = resolveDomain();
 
   watch([theme, resolvedTheme], ([value, resolved]) => {
@@ -51,6 +65,13 @@ export function usePlatformShell({
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", resolved);
     }
+  }, { immediate: true });
+
+  watch([currentLang, locale, direction], ([lang, nextLocale, nextDirection]) => {
+    if (typeof document === "undefined") return;
+    document.documentElement.lang = nextLocale;
+    document.documentElement.dir = nextDirection;
+    document.documentElement.setAttribute("data-lang", lang);
   }, { immediate: true });
 
   const applyLang = (lang) => {
@@ -73,8 +94,10 @@ export function usePlatformShell({
     t,
     theme,
     locale,
+    direction,
     domain,
     isLoginRoute,
+    languageOptions,
     languageLabels,
     applyLang,
     setTheme,

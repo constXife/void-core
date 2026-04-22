@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { Settings, LogOut, Globe, Sun, Moon, Monitor } from "lucide-vue-next";
 import PlatformSettingsRow from "./PlatformSettingsRow.vue";
 import PlatformSegmentedControl from "./PlatformSegmentedControl.vue";
+import { PLATFORM_LANGUAGE_IDS } from "../i18n/index.js";
 
 const props = defineProps({
   user: { type: Object, default: null },
@@ -37,7 +38,7 @@ const profileHref = computed(() => {
 });
 
 const resolvedLanguageOptions = computed(() =>
-  props.languageOptions?.length ? props.languageOptions : ["ru", "en"]
+  props.languageOptions?.length ? props.languageOptions : PLATFORM_LANGUAGE_IDS
 );
 
 const themeOptions = computed(() => ([

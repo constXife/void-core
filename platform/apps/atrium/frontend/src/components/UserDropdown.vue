@@ -4,6 +4,7 @@ import { Gauge, UserCog } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import PlatformSettingsRow from "../platform/components/PlatformSettingsRow.vue";
 import PlatformUserDropdownPanel from "../platform/components/PlatformUserDropdownPanel.vue";
+import { PLATFORM_LANGUAGE_IDS } from "../platform/i18n/index.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useAuthStore } from "../stores/auth.js";
 import { useUiStore } from "../stores/ui.js";
@@ -34,7 +35,7 @@ const {
 const { supportedLangs, themeSelection } = storeToRefs(appStore);
 
 const languageOptions = computed(() =>
-  Array.isArray(supportedLangs.value) && supportedLangs.value.length ? supportedLangs.value : ["ru", "en"]
+  Array.isArray(supportedLangs.value) && supportedLangs.value.length ? supportedLangs.value : PLATFORM_LANGUAGE_IDS
 );
 
 const showLanguage = computed(
