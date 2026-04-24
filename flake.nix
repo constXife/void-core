@@ -887,6 +887,12 @@
       foundation-options-doc = (mkFoundationOptionsDoc pkgs).optionsCommonMark;
       atrium-source = atrium.source;
       atrium-frontend-dist = atrium.frontendDist;
+      atrium-client-root-default = atrium.clientRootDefault;
+      atrium-widgets-default = atrium.widgetsDefault;
+      atrium-host-rust = atrium.hostRust;
+      atrium-server = atrium.server;
+      atrium-run = atrium.run;
+      atrium-backend-dev = atrium.backendDev;
       atrium = atrium.frontendDist;
     });
 

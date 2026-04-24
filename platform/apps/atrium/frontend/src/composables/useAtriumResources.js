@@ -2,27 +2,19 @@ import { computed, ref } from "vue";
 
 export function useAtriumResources({
   BLOCK_TYPES,
-  addShoppingNeedToRun,
   blockDataFor,
   blockTypeIs,
   blocksForSpace,
-  closeShoppingRun,
   fetchJSON,
   isAdminSpace,
   isKidsSpace,
   isPublicReadonlySpace,
-  loadShoppingSummary,
   navigateTo,
   navigateToAdmin,
   notify,
   recentResourcesBySpace,
   recentResourcesKey,
   settingsStore,
-  shoppingMutationPendingKey,
-  shoppingSummary,
-  shoppingSummaryError,
-  shoppingSummaryLoading,
-  shoppingNeedQueued,
   showUserDropdown,
   spaces,
   t,
@@ -270,136 +262,37 @@ export function useAtriumResources({
     return items;
   };
 
-  const surfaceShoppingAction = () => ({
-    actionKind: "route",
-    actionLabel: t("surface.action.openShopping"),
-    actionTarget: "/shopping"
-  });
-
-  const shoppingInlineAction = (id, label, actionKind, actionTarget, disabled = false) => ({
-    id,
-    label,
-    actionKind,
-    actionTarget,
-    disabled
-  });
-
-  const shoppingCardTitles = (items, fallback) => {
-    const titles = (Array.isArray(items) ? items : [])
-      .map((item) => String(item?.title || item?.item_name || item?.name || "").trim())
-      .filter(Boolean)
-      .slice(0, 2);
-    return titles.length ? titles.join(" · ") : fallback;
-  };
-
   const surfaceCardsFor = (space) => {
     if (!space) return [];
     const resources = resourceEntriesForSpace(space);
     if (isAdminSpace(space)) {
-      if (shoppingSummaryLoading.value) {
-        return [
-          {
-            id: "shopping-loading",
-            eyebrow: t("surface.shopping.title"),
-            title: t("surface.shopping.loadingTitle"),
-            body: t("surface.shopping.loadingBody"),
-            ...surfaceShoppingAction()
-          }
-        ];
-      }
-      if (shoppingSummaryError.value) {
-        return [
-          {
-            id: "shopping-error",
-            eyebrow: t("surface.shopping.title"),
-            title: t("surface.state.review"),
-            body: t("surface.shopping.errorBody"),
-            ...surfaceShoppingAction()
-          }
-        ];
-      }
-
-      const summary = shoppingSummary.value || {};
-      const needs = summary?.needs_to_buy || {};
-      const activeRun = summary?.active_run || {};
-      const recentlyClosed = summary?.recently_closed || {};
-      const activeRunRecord = activeRun?.run || null;
-      const activeRunItems = Array.isArray(activeRun?.items) ? activeRun.items : [];
-      const actionableCount = Number(activeRun?.actionable_count || 0);
-      const firstNeedToQueue = (Array.isArray(needs?.items) ? needs.items : []).find(
-        (item) => !shoppingNeedQueued(item)
-      );
-      const shoppingBusy = Boolean(shoppingMutationPendingKey.value);
-      const openAction = shoppingInlineAction(
-        "open-shopping",
-        t("surface.action.openShopping"),
-        "route",
-        "/shopping"
-      );
-      const refreshAction = shoppingInlineAction(
-        "refresh-shopping",
-        t("surface.action.refreshShopping"),
-        "handler",
-        () => loadShoppingSummary({ force: true }),
-        shoppingBusy
-      );
-
       return [
         {
-          id: "shopping-needs",
-          eyebrow: t("surface.shopping.needsTitle"),
-          title: Number(needs?.count || 0)
-            ? t("surface.shopping.needsValue", { count: Number(needs.count || 0) })
-            : t("surface.shopping.emptyNeedsTitle"),
-          body: shoppingCardTitles(needs?.items, t("surface.shopping.emptyNeedsBody")),
+          id: "admin-backup",
+          eyebrow: t("surface.admin.backupTitle"),
+          title: t("surface.state.ready"),
+          body: t("surface.admin.backupBody")
+        },
+        {
+          id: "admin-update",
+          eyebrow: t("surface.admin.updateTitle"),
+          title: t("surface.state.review"),
+          body: t("surface.admin.updateBody")
+        },
+        {
+          id: "admin-critical",
+          eyebrow: t("surface.admin.criticalTitle"),
+          title: resources.length ? t("surface.state.clear") : t("surface.state.attention"),
+          body: t("surface.admin.criticalBody"),
           actions: [
-            ...(firstNeedToQueue
-              ? [
-                  shoppingInlineAction(
-                    `queue-need:${String(firstNeedToQueue?.instance_id || firstNeedToQueue?.intent_id || "").trim()}`,
-                    t("surface.action.queueShoppingNeed"),
-                    "handler",
-                    () => addShoppingNeedToRun(firstNeedToQueue),
-                    shoppingBusy
-                  )
-                ]
-              : []),
-            openAction
+            {
+              id: "open-admin",
+              label: t("surface.action.openAdmin"),
+              actionKind: "admin-tab",
+              actionTarget: "overview",
+              disabled: false
+            }
           ]
-        },
-        {
-          id: "shopping-run",
-          eyebrow: t("surface.shopping.runTitle"),
-          title:
-            String(activeRunRecord?.title || activeRunRecord?.run_id || "").trim() ||
-            t("surface.shopping.emptyRunTitle"),
-          body: activeRunRecord
-            ? t("surface.shopping.runValue", {
-                count: activeRunItems.length,
-                actionable: actionableCount
-              })
-            : t("surface.shopping.emptyRunBody"),
-          actions: activeRunRecord
-            ? [
-                shoppingInlineAction(
-                  `close-run:${String(activeRunRecord?.run_id || "").trim()}`,
-                  t("surface.action.closeShoppingRun"),
-                  "handler",
-                  () => closeShoppingRun({ runID: activeRunRecord?.run_id }),
-                  shoppingBusy
-                ),
-                openAction
-              ]
-            : [openAction]
-        },
-        {
-          id: "shopping-closed",
-          eyebrow: t("surface.shopping.closedTitle"),
-          title: Number(recentlyClosed?.count || 0)
-            ? t("surface.shopping.closedValue", { count: Number(recentlyClosed.count || 0) })
-            : t("surface.shopping.emptyClosedTitle"),
-          body: shoppingCardTitles(recentlyClosed?.items, t("surface.shopping.emptyClosedBody")),
-          actions: [refreshAction, openAction]
         }
       ];
     }
@@ -433,8 +326,8 @@ export function useAtriumResources({
     if (!space) return { title: "", subtitle: "" };
     if (isAdminSpace(space)) {
       return {
-        title: t("surface.shopping.title"),
-        subtitle: t("surface.shopping.subtitle")
+        title: t("surface.admin.title"),
+        subtitle: t("surface.admin.subtitle")
       };
     }
     if (isKidsSpace(space)) {

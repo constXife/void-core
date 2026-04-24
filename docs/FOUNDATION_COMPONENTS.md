@@ -86,7 +86,7 @@ For object storage specifically, the intended split is:
 | `dns/coredns` | `required` | provides the preferred private-zone DNS resolver baseline | foundation uses `CoreDNS` as the first canonical private naming implementation | router, DHCP, network distribution, and environment-specific records remain client-owned |
 | `ingress/caddy` | `required` | provides the preferred host-based ingress baseline | foundation uses `Caddy` as the first canonical reverse-proxy entry for internal web services and exposes a generic published-host seam for shell or product hosts | actual ingress placement, certificates wiring, host enablement, and deployment topology remain client-owned |
 | `pki/step-ca` | `required` | provides the preferred private CA and certificate issuance baseline | foundation uses `step-ca` as the first canonical private trust and ACME-compatible issuance primitive | root trust distribution, bootstrap handling, and CA operational material remain client-owned |
-| `shell/atrium` | `required` | provides the first foundation shell and entry surface | foundation exposes a reusable portal shell that higher-level products and profiles may package and extend | product-specific spaces, composition, and resource catalogs belong above the foundation layer |
+| `shell/atrium` | `required` | provides the first foundation shell and entry surface | foundation exposes a reusable portal shell that higher-level products and profiles may package and extend, and that should remain functionally usable from `void-core` alone | product-specific spaces, composition, and resource catalogs belong above the foundation layer |
 | `storage/garage` | `optional foundation companion` | provides the preferred object-storage substrate for blobs and large artifacts | foundation may expose an S3-compatible storage primitive for media, attachments, exports, backups, and other binary objects without pushing those payloads into graph or SQL models; it may also expose a generic declarative provisioning seam for baseline buckets, service accounts, and grants | bucket layout, retention, replication, durability choices, secret values, and concrete client data remain client-owned |
 
 ## Usage principles
@@ -98,6 +98,7 @@ The inventory above should be interpreted with these rules:
 3. `void-core` must not own client inventory, secrets, or runtime data.
 4. Products built above the foundation may compose these primitives differently, but should not redefine their core contracts casually.
 5. This component inventory is an explicit scope boundary: code that cannot be justified by these documented foundation responsibilities should live downstream, not in `void-core`.
+6. `shell/atrium` must stay functionally obtainable from `void-core` itself; a downstream repository may extend it, but should not be required for a working baseline shell.
 
 ## Relationship to products
 

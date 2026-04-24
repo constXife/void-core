@@ -5,12 +5,6 @@ import {
   createDashboardEditForm,
   createInlineAddForm
 } from "./useAtriumDashboardModel.js";
-import {
-  calendarUpcomingQueryFromBlock,
-  inventorySummaryQueryFromBlock,
-  isCalendarUpcomingBlock,
-  isInventorySummaryBlock
-} from "../lib/dashboard-block-data.js";
 import { prefersProvisioningDashboard } from "../lib/dashboard-source.js";
 
 export function useAtriumDashboard({
@@ -336,37 +330,6 @@ export function useAtriumDashboard({
           if (isResourcesBlock(block)) {
             return [block.id, resources];
           }
-          if (isCalendarUpcomingBlock(block)) {
-            try {
-              const params = new URLSearchParams();
-              const query = calendarUpcomingQueryFromBlock(block);
-              params.set("window", query.window);
-              params.set("include_archived", String(query.include_archived));
-              params.set("include_reminders", String(query.include_reminders));
-              params.set("limit", String(query.limit));
-              return [
-                block.id,
-                await fetchJSON(`/api/knowledge/v1/calendar/upcoming?${params.toString()}`)
-              ];
-            } catch {
-              return [block.id, {}];
-            }
-          }
-          if (isInventorySummaryBlock(block)) {
-            try {
-              const params = new URLSearchParams();
-              const query = inventorySummaryQueryFromBlock(block);
-              params.set("slice", query.slice);
-              params.set("include_archived", String(query.include_archived));
-              params.set("attention_limit", String(query.attention_limit));
-              return [
-                block.id,
-                await fetchJSON(`/api/knowledge/v1/inventory/summary?${params.toString()}`)
-              ];
-            } catch {
-              return [block.id, {}];
-            }
-          }
           return [block.id, {}];
         })
       )
@@ -392,37 +355,6 @@ export function useAtriumDashboard({
         blocks.map(async (block) => {
           if (isResourcesBlock(block)) {
             return [block.id, filterProvisioningItemsForBlock(resources, block, audience)];
-          }
-          if (isCalendarUpcomingBlock(block)) {
-            try {
-              const params = new URLSearchParams();
-              const query = calendarUpcomingQueryFromBlock(block);
-              params.set("window", query.window);
-              params.set("include_archived", String(query.include_archived));
-              params.set("include_reminders", String(query.include_reminders));
-              params.set("limit", String(query.limit));
-              return [
-                block.id,
-                await fetchJSON(`/api/knowledge/v1/calendar/upcoming?${params.toString()}`)
-              ];
-            } catch {
-              return [block.id, {}];
-            }
-          }
-          if (isInventorySummaryBlock(block)) {
-            try {
-              const params = new URLSearchParams();
-              const query = inventorySummaryQueryFromBlock(block);
-              params.set("slice", query.slice);
-              params.set("include_archived", String(query.include_archived));
-              params.set("attention_limit", String(query.attention_limit));
-              return [
-                block.id,
-                await fetchJSON(`/api/knowledge/v1/inventory/summary?${params.toString()}`)
-              ];
-            } catch {
-              return [block.id, {}];
-            }
           }
           return [block.id, {}];
         })

@@ -1,0 +1,7 @@
+id: admin-default
+blocks:
+  - id: key-resources
+    type: resources_pinned
+    title: "Key resources"
+    config:
+      limit: 8

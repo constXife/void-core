@@ -59,9 +59,6 @@ const routeStateFromRoute = (route) => {
   if (name === "privacy") {
     return { view: "privacy", tab: null, spaceSlug: null };
   }
-  if (name === "shopping") {
-    return { view: "shopping", tab: null, spaceSlug: null };
-  }
   if (name.startsWith("admin")) {
     const tabFromName = name.startsWith("admin-")
       ? name.replace("admin-", "")
@@ -248,11 +245,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
       authEnabled.value = false;
     }
   });
-  const shoppingSummary = ref(null);
-  const shoppingSummaryLoading = ref(false);
-  const shoppingSummaryError = ref("");
-  const shoppingMutationPendingKey = ref("");
-  const shoppingMutationError = ref("");
 
   const loadSession = async () => {
     if (sessionLoaded.value) return me.value;
@@ -267,218 +259,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
   };
 
   const ensureSession = async () => loadSession();
-
-  const loadShoppingSummary = async ({ force = false } = {}) => {
-    if (!me.value) {
-      shoppingSummary.value = null;
-      shoppingSummaryError.value = "";
-      shoppingSummaryLoading.value = false;
-      return null;
-    }
-    if (shoppingSummaryLoading.value) return shoppingSummary.value;
-    if (!force && shoppingSummary.value) return shoppingSummary.value;
-
-    shoppingSummaryLoading.value = true;
-    shoppingSummaryError.value = "";
-    try {
-      shoppingSummary.value = await fetchJSON("/api/knowledge/v1/shopping/summary");
-    } catch (err) {
-      shoppingSummary.value = null;
-      shoppingSummaryError.value = String(err?.message || "");
-    } finally {
-      shoppingSummaryLoading.value = false;
-    }
-    return shoppingSummary.value;
-  };
-
-  const activeShoppingRun = () => shoppingSummary.value?.active_run?.run || null;
-  const activeShoppingRunItems = () =>
-    Array.isArray(shoppingSummary.value?.active_run?.items) ? shoppingSummary.value.active_run.items : [];
-  const shoppingNeedQueued = (itemOrIntentID) => {
-    const intentID =
-      typeof itemOrIntentID === "string"
-        ? itemOrIntentID
-        : String(itemOrIntentID?.intent_id || itemOrIntentID?.instance_id || "").trim();
-    if (!intentID) return false;
-    return activeShoppingRunItems().some(
-      (item) => String(item?.linked_purchase_intent_id || "").trim() === intentID
-    );
-  };
-
-  const defaultShoppingRunTitle = () =>
-    currentLang.value === "ru" ? "Текущий shopping batch" : "Current shopping batch";
-
-  const runShoppingMutation = async (key, action) => {
-    shoppingMutationPendingKey.value = key;
-    shoppingMutationError.value = "";
-    try {
-      const result = await action();
-      await loadShoppingSummary({ force: true });
-      return result;
-    } catch (err) {
-      const message = String(err?.message || "Request failed");
-      shoppingMutationError.value = message;
-      notify(message, "error");
-      throw err;
-    } finally {
-      shoppingMutationPendingKey.value = "";
-    }
-  };
-
-  const ensureActiveShoppingRun = async () => {
-    const currentRun = activeShoppingRun();
-    if (currentRun?.run_id) return currentRun;
-    const payload = await fetchJSON("/api/knowledge/v1/shopping/runs", {
-      method: "POST",
-      body: JSON.stringify({
-        title: defaultShoppingRunTitle(),
-        status: "active",
-        run_kind: "shopping-list",
-        cadence: "ad-hoc"
-      })
-    });
-    return payload?.run || null;
-  };
-
-  const addShoppingNeedToRun = async (item) => {
-    const intentID = String(item?.intent_id || item?.instance_id || "").trim();
-    const title = String(item?.title || item?.name || "").trim();
-    if (!intentID || !title || shoppingNeedQueued(intentID)) return null;
-
-    return runShoppingMutation(`shopping-need:${intentID}`, async () => {
-      const run = await ensureActiveShoppingRun();
-      return fetchJSON("/api/knowledge/v1/shopping/items", {
-        method: "POST",
-        body: JSON.stringify({
-          run_id: run?.run_id,
-          title,
-          item_kind: "other",
-          source_kind: "purchase-intent",
-          status: "suggested",
-          priority: ["low", "normal", "high"].includes(String(item?.priority || "").toLowerCase())
-            ? String(item.priority).toLowerCase()
-            : "normal",
-          linked_purchase_intent_id: intentID
-        })
-      });
-    });
-  };
-
-  const createShoppingIntent = async ({
-    title,
-    intentCategory,
-    priority,
-    note,
-    intentStatus
-  } = {}) => {
-    const normalizedTitle = String(title || "").trim();
-    if (!normalizedTitle) return null;
-
-    const payload = {
-      title: normalizedTitle,
-      intent_category: String(intentCategory || "other").trim().toLowerCase()
-    };
-    if (priority) {
-      payload.priority = String(priority).trim().toLowerCase();
-    }
-    if (note) {
-      payload.note = String(note).trim();
-    }
-    if (intentStatus) {
-      payload.intent_status = String(intentStatus).trim().toLowerCase();
-    }
-
-    return runShoppingMutation("shopping-intent:create", async () =>
-      fetchJSON("/api/knowledge/v1/shopping/intents", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      })
-    );
-  };
-
-  const patchShoppingIntent = async (
-    intentID,
-    { title, intentCategory, priority, note, intentStatus } = {}
-  ) => {
-    const normalizedIntentID = String(intentID || "").trim();
-    if (!normalizedIntentID) return null;
-
-    const payload = {};
-    if (title !== undefined) {
-      payload.title = String(title || "");
-    }
-    if (intentCategory !== undefined) {
-      payload.intent_category = String(intentCategory || "").trim().toLowerCase();
-    }
-    if (priority !== undefined) {
-      payload.priority = String(priority || "").trim().toLowerCase();
-    }
-    if (note !== undefined) {
-      payload.note = String(note || "");
-    }
-    if (intentStatus !== undefined) {
-      payload.intent_status = String(intentStatus || "").trim().toLowerCase();
-    }
-
-    return runShoppingMutation(`shopping-intent:${normalizedIntentID}`, async () =>
-      fetchJSON(`/api/knowledge/v1/shopping/intents/${encodeURIComponent(normalizedIntentID)}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload)
-      })
-    );
-  };
-
-  const addManualShoppingItem = async (title) => {
-    const normalizedTitle = String(title || "").trim();
-    if (!normalizedTitle) return null;
-
-    return runShoppingMutation("shopping-manual-item", async () => {
-      const run = await ensureActiveShoppingRun();
-      return fetchJSON("/api/knowledge/v1/shopping/items", {
-        method: "POST",
-        body: JSON.stringify({
-          run_id: run?.run_id,
-          title: normalizedTitle,
-          item_kind: "other",
-          source_kind: "manual",
-          status: "suggested",
-          priority: "normal"
-        })
-      });
-    });
-  };
-
-  const patchShoppingItemStatus = async (itemID, status) => {
-    const normalizedItemID = String(itemID || "").trim();
-    const normalizedStatus = String(status || "").trim().toLowerCase();
-    if (!normalizedItemID || !normalizedStatus) return null;
-
-    return runShoppingMutation(`shopping-item:${normalizedItemID}:${normalizedStatus}`, async () =>
-      fetchJSON(`/api/knowledge/v1/shopping/items/${encodeURIComponent(normalizedItemID)}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: normalizedStatus })
-      })
-    );
-  };
-
-  const closeShoppingRun = async ({ runID, closeOpenItemsAs } = {}) => {
-    const targetRunID = String(runID || activeShoppingRun()?.run_id || "").trim();
-    if (!targetRunID) return null;
-
-    const payload = {
-      status: "completed"
-    };
-    if (closeOpenItemsAs) {
-      payload.close_open_items_as = String(closeOpenItemsAs).trim().toLowerCase();
-    }
-
-    return runShoppingMutation(`shopping-run:${targetRunID}:completed`, async () =>
-      fetchJSON(`/api/knowledge/v1/shopping/runs/${encodeURIComponent(targetRunID)}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload)
-      })
-    );
-  };
 
   const {
     loadAll,
@@ -615,29 +395,19 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     updateResourcePopoverPlacement
   } = useAtriumResources({
     BLOCK_TYPES,
-    addShoppingNeedToRun: (...args) => addShoppingNeedToRun(...args),
     blockDataFor: (...args) => blockDataFor(...args),
     blockTypeIs: (...args) => blockTypeIs(...args),
     blocksForSpace: (...args) => blocksForSpace(...args),
-    closeShoppingRun: (...args) => closeShoppingRun(...args),
-    createShoppingIntent: (...args) => createShoppingIntent(...args),
     fetchJSON,
     isAdminSpace: (...args) => isAdminSpace(...args),
     isKidsSpace: (...args) => isKidsSpace(...args),
     isPublicReadonlySpace: (...args) => isPublicReadonlySpace(...args),
-    loadShoppingSummary: (...args) => loadShoppingSummary(...args),
     navigateTo: (...args) => navigateTo(...args),
     navigateToAdmin: (...args) => navigateToAdmin(...args),
     notify,
-    patchShoppingIntent: (...args) => patchShoppingIntent(...args),
     recentResourcesBySpace,
     recentResourcesKey,
     settingsStore,
-    shoppingMutationPendingKey,
-    shoppingSummary,
-    shoppingSummaryError,
-    shoppingSummaryLoading,
-    shoppingNeedQueued: (...args) => shoppingNeedQueued(...args),
     showUserDropdown,
     spaces,
     t: (...args) => t(...args),
@@ -1191,13 +961,9 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
       updateClock();
       updateViewport();
       await loadAll();
-      await loadShoppingSummary();
       workspaceBootstrapped.value = true;
     } else {
       await loadSession();
-      if (me.value && !shoppingSummary.value) {
-        await loadShoppingSummary();
-      }
     }
 
     await syncRouteSelection(route);
@@ -1242,11 +1008,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     addDashboardBlock,
     applyProvisioningSnapshotToEditor,
     resetDashboardEditorDraft,
-    addManualShoppingItem,
     addMembership,
-    addShoppingNeedToRun,
-    createShoppingIntent,
-    patchShoppingIntent,
     adminSubtitle,
     adminTab,
     adminTitle,
@@ -1377,7 +1139,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     languageSelection,
     languageSwitcherMode,
     languageSwitcherVisible,
-    loadShoppingSummary,
     loading,
     localWidgets,
     loginBusy,
@@ -1411,7 +1172,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     performanceMode,
     performanceSelection,
     performanceSelectorVisible,
-    patchShoppingItemStatus,
     prevSpace,
     privacyDocumentHtml,
     provisioningCatalog,
@@ -1452,12 +1212,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     showDevLogin,
     showShortcuts,
     showUserDropdown,
-    shoppingMutationError,
-    shoppingMutationPendingKey,
-    shoppingNeedQueued,
-    shoppingSummary,
-    shoppingSummaryError,
-    shoppingSummaryLoading,
     selectedContentSpace,
     spaceDescription,
     spaceIconLabel,
@@ -1484,7 +1238,6 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     themePreference,
     themeSelection,
     toastStore,
-    closeShoppingRun,
     todoItemsFor,
     toggleDashboardEdit,
     toggleDashboardEditAdvanced,

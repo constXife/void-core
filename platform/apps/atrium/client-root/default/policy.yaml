@@ -1,0 +1,7 @@
+spaces:
+  admin:
+    allow_personalization: true
+    allow_reorder: true
+    allow_hide_default: false
+    allow_enable_optional: false
+    allow_custom_background: false

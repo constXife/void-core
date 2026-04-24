@@ -60,6 +60,11 @@ That includes:
 - reusable layouts and presentation primitives;
 - build and packaging assets needed to ship the shell.
 
+For Atrium specifically, "ship the shell" means more than publishing UI source:
+- `void-core` should remain sufficient to obtain a working baseline `Atrium`;
+- if a host/runtime path is required for the foundation shell to function, that path belongs in `void-core`;
+- downstream host delegation may exist as an explicit compatibility seam, but it must not be the default baseline runtime.
+
 That does not include:
 - downstream product-specific routes;
 - downstream product-specific host UIs such as calendar, inventory, or finance surfaces;

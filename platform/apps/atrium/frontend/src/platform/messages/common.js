@@ -14,10 +14,7 @@ export const commonMessages = {
     "app.themeAuto": "Auto",
     "language.en": "English",
     "language.ru": "Русский",
-    "product.atrium": "Atrium",
-    "product.calendar": "Calendar",
-    "product.finance": "Finance",
-    "product.inventory": "Inventory"
+    "product.atrium": "Atrium"
   },
   ru: {
     "app.loading": "Загрузка",
@@ -34,9 +31,6 @@ export const commonMessages = {
     "app.themeAuto": "Авто",
     "language.en": "English",
     "language.ru": "Русский",
-    "product.atrium": "Atrium",
-    "product.calendar": "Календарь",
-    "product.finance": "Финансы",
-    "product.inventory": "Инвентарь"
+    "product.atrium": "Atrium"
   }
 };

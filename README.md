@@ -15,6 +15,10 @@ It exists so higher-level product repos and client-owned deployment repos can bu
 
 In practice, it gives downstream layers a stable foundation for naming, secrets contracts, identity, private DNS, ingress, private PKI, and a foundation shell.
 
+For `Atrium`, the canonical contract is stronger than "shared shell code":
+- `void-core` should provide a functionally usable `Atrium` foundation shell on its own;
+- downstream repositories such as `void` may extend or package that shell differently, but should not be required to obtain a working baseline `Atrium`.
+
 ## What belongs here
 
 - reusable NixOS foundation modules;

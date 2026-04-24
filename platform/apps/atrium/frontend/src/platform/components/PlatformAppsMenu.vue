@@ -15,47 +15,43 @@ const props = defineProps({
   lang: {
     type: String,
     default: "ru"
+  },
+  products: {
+    type: Array,
+    default: () => [{ key: "atrium", label: "Atrium", accent: "A" }]
   }
 });
-
-const knownProducts = ["atrium", "calendar", "finance", "inventory"];
 
 const localized = computed(() => {
   if (props.lang === "ru") {
     return {
       title: "Приложения",
-      unavailable: "Недоступно в текущем окружении",
-      products: {
-        atrium: "Atrium",
-        calendar: "Календарь",
-        finance: "Финансы",
-        inventory: "Инвентарь"
-      }
+      unavailable: "Недоступно в текущем окружении"
     };
   }
 
   return {
     title: "Apps",
-    unavailable: "Unavailable in the current environment",
-    products: {
-      atrium: "Atrium",
-      calendar: "Calendar",
-      finance: "Finance",
-      inventory: "Inventory"
-    }
+    unavailable: "Unavailable in the current environment"
   };
 });
 
-const items = computed(() => [
-  { key: "atrium", accent: "A" },
-  { key: "calendar", accent: "C" },
-  { key: "finance", accent: "F" },
-  { key: "inventory", accent: "I" }
-].map((item) => ({
-  ...item,
-  href: resolveProductHref(item.key),
-  label: localized.value.products[item.key] || item.key
-})));
+const items = computed(() =>
+  props.products
+    .map((item) => {
+      const key = String(item?.key || "").trim().toLowerCase();
+      if (!key) return null;
+      return {
+        key,
+        accent: item?.accent || key[0]?.toUpperCase() || "?",
+        href: item?.href || resolveProductHref(key),
+        label: item?.label || key
+      };
+    })
+    .filter(Boolean)
+);
+
+const productKeys = computed(() => items.value.map((item) => item.key));
 
 const open = ref(false);
 
@@ -80,7 +76,7 @@ function resolveProductHref(productKey) {
   }
 
   const labels = normalizedHost.split(".");
-  if (labels.length >= 3 && knownProducts.includes(labels[0])) {
+  if (labels.length >= 3 && productKeys.value.includes(labels[0])) {
     labels[0] = productKey;
     return `${protocol}//${labels.join(".")}${port ? `:${port}` : ""}/`;
   }

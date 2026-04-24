@@ -1,0 +1,9 @@
+id: admin
+title: "Admin"
+state: active
+type: staff
+description: "Workspace administration"
+layout: grid
+groups:
+  - admin
+dashboard_template: admin-default

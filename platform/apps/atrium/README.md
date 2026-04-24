@@ -9,6 +9,11 @@ Canonical integration points live in:
 - `../../nixos/modules/shell/atrium.nix`
 - `../../packages/atrium`
 
+Normative boundary:
+- users should be able to get a functionally usable `Atrium` from `void-core` alone;
+- if a host/runtime path is required for the baseline shell, it belongs in `void-core`;
+- downstream repositories such as `void` may extend the shell, but should not be mandatory for first boot or first use.
+
 Canonical frontend header composition now lives in:
 - `frontend/src/platform/components/README.md`
 
@@ -25,49 +30,87 @@ Current `v0` is intentionally narrow:
 - announcements CRUD, service catalog CRUD, service placements, and `/ws` live transport are not part of the shipped `v0` surface;
 - multi-space/family-facing expansion remains future work rather than a current promise.
 
-## Quick start
+## Current Implementation Note
+The intended boundary is that `Atrium` remains functionally usable from `void-core` without a sibling downstream repository.
+
+The local development entrypoints now default to the standalone `void-core` preview host. Downstream
+host delegation remains available only through explicit `ATRIUM_HOST_MODE=shim` configuration.
+
+## Current Transitional Quick Start
 1) Enter the repository shell:
    `nix develop`
 2) Install frontend dependencies:
    `task frontend-install`
-3) Ensure a sibling `../void` checkout exists, or export `VOID_REPO_ROOT=/path/to/void`
-4) Start the Rust-backed local dev stack:
+3) Start the Rust-backed local dev stack:
    `task fixture-dev`
-5) Visit:
+4) Visit:
    `http://localhost:8080/health`
 
 ## Local dev
 - Enter the repository shell: `nix develop`
 - Copy env file: `cp .env.example .env` and adjust as needed
-- Ensure a sibling `../void` checkout exists, or export `VOID_REPO_ROOT=/path/to/void`
 - Install frontend deps: `task frontend-install`
 - Run the canonical Rust web host with env from `.env`: `task backend-dev`
-- Run the same host against the default canonical client root: `task backend-fixture-dev`
+- Run the same host against the bundled foundation client root: `task backend-fixture-dev`
 - Run frontend dev server: `task frontend-dev`
 - Run backend + frontend with an external database: `task dev`
-- Run backend + frontend against the default canonical client root: `task fixture-dev`
+- Run backend + frontend against the bundled foundation client root: `task fixture-dev`
 - Run Atrium tests: `task test`
 - Run frontend unit tests: `task frontend-test`
 - Run all tests: `task test-all`
 - Run smoke checks against a running backend: `task smoke`
+- Verify the standalone `void-core` backend launcher: `task self-contained-smoke`
 - Override the client root explicitly: `ATRIUM_CLIENT_ROOT_PATH=/path/to/client-root task backend-dev`
 
-Local dev is now Rust-host-first: the backend path runs `void-atrium-web` and points it at a
-canonical file-first client root. By default that root is `../void/atrium/defaults/profiles/default`.
-If you need a different declared baseline, override `ATRIUM_CLIENT_ROOT_PATH`.
-`void-core` by itself does not ship the Rust host binary; the local dev entrypoints shell out to
-the sibling `void` repository unless `VOID_REPO_ROOT` says otherwise.
+`task run`, `task backend-dev`, and `task fixture-dev` default to `ATRIUM_HOST_MODE=preview`, so
+they work from `void-core` alone. The launcher does not auto-detect or build a sibling `../void`
+checkout. A downstream compatibility host is an explicit opt-in path, for example:
+`ATRIUM_HOST_MODE=shim ATRIUM_DOWNSTREAM_HOST_BIN=/path/to/void-atrium-web task backend-dev`.
+
+The intended direction remains Rust-host-first inside `void-core` itself.
+Today the backend path already runs through a `void-core`-owned host shim. Its default mode serves
+the bundled frontend dist and the first local foundation runtime path from `void-core`.
+The remaining migration debt is therefore the full foundation runtime implementation, not the
+launcher, baseline, or host-source ownership.
 
 ## Deployment boundary
 - Canonical foundation integration is Nix/NixOS-first via `platform/packages/atrium` and `platform/nixos/modules/shell/atrium.nix`.
+- `platform/packages/atrium/server.nix` is now the canonical wrapper contour for a runnable Atrium host package.
+- `platform/packages/atrium/run.nix` and `platform/packages/atrium/backend-dev.nix` now own the transitional dev launcher path from `void-core`.
+- `platform/packages/atrium/host-rust.nix` now owns the first Rust host source/binary contour for Atrium inside `void-core`.
+- `services.atrium.package` is the canonical NixOS seam for wiring the runnable host into the foundation module.
+- `services.atrium` now defaults to the standalone `void-core` preview server wrapper, so enabling the module no longer requires a downstream host package for a functional baseline shell.
 - This repository does not currently ship a maintained container-compose path for Atrium.
 - If container packaging returns later, it should remain secondary to the canonical Nix/NixOS integration path.
+
+Preview mode:
+- `nix run ../../..#atrium-run`
+- `nix run ../../..#atrium-backend-dev`
+- this starts the local `void-core` host shim directly, serves the bundled frontend dist, and exposes the first standalone foundation APIs without a downstream host binary
+
+Current standalone preview runtime behavior:
+- bundled frontend dist is served directly by `atrium-host-rust`
+- `spaces` CRUD now writes through to `client-root/spaces/*.yaml`
+- `directory_items` CRUD now writes through to `client-root/resources/*.yaml` and `client-root/placements/*.yaml`
+- `dashboard/save` now writes template blocks through to `client-root/templates/*.yaml` and keeps hidden-block state in preview overlay files under `client-root/user-overlays/`
+- `/atrium/workspace` and `dashboard/save` now return `workspace.current_space.dashboard` with `blocks`, `block_order`, `hidden_block_ids`, `visible_block_ids`, and `visible_blocks` in the frontend-expected shape
+- dashboard blocks now expose richer standalone materialization fields, including block `contract.inspect` payloads for resources and summary-style blocks
+- preview identity can now be driven from env via `VOID_ATRIUM_PREVIEW_USER_ID`, `VOID_ATRIUM_PREVIEW_EMAIL`, `VOID_ATRIUM_PREVIEW_ROLE`, and `VOID_ATRIUM_PREVIEW_AUTHENTICATED`
+- hidden dashboard state is now stored per preview user under `client-root/user-overlays/<user>/*.yaml`, with fallback read from the older global `dashboard-overrides/*.yaml`
+- downstream `shim` mode remains available for product-specific host routes while the richer runtime is still migrating
 
 ## Declared client root
 The canonical runtime now reads Atrium state from a client-owned root directory rather than a
 Go-era provisioning file. The expected runtime inputs are:
 - `/etc/atrium/client-root` for declared Atrium content and mutations
 - `/etc/atrium/widgets.yaml` for widgets payload consumed by the Rust host/runtime
+
+This repository now also ships a minimal bundled foundation baseline at:
+- `platform/apps/atrium/client-root/default`
+- `platform/apps/atrium/widgets/default.yaml`
+
+The current `task backend-fixture-dev` and `task fixture-dev` flows use that local baseline with the
+standalone `void-core` preview host.
 
 For the current public `v0`, the minimal foundation example is:
 - one declared `Admin` space;
@@ -118,9 +161,9 @@ directory_items:
     audience_groups: ["admin"]
 ```
 
-Local development in this repository no longer ships a bundled compatibility provisioning fixture.
-Without an explicit `ATRIUM_CLIENT_ROOT_PATH`, the dev flow uses the default client root from the
-sibling `void` checkout.
+Local development in this repository now ships a bundled foundation fixture baseline.
+The remaining migration debt is the Rust host/runtime packaging path, not the canonical client root
+baseline itself.
 
 ## Space display_config (UI behavior)
 Supported keys (frontend):
