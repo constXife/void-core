@@ -1,4 +1,4 @@
-export const PLATFORM_FALLBACK_LANG = "ru";
+export const PLATFORM_FALLBACK_LANG = "en";
 
 export const PLATFORM_LOCALES = Object.freeze({
   ru: Object.freeze({
@@ -6,14 +6,14 @@ export const PLATFORM_LOCALES = Object.freeze({
     label: "Русский",
     locale: "ru-RU",
     direction: "ltr",
-    fallbacks: ["en"]
+    fallbacks: []
   }),
   en: Object.freeze({
     id: "en",
     label: "English",
     locale: "en-US",
     direction: "ltr",
-    fallbacks: ["ru"]
+    fallbacks: []
   })
 });
 

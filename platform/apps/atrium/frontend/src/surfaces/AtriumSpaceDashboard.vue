@@ -59,7 +59,9 @@ const {
   openAddBlockPicker,
   rememberResourceVisit,
   resourceInitial,
+  resourceDescription,
   normalizeIconUrl: resolveIconUrl,
+  resourceTitle,
   s3EndpointsFor,
   saveDashboardLayout,
   serviceStatusLabel,
@@ -209,7 +211,7 @@ const inventoryAttentionMeta = (item) =>
                     :data-resource-id="String(item.id)"
                   >
                     <span class="resource-icon resource-icon-tile">
-                      <img v-if="resolveIconUrl(item.icon_url)" :src="resolveIconUrl(item.icon_url)" :alt="item.title" />
+                      <img v-if="resolveIconUrl(item.icon_url)" :src="resolveIconUrl(item.icon_url)" :alt="resourceTitle(item)" />
                       <span v-else>{{ resourceInitial(item) }}</span>
                     </span>
                     <span class="resource-meta">
@@ -222,13 +224,13 @@ const inventoryAttentionMeta = (item) =>
                           class="resource-title-link"
                           @click.stop="rememberResourceVisit(props.space, item)"
                         >
-                          {{ item.title }}
+                          {{ resourceTitle(item) }}
                         </a>
-                        <span v-else class="resource-title">{{ item.title }}</span>
+                        <span v-else class="resource-title">{{ resourceTitle(item) }}</span>
                       </span>
                       <template v-if="item.type === 'service'">
-                        <span v-if="item.description" class="resource-desc">
-                          {{ item.description }}
+                        <span v-if="resourceDescription(item)" class="resource-desc">
+                          {{ resourceDescription(item) }}
                         </span>
                         <span class="flex flex-wrap gap-2 mt-1">
                           <span v-if="serviceStatusLabel(item)" class="chip">
@@ -246,7 +248,7 @@ const inventoryAttentionMeta = (item) =>
                           </button>
                         </div>
                       </template>
-                      <span v-else-if="item.description" class="resource-desc">{{ item.description }}</span>
+                      <span v-else-if="resourceDescription(item)" class="resource-desc">{{ resourceDescription(item) }}</span>
                     </span>
                     <button
                       v-if="enableV0ResourceDetails && canOpenResourceDetails(item) && !isPublicReadonlySpace(props.space)"
@@ -271,7 +273,7 @@ const inventoryAttentionMeta = (item) =>
                       <div class="resource-popover-header">
                         <div class="min-w-0">
                           <div class="text-xs text-white/50 uppercase tracking-wider">{{ t("resource.details.title") }}</div>
-                          <div class="text-lg font-semibold truncate">{{ resourcePopoverItem.title }}</div>
+                          <div class="text-lg font-semibold truncate">{{ resourceTitle(resourcePopoverItem) }}</div>
                         </div>
                         <button class="btn btn-ghost btn-icon" @click="closeResourcePopover">
                           <Tooltip
@@ -290,11 +292,11 @@ const inventoryAttentionMeta = (item) =>
                           <div class="drawer-section-body">
                             <div class="drawer-row">
                               <span class="drawer-label">{{ t("resource.details.service") }}</span>
-                              <span class="drawer-value">{{ resourcePopoverItem.title }}</span>
+                              <span class="drawer-value">{{ resourceTitle(resourcePopoverItem) }}</span>
                             </div>
-                            <div v-if="resourcePopoverItem.description" class="drawer-row">
+                            <div v-if="resourceDescription(resourcePopoverItem)" class="drawer-row">
                               <span class="drawer-label">{{ t("resource.details.description") }}</span>
-                              <span class="drawer-value">{{ resourcePopoverItem.description }}</span>
+                              <span class="drawer-value">{{ resourceDescription(resourcePopoverItem) }}</span>
                             </div>
                             <div v-if="resourcePopoverItem.tier" class="drawer-row">
                               <span class="drawer-label">{{ t("resource.details.tier") }}</span>
@@ -380,11 +382,11 @@ const inventoryAttentionMeta = (item) =>
                           <div class="drawer-section-body">
                             <div class="drawer-row">
                               <span class="drawer-label">{{ t("resource.details.titleField") }}</span>
-                              <span class="drawer-value">{{ resourcePopoverItem.title }}</span>
+                              <span class="drawer-value">{{ resourceTitle(resourcePopoverItem) }}</span>
                             </div>
-                            <div v-if="resourcePopoverItem.description" class="drawer-row">
+                            <div v-if="resourceDescription(resourcePopoverItem)" class="drawer-row">
                               <span class="drawer-label">{{ t("resource.details.description") }}</span>
-                              <span class="drawer-value">{{ resourcePopoverItem.description }}</span>
+                              <span class="drawer-value">{{ resourceDescription(resourcePopoverItem) }}</span>
                             </div>
                             <div v-if="resourcePopoverItem.service_type" class="drawer-row">
                               <span class="drawer-label">{{ t("resource.details.type") }}</span>

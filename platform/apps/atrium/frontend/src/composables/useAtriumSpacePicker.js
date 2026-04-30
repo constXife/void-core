@@ -1,12 +1,12 @@
 import { computed, ref } from "vue";
 
-const matchesSpaceQuery = (space, query) => {
+const matchesSpaceQuery = (space, query, { spaceTitle, spaceDescription }) => {
   const value = String(query || "").trim().toLowerCase();
   if (!value) return true;
   const hay = [
-    space?.title,
+    spaceTitle(space),
     space?.slug,
-    space?.description,
+    spaceDescription(space),
     space?.display_config?.description
   ]
     .filter(Boolean)
@@ -24,13 +24,17 @@ export function useAtriumSpacePicker({
   scrollToIndex,
   settingsStore,
   spaceDescription,
+  spaceTitle,
   spaces
 }) {
   const spacePickerOpen = ref(false);
   const spaceQuery = ref("");
 
   const filteredSpaces = computed(() =>
-    spaces.value.filter((space) => matchesSpaceQuery(space, spaceQuery.value))
+    spaces.value.filter((space) => matchesSpaceQuery(space, spaceQuery.value, {
+      spaceDescription,
+      spaceTitle
+    }))
   );
 
   const spacesFromIds = (ids) => {
@@ -42,7 +46,7 @@ export function useAtriumSpacePicker({
     if (!space) return "•";
     const icon = space?.display_config?.icon;
     if (icon) return icon;
-    const title = String(space.title || "").trim();
+    const title = String(spaceTitle(space) || "").trim();
     return title ? title[0].toUpperCase() : "•";
   };
 

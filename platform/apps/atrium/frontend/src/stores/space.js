@@ -36,6 +36,7 @@ export const useSpaceStore = defineStore("atrium-space", () => {
     spacePickerOpen,
     spacePickerSections,
     spaceQuery,
+    spaceTitle: app.spaceTitle,
     spaces,
     togglePinnedSpace: app.togglePinnedSpace,
     toggleSpacePicker: app.toggleSpacePicker

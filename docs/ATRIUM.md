@@ -118,3 +118,30 @@ Current standalone preview capabilities now include:
 - workspace and mutation responses shaped around `workspace.current_space.dashboard`, including `blocks`, `block_order`, `hidden_block_ids`, `visible_block_ids`, and `visible_blocks`.
 - richer standalone block materialization, including `contract.inspect` payloads for resources and summary-style dashboard blocks.
 - preview identity env inputs and a first per-user overlay seam through `/api/me`, `/atrium/memberships`, and `user-overlays/<user>/*.yaml`.
+
+## Localization Contract
+
+Atrium uses the platform localization contract owned by `void-core`.
+Localizable read-model fields are structured values, not fallback strings.
+
+Canonical shape:
+
+```json
+{
+  "key": "atrium.space.admin.title",
+  "translations": {
+    "en": "Admin",
+    "ru": "Администрирование"
+  }
+}
+```
+
+The platform fallback language is `en`.
+The fallback language is resolved from `translations.en`; there is no separate
+`fallback_label` field.
+
+Client-owned repositories may provide their own localized values for spaces,
+resources, placements, dashboard blocks, and other operator-owned labels through
+their Atrium client root or overlays.
+The platform resolver selects the current language, then the platform fallback
+language, then the stable key.

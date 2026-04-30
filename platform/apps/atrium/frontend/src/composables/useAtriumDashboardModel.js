@@ -24,7 +24,12 @@ export const createInlineAddForm = () => ({
   pinned: false
 });
 
-export function createAtriumDashboardModel({ BLOCK_TYPES, isMobile, t }) {
+export function createAtriumDashboardModel({
+  BLOCK_TYPES,
+  isMobile,
+  localizedText = (value, defaultValue = "") => String(value || defaultValue),
+  t
+}) {
   const normalizeBlockType = (value) => {
     const raw = String(value || "").trim().toLowerCase();
     if (!raw) return BLOCK_TYPES.resourcesPinned;
@@ -174,7 +179,7 @@ export function createAtriumDashboardModel({ BLOCK_TYPES, isMobile, t }) {
     return styles;
   };
 
-  const blockTitle = (block) => block.title || blockTypeLabel(block) || "Block";
+  const blockTitle = (block) => localizedText(block?.title, blockTypeLabel(block) || "Block");
 
   const getGridMetrics = (gridEl) => {
     if (!gridEl) return null;

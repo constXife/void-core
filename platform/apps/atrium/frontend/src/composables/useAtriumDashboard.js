@@ -13,6 +13,7 @@ export function useAtriumDashboard({
   fetchJSON,
   isMobile,
   isPublicReadonlySpace,
+  localizedText,
   notify,
   parseDisplayConfig,
   showAdmin,
@@ -79,6 +80,7 @@ export function useAtriumDashboard({
   } = createAtriumDashboardModel({
     BLOCK_TYPES,
     isMobile,
+    localizedText,
     t
   });
 

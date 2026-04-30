@@ -37,7 +37,7 @@ const {
         <span class="atrium-space-switcher__side-icon">
           {{ spaceStore.spaceIconLabel(prevSpace) }}
         </span>
-        <span class="atrium-space-switcher__side-title">{{ prevSpace.title }}</span>
+        <span class="atrium-space-switcher__side-title">{{ spaceStore.spaceTitle(prevSpace) }}</span>
       </button>
 
       <button class="atrium-space-switcher__current" @click="spaceStore.toggleSpacePicker()">
@@ -46,7 +46,7 @@ const {
         </span>
         <span class="atrium-space-switcher__current-copy">
           <span class="atrium-space-switcher__current-title">
-            {{ currentSpace?.title || t("app.spaces") }}
+            {{ currentSpace ? spaceStore.spaceTitle(currentSpace) : t("app.spaces") }}
           </span>
           <span
             v-if="spaceStore.spaceMetaLabel(currentSpace)"
@@ -69,7 +69,7 @@ const {
         <span class="atrium-space-switcher__side-icon">
           {{ spaceStore.spaceIconLabel(nextSpace) }}
         </span>
-        <span class="atrium-space-switcher__side-title">{{ nextSpace.title }}</span>
+        <span class="atrium-space-switcher__side-title">{{ spaceStore.spaceTitle(nextSpace) }}</span>
         <ChevronRight class="atrium-space-switcher__chevron" />
       </button>
     </div>

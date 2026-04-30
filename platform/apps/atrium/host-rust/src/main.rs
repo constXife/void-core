@@ -8,13 +8,19 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 #[derive(Debug, Clone)]
+struct LocalizedText {
+    key: String,
+    translations: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone)]
 struct PreviewSpace {
     id: String,
-    title: String,
+    title: LocalizedText,
     state: String,
     space_type: String,
     layout: String,
-    description: String,
+    description: LocalizedText,
     groups: Vec<String>,
     dashboard_template: String,
 }
@@ -23,7 +29,7 @@ struct PreviewSpace {
 struct PreviewTemplateBlock {
     id: String,
     block_type: String,
-    title: String,
+    title: LocalizedText,
     limit: i64,
 }
 
@@ -49,7 +55,8 @@ struct PreviewDirectoryItem {
     id: String,
     resource_id: String,
     space_id: String,
-    title: String,
+    title: LocalizedText,
+    description: LocalizedText,
     url: String,
     item_type: String,
     pinned: bool,
@@ -496,8 +503,16 @@ fn load_preview_directory_items(client_root: &Path) -> Vec<PreviewDirectoryItem>
                 id: format!("{}:{}", space_id, entry.resource_id),
                 resource_id: entry.resource_id.clone(),
                 space_id: space_id.clone(),
-                title: parse_scalar(&resource_source, "title")
-                    .unwrap_or_else(|| entry.resource_id.clone()),
+                title: parse_localized_text(
+                    &resource_source,
+                    "title",
+                    &format!("atrium.resource.{}.title", entry.resource_id),
+                ),
+                description: parse_localized_text(
+                    &resource_source,
+                    "description",
+                    &format!("atrium.resource.{}.description", entry.resource_id),
+                ),
                 url: parse_scalar(&resource_source, "url").unwrap_or_default(),
                 item_type: parse_scalar(&resource_source, "type")
                     .unwrap_or_else(|| "resource".to_string()),
@@ -511,13 +526,13 @@ fn load_preview_directory_items(client_root: &Path) -> Vec<PreviewDirectoryItem>
         (
             if left.pinned { 0 } else { 1 },
             left.order,
-            left.title.to_lowercase(),
+            localized_text_sort_key(&left.title),
             left.id.clone(),
         )
             .cmp(&(
                 if right.pinned { 0 } else { 1 },
                 right.order,
-                right.title.to_lowercase(),
+                localized_text_sort_key(&right.title),
                 right.id.clone(),
             ))
     });
@@ -533,16 +548,21 @@ fn load_preview_spaces(directory: &Path) -> Vec<PreviewSpace> {
             .and_then(|value| value.to_str())
             .unwrap_or("space")
             .to_string();
+        let id = parse_scalar(&source, "id").unwrap_or(fallback_id);
         spaces.push(PreviewSpace {
-            id: parse_scalar(&source, "id").unwrap_or_else(|| fallback_id),
-            title: parse_scalar(&source, "title").unwrap_or_else(|| "Untitled".to_string()),
+            title: parse_localized_text(&source, "title", &format!("atrium.space.{id}.title")),
             state: parse_scalar(&source, "state").unwrap_or_else(|| "active".to_string()),
             space_type: parse_scalar(&source, "type").unwrap_or_else(|| "staff".to_string()),
             layout: parse_scalar(&source, "layout").unwrap_or_else(|| "grid".to_string()),
-            description: parse_scalar(&source, "description").unwrap_or_default(),
+            description: parse_localized_text(
+                &source,
+                "description",
+                &format!("atrium.space.{id}.description"),
+            ),
             groups: parse_string_list(&source, "groups"),
             dashboard_template: parse_scalar(&source, "dashboard_template")
                 .unwrap_or_else(|| "admin-default".to_string()),
+            id,
         });
     }
     spaces.sort_by(|left, right| left.id.cmp(&right.id));
@@ -705,7 +725,7 @@ fn preview_dashboard_json(state: &PreviewState, space: &PreviewSpace) -> String 
         json_string(&state.catalog.client_root_path),
         json_string(&space.id),
         json_string(&space.id),
-        json_string(&space.title),
+        localized_text_json(&space.title),
         json_string(&space.dashboard_template),
         preview_template_json(&template),
         template.blocks.len(),
@@ -755,11 +775,12 @@ fn preview_directory_items_json(state: &PreviewState, space_id: Option<&str>) ->
 
 fn preview_directory_item_json(item: &PreviewDirectoryItem) -> String {
     format!(
-        "{{\"id\":{},\"resource_id\":{},\"space_id\":{},\"title\":{},\"url\":{},\"item_type\":{},\"pinned\":{},\"order\":{}}}",
+        "{{\"id\":{},\"resource_id\":{},\"space_id\":{},\"title\":{},\"description\":{},\"url\":{},\"item_type\":{},\"pinned\":{},\"order\":{}}}",
         json_string(&item.id),
         json_string(&item.resource_id),
         json_string(&item.space_id),
-        json_string(&item.title),
+        localized_text_json(&item.title),
+        localized_text_json(&item.description),
         json_string(&item.url),
         json_string(&item.item_type),
         if item.pinned { "true" } else { "false" },
@@ -863,7 +884,7 @@ fn preview_block_json(
         "{{\"id\":{},\"type\":{},\"title\":{},\"space\":{},\"template\":{},\"config\":{},\"layout\":{{\"xs\":{{\"order\":{}}}}},\"order\":{},\"visible\":{},\"contract\":{}}}",
         json_string(&block.id),
         json_string(&block.block_type),
-        json_string(&block.title),
+        localized_text_json(&block.title),
         json_string(&space.id),
         json_string(&template.key),
         preview_block_config_json(block),
@@ -916,7 +937,7 @@ fn preview_block_contract_json(state: &PreviewState, block: &PreviewTemplateBloc
 
 fn preview_resource_inspect_json(state: &PreviewState, resource_ids: &[&str]) -> Option<String> {
     let entry = state.directory_items.iter().find(|item| {
-        let normalized_title = item.title.trim().to_ascii_lowercase();
+        let normalized_title = localized_text_sort_key(&item.title);
         resource_ids.iter().any(|resource_id| {
             item.resource_id.eq_ignore_ascii_case(resource_id)
                 || normalized_title == resource_id.to_ascii_lowercase()
@@ -929,7 +950,7 @@ fn preview_resource_inspect_json(state: &PreviewState, resource_ids: &[&str]) ->
     Some(format!(
         "{{\"id\":{},\"title\":{},\"url\":{}}}",
         json_string(&entry.resource_id),
-        json_string(&entry.title),
+        localized_text_json(&entry.title),
         json_string(url)
     ))
 }
@@ -947,15 +968,18 @@ fn preview_create_space(state: &mut PreviewState, body: &str) -> String {
         );
     }
     let space = PreviewSpace {
-        id,
-        title,
+        title: localized_text(&format!("atrium.space.{id}.title"), &title, ""),
         state: "active".to_string(),
         space_type: extract_json_string(body, "type").unwrap_or_else(|| "staff".to_string()),
         layout: extract_json_string(body, "layout_mode").unwrap_or_else(|| "grid".to_string()),
-        description: extract_nested_json_string(body, "display_config", "description")
-            .unwrap_or_default(),
+        description: localized_text(
+            &format!("atrium.space.{id}.description"),
+            &extract_nested_json_string(body, "display_config", "description").unwrap_or_default(),
+            "",
+        ),
         groups: extract_json_string_array(body, "visibility_groups"),
         dashboard_template: "admin-default".to_string(),
+        id,
     };
     if let Err(error) = write_preview_space_file(&state.client_root_dir(), &space) {
         return format!(
@@ -978,7 +1002,7 @@ fn preview_patch_space(state: &mut PreviewState, space_id: &str, body: &str) -> 
         );
     };
     if let Some(title) = extract_json_string(body, "title") {
-        space.title = title;
+        space.title = localized_text(&format!("atrium.space.{}.title", space.id), &title, "");
     }
     if let Some(space_type) = extract_json_string(body, "type") {
         space.space_type = space_type;
@@ -987,7 +1011,11 @@ fn preview_patch_space(state: &mut PreviewState, space_id: &str, body: &str) -> 
         space.layout = layout;
     }
     if let Some(description) = extract_nested_json_string(body, "display_config", "description") {
-        space.description = description;
+        space.description = localized_text(
+            &format!("atrium.space.{}.description", space.id),
+            &description,
+            "",
+        );
     }
     if let Some(groups) = extract_optional_json_string_array(body, "visibility_groups") {
         space.groups = groups;
@@ -1074,9 +1102,14 @@ fn preview_create_directory_item(state: &mut PreviewState, body: &str) -> String
     let resource_id = preview_next_resource_id(state, &title);
     let item = PreviewDirectoryItem {
         id: format!("{space_id}:{resource_id}"),
+        title: localized_text(&format!("atrium.resource.{resource_id}.title"), &title, ""),
+        description: localized_text(
+            &format!("atrium.resource.{resource_id}.description"),
+            &extract_json_string(body, "description").unwrap_or_default(),
+            "",
+        ),
         resource_id,
         space_id,
-        title,
         url: extract_json_string(body, "url").unwrap_or_default(),
         item_type: extract_json_string(body, "item_type").unwrap_or_else(|| "resource".to_string()),
         pinned: extract_json_bool(body, "pinned").unwrap_or(false),
@@ -1108,7 +1141,7 @@ fn preview_patch_directory_item(state: &mut PreviewState, item_id: &str, body: &
     };
     let mut item = existing_item;
     if let Some(title) = extract_json_string(body, "title") {
-        item.title = title;
+        item.title = localized_text(&format!("atrium.resource.{}.title", item.resource_id), &title, "");
     }
     if let Some(url) = extract_json_string(body, "url") {
         item.url = url;
@@ -1455,13 +1488,19 @@ fn preview_filesystem_key(value: &str, fallback: &str) -> String {
 fn preview_space_yaml(space: &PreviewSpace) -> String {
     let mut lines = vec![
         format!("id: {}", yaml_string(&space.id)),
-        format!("title: {}", yaml_string(&space.title)),
+        "title:".to_string(),
+    ];
+    lines.extend(localized_text_yaml_lines(&space.title, 2));
+    lines.extend([
         format!("state: {}", yaml_string(&space.state)),
         format!("type: {}", yaml_string(&space.space_type)),
-        format!("description: {}", yaml_string(&space.description)),
+        "description:".to_string(),
+    ]);
+    lines.extend(localized_text_yaml_lines(&space.description, 2));
+    lines.extend([
         format!("layout: {}", yaml_string(&space.layout)),
         "groups:".to_string(),
-    ];
+    ]);
     for group in &space.groups {
         lines.push(format!("  - {}", yaml_string(group)));
     }
@@ -1474,14 +1513,21 @@ fn preview_space_yaml(space: &PreviewSpace) -> String {
 }
 
 fn preview_resource_yaml(item: &PreviewDirectoryItem) -> String {
-    let lines = vec![
+    let mut lines = vec![
         format!("id: {}", yaml_string(&item.resource_id)),
-        format!("title: {}", yaml_string(&item.title)),
+        "title:".to_string(),
+    ];
+    lines.extend(localized_text_yaml_lines(&item.title, 2));
+    lines.extend([
+        "description:".to_string(),
+    ]);
+    lines.extend(localized_text_yaml_lines(&item.description, 2));
+    lines.extend([
         format!("url: {}", yaml_string(&item.url)),
         format!("type: {}", yaml_string(&item.item_type)),
         "state: \"active\"".to_string(),
         String::new(),
-    ];
+    ]);
     lines.join("\n")
 }
 
@@ -1507,12 +1553,105 @@ fn preview_template_yaml(template: &PreviewTemplate) -> String {
     for block in &template.blocks {
         lines.push(format!("  - id: {}", yaml_string(&block.id)));
         lines.push(format!("    type: {}", yaml_string(&block.block_type)));
-        lines.push(format!("    title: {}", yaml_string(&block.title)));
+        lines.push("    title:".to_string());
+        lines.extend(localized_text_yaml_lines(&block.title, 6));
         lines.push("    config:".to_string());
         lines.push(format!("      limit: {}", block.limit));
     }
     lines.push(String::new());
     lines.join("\n")
+}
+
+fn localized_text_sort_key(value: &LocalizedText) -> String {
+    value
+        .translations
+        .get("en")
+        .or_else(|| value.translations.values().next())
+        .map(|item| item.to_lowercase())
+        .unwrap_or_else(|| value.key.to_lowercase())
+}
+
+fn localized_text_json(value: &LocalizedText) -> String {
+    let translations = value
+        .translations
+        .iter()
+        .map(|(lang, text)| format!("{}:{}", json_string(lang), json_string(text)))
+        .collect::<Vec<_>>();
+    format!(
+        "{{\"key\":{},\"translations\":{{{}}}}}",
+        json_string(&value.key),
+        translations.join(",")
+    )
+}
+
+fn localized_text_yaml_lines(value: &LocalizedText, indent: usize) -> Vec<String> {
+    let prefix = " ".repeat(indent);
+    let mut lines = vec![format!("{prefix}key: {}", yaml_string(&value.key))];
+    lines.push(format!("{prefix}translations:"));
+    for (lang, text) in &value.translations {
+        lines.push(format!("{prefix}  {lang}: {}", yaml_string(text)));
+    }
+    lines
+}
+
+fn parse_localized_text(source: &str, key: &str, default_key: &str) -> LocalizedText {
+    let lines = source.lines().collect::<Vec<_>>();
+    let field_prefix = format!("{key}:");
+    let Some((index, field_line)) = lines
+        .iter()
+        .enumerate()
+        .find(|(_, line)| line.trim() == field_prefix)
+    else {
+        return LocalizedText {
+            key: default_key.to_string(),
+            translations: BTreeMap::new(),
+        };
+    };
+
+    let base_indent = leading_spaces(field_line);
+    let mut text = LocalizedText {
+        key: default_key.to_string(),
+        translations: BTreeMap::new(),
+    };
+    let mut in_translations = false;
+    let mut translations_indent = 0usize;
+
+    for line in lines.iter().skip(index + 1) {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let indent = leading_spaces(line);
+        if indent <= base_indent {
+            break;
+        }
+        let trimmed = line.trim();
+        if let Some(value) = trimmed.strip_prefix("key:") {
+            let parsed = unquote(value.trim()).to_string();
+            if !parsed.is_empty() {
+                text.key = parsed;
+            }
+            in_translations = false;
+        } else if trimmed == "translations:" {
+            in_translations = true;
+            translations_indent = indent;
+        } else if in_translations && indent > translations_indent {
+            if let Some((lang, value)) = trimmed.split_once(':') {
+                let lang = lang.trim().to_ascii_lowercase();
+                let value = unquote(value.trim()).to_string();
+                if !lang.is_empty() && !value.is_empty() {
+                    text.translations.insert(lang, value);
+                }
+            }
+        } else {
+            in_translations = false;
+        }
+    }
+
+    text
+}
+
+fn leading_spaces(value: &str) -> usize {
+    value.chars().take_while(|ch| *ch == ' ').count()
 }
 
 fn parse_scalar(source: &str, key: &str) -> Option<String> {
@@ -1674,7 +1813,10 @@ fn parse_template_blocks(source: &str) -> Vec<PreviewTemplateBlock> {
             current = Some(PreviewTemplateBlock {
                 id: unquote(value.trim()).to_string(),
                 block_type: String::new(),
-                title: String::new(),
+                title: LocalizedText {
+                    key: String::new(),
+                    translations: BTreeMap::new(),
+                },
                 limit: 8,
             });
             continue;
@@ -1686,7 +1828,10 @@ fn parse_template_blocks(source: &str) -> Vec<PreviewTemplateBlock> {
         if let Some(value) = trimmed.strip_prefix("type:") {
             block.block_type = unquote(value.trim()).to_string();
         } else if let Some(value) = trimmed.strip_prefix("title:") {
-            block.title = unquote(value.trim()).to_string();
+            let title = unquote(value.trim()).to_string();
+            if !title.is_empty() {
+                block.title = localized_text("", &title, "");
+            }
         } else if let Some(value) = trimmed.strip_prefix("limit:") {
             if let Ok(limit) = unquote(value.trim()).parse::<i64>() {
                 block.limit = limit;
@@ -1708,8 +1853,11 @@ fn normalize_block(mut block: PreviewTemplateBlock) -> PreviewTemplateBlock {
     if block.block_type.trim().is_empty() {
         block.block_type = "resources_pinned".to_string();
     }
-    if block.title.trim().is_empty() {
-        block.title = "Key resources".to_string();
+    if block.title.key.trim().is_empty() {
+        block.title.key = format!("atrium.block.{}.title", block.id);
+    }
+    if block.title.translations.is_empty() {
+        block.title = localized_text(&block.title.key, "Key resources", "Ключевые ресурсы");
     }
     block
 }
@@ -1834,9 +1982,9 @@ fn extract_dashboard_blocks(body: &str) -> Vec<PreviewTemplateBlock> {
         let title = extract_json_string(block_body, "title").unwrap_or_else(|| "Preview block".to_string());
         let limit = extract_json_number(block_body, "limit").unwrap_or(8);
         blocks.push(PreviewTemplateBlock {
+            title: localized_text(&format!("atrium.block.{id}.title"), &title, ""),
             id,
             block_type,
-            title,
             limit,
         });
         remaining = &block_body[6..];
@@ -1873,14 +2021,32 @@ fn slugify(value: &str) -> String {
     slug.trim_matches('-').to_string()
 }
 
+fn localized_text(key: &str, en: &str, ru: &str) -> LocalizedText {
+    let mut translations = BTreeMap::new();
+    if !en.trim().is_empty() {
+        translations.insert("en".to_string(), en.to_string());
+    }
+    if !ru.trim().is_empty() {
+        translations.insert("ru".to_string(), ru.to_string());
+    }
+    LocalizedText {
+        key: key.to_string(),
+        translations,
+    }
+}
+
 fn default_preview_space() -> PreviewSpace {
     PreviewSpace {
         id: "admin".to_string(),
-        title: "Admin".to_string(),
+        title: localized_text("atrium.space.admin.title", "Admin", "Администрирование"),
         state: "active".to_string(),
         space_type: "staff".to_string(),
         layout: "grid".to_string(),
-        description: "Workspace administration".to_string(),
+        description: localized_text(
+            "atrium.space.admin.description",
+            "Workspace administration",
+            "Управление рабочим пространством",
+        ),
         groups: vec!["admin".to_string()],
         dashboard_template: "admin-default".to_string(),
     }
@@ -1890,7 +2056,7 @@ fn default_preview_block() -> PreviewTemplateBlock {
     PreviewTemplateBlock {
         id: "key-resources".to_string(),
         block_type: "resources_pinned".to_string(),
-        title: "Key resources".to_string(),
+        title: localized_text("atrium.block.key-resources.title", "Key resources", "Ключевые ресурсы"),
         limit: 8,
     }
 }
@@ -1906,12 +2072,12 @@ fn preview_space_json(space: &PreviewSpace) -> String {
     format!(
         "{{\"id\":{},\"title\":{},\"state\":{},\"type\":{},\"layout\":{},\"groups\":{},\"description\":{},\"display_config\":{{\"dashboard_template_key\":{}}},\"dashboard_template\":{},\"provisioning_dashboard_template\":{},\"is_provisioned\":true,\"is_default_public_entry\":false}}",
         json_string(&space.id),
-        json_string(&space.title),
+        localized_text_json(&space.title),
         json_string(&space.state),
         json_string(&space.space_type),
         json_string(&space.layout),
         json_string_array(&space.groups),
-        json_string(&space.description),
+        localized_text_json(&space.description),
         json_string(&space.dashboard_template),
         json_string(&space.dashboard_template),
         json_string(&space.dashboard_template),

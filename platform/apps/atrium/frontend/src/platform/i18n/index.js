@@ -8,4 +8,4 @@ export {
   resolvePlatformLocale,
   resolveSupportedPlatformLangs
 } from "./locales.js";
-export { resolveLocalizedText } from "./resolveLocalizedText.js";
+export { resolveLocalizedField, resolveLocalizedText } from "./resolveLocalizedText.js";

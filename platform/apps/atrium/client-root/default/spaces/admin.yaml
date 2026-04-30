@@ -1,8 +1,16 @@
 id: admin
-title: "Admin"
+title:
+  key: atrium.space.admin.title
+  translations:
+    en: "Admin"
+    ru: "Администрирование"
 state: active
 type: staff
-description: "Workspace administration"
+description:
+  key: atrium.space.admin.description
+  translations:
+    en: "Workspace administration"
+    ru: "Управление рабочим пространством"
 layout: grid
 groups:
   - admin

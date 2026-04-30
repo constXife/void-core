@@ -73,7 +73,7 @@ const { isKioskMode, isMobile, tooltipDelay, tooltipsDisabled } = storeToRefs(ui
             >
               <span class="space-picker-icon">{{ spaceStore.spaceIconLabel(space) }}</span>
               <span class="space-picker-info">
-                <span class="space-picker-name">{{ space.title }}</span>
+                <span class="space-picker-name">{{ spaceStore.spaceTitle(space) }}</span>
                 <span v-if="spaceStore.spaceMetaLabel(space)" class="space-picker-meta">
                   {{ spaceStore.spaceMetaLabel(space) }}
                 </span>

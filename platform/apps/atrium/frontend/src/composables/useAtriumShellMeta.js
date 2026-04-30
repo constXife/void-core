@@ -29,21 +29,21 @@ export const spacePublicEntry = (space) => {
 
 export const spaceDescription = (space) => {
   const publicEntry = spacePublicEntry(space);
-  if (publicEntry?.subtitle) return String(publicEntry.subtitle);
+  if (publicEntry?.subtitle) return publicEntry.subtitle;
   if (space?.description) return space.description;
   return "";
 };
 
 export const spacePublicTitle = (space) => {
   const publicEntry = spacePublicEntry(space);
-  if (publicEntry?.title) return String(publicEntry.title);
+  if (publicEntry?.title) return publicEntry.title;
   return space?.title || "";
 };
 
 export const spacePublicHelp = (space) => {
   const publicEntry = spacePublicEntry(space);
-  if (publicEntry?.help) return String(publicEntry.help);
-  if (publicEntry?.contact) return String(publicEntry.contact);
+  if (publicEntry?.help) return publicEntry.help;
+  if (publicEntry?.contact) return publicEntry.contact;
   return "";
 };
 

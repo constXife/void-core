@@ -82,6 +82,7 @@ const {
   serviceStatusLabel,
   setDashboardEditSelection,
   spaceDescription,
+  spaceTitle,
   surfaceCardActions,
   surfaceCardsFor,
   surfaceHeadingFor,
@@ -100,7 +101,7 @@ const {
   <div class="stage-panel">
     <div class="stage-header">
       <div>
-        <h2 class="stage-title">{{ props.space.title }}</h2>
+        <h2 class="stage-title">{{ spaceTitle(props.space) }}</h2>
         <div v-if="spaceDescription(props.space)" class="stage-subtitle">
           {{ spaceDescription(props.space) }}
         </div>

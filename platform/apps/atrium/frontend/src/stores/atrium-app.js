@@ -10,9 +10,9 @@ import { useAtriumResources } from "../composables/useAtriumResources.js";
 import { useAtriumRoleOverride } from "../composables/useAtriumRoleOverride.js";
 import { useAtriumTheme } from "../composables/useAtriumTheme.js";
 import {
-  spaceDescription,
-  spacePublicHelp,
-  spacePublicTitle,
+  spaceDescription as rawSpaceDescription,
+  spacePublicHelp as rawSpacePublicHelp,
+  spacePublicTitle as rawSpacePublicTitle,
   useAdminMeta,
   usePublicShellMeta
 } from "../composables/useAtriumShellMeta.js";
@@ -33,6 +33,7 @@ import privacyDocumentRu from "../content/privacy.ru.md?raw";
 import { createAtriumApi } from "../lib/atrium-api.js";
 import { renderMarkdown } from "../lib/atrium-markdown.js";
 import { createAtriumSettings } from "../lib/atrium-settings.js";
+import { resolveLocalizedText } from "../platform/i18n/index.js";
 import { staffMetrics, staffQueue, staffQuickActions } from "../mocks/staff.js";
 import { useToastStore } from "./toast.js";
 
@@ -417,6 +418,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
 
   const {
     currentLang,
+    currentLocale,
     languageLabels,
     languageSelection,
     languageSwitcherMode,
@@ -435,6 +437,20 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     privacyDocuments: PRIVACY_DOCUMENTS,
     settingsStore
   });
+
+  const localizedText = (value, defaultValue = "") =>
+    resolveLocalizedText(value, {
+      lang: currentLang.value,
+      locale: currentLocale.value,
+      defaultValue
+    });
+
+  const spaceTitle = (space) => localizedText(rawSpacePublicTitle(space), String(space?.id || ""));
+  const spaceDescription = (space) => localizedText(rawSpaceDescription(space));
+  const spacePublicTitle = (space) => spaceTitle(space);
+  const spacePublicHelp = (space) => localizedText(rawSpacePublicHelp(space));
+  const resourceTitle = (item) => localizedText(item?.title, String(item?.id || item?.resource_id || ""));
+  const resourceDescription = (item) => localizedText(item?.description);
 
   const {
     authModes,
@@ -586,6 +602,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     fetchJSON,
     isMobile,
     isPublicReadonlySpace,
+    localizedText,
     notify,
     parseDisplayConfig,
     showAdmin,
@@ -829,6 +846,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     scrollToIndex,
     settingsStore,
     spaceDescription,
+    spaceTitle,
     spaces
   });
 
@@ -1184,10 +1202,12 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     restoreSpace,
     resolveHomePath,
     resourceInitial,
+    resourceDescription,
     resourcePopoverItem,
     resourcePopoverOpen,
     resourcePopoverPlacement,
     resourcePopoverViewer,
+    resourceTitle,
     roleOptions,
     roleOverrideActive,
     roleOverrideSelection,
@@ -1220,6 +1240,7 @@ export const useAtriumAppStore = defineStore("atrium-app", () => {
     spacePickerSections,
     spacePublicHelp,
     spacePublicTitle,
+    spaceTitle,
     spaceQuery,
     spaces,
     spacesAdmin,

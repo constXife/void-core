@@ -1,4 +1,5 @@
 import { Bookmark } from "lucide-vue-next";
+import { PLATFORM_FALLBACK_LANG } from "./platform/i18n/index.js";
 
 export const HOTKEYS = {
   next: "D / →",
@@ -6,7 +7,7 @@ export const HOTKEYS = {
   help: "?"
 };
 
-export const FALLBACK_LANG = "ru";
+export const FALLBACK_LANG = PLATFORM_FALLBACK_LANG;
 export const LANG_STORAGE_KEY = "atrium:lang";
 export const ENABLE_V0_EDITOR = false;
 export const ENABLE_V0_DEV_ADMIN_SEAMS = false;

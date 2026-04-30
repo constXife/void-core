@@ -2,6 +2,10 @@ id: admin-default
 blocks:
   - id: key-resources
     type: resources_pinned
-    title: "Key resources"
+    title:
+      key: atrium.block.key-resources.title
+      translations:
+        en: "Key resources"
+        ru: "Ключевые ресурсы"
     config:
       limit: 8

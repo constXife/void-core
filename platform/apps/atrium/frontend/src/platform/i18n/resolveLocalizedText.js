@@ -65,11 +65,25 @@ export const resolveLocalizedText = (
     if (resolved) return resolved;
   }
 
-  const fallbackLabel = String(input?.fallbackLabel || "").trim();
-  if (fallbackLabel) return fallbackLabel;
-
   const key = String(input?.key || "").trim();
   if (key) return key;
 
   return defaultValue;
 };
+
+export const resolveLocalizedField = (
+  record,
+  field,
+  {
+    lang,
+    locale,
+    fallbackLang = PLATFORM_FALLBACK_LANG,
+    defaultValue = ""
+  } = {}
+) =>
+  resolveLocalizedText(record?.[field], {
+    lang,
+    locale: locale || resolvePlatformLocale(lang, fallbackLang),
+    fallbackLang,
+    defaultValue
+  });

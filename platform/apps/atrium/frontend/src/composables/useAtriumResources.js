@@ -1,5 +1,13 @@
 import { computed, ref } from "vue";
 
+const resourceTitleFallback = (item) => {
+  const title = item?.title;
+  if (title && typeof title === "object") {
+    return title.translations?.en || Object.values(title.translations || {})[0] || title.key || "";
+  }
+  return String(title || "");
+};
+
 export function useAtriumResources({
   BLOCK_TYPES,
   blockDataFor,
@@ -49,7 +57,7 @@ export function useAtriumResources({
   const resourcePopoverAnchor = ref(null);
 
   const resourceInitial = (item) => {
-    const title = String(item?.title || "").trim();
+    const title = resourceTitleFallback(item).trim();
     return title ? title[0].toUpperCase() : "•";
   };
 
@@ -228,7 +236,7 @@ export function useAtriumResources({
 
   const rememberResourceVisit = (space, item) => {
     const spaceId = String(space?.id || item?.space_id || "");
-    const title = String(item?.title || "").trim();
+    const title = resourceTitleFallback(item).trim();
     const url = String(item?.url || "").trim();
     if (!spaceId || !title || !url) return;
     const entry = {
@@ -297,7 +305,7 @@ export function useAtriumResources({
       ];
     }
     if (isKidsSpace(space)) {
-      const safeResources = resources.slice(0, 3).map((item) => item.title);
+      const safeResources = resources.slice(0, 3).map(resourceTitleFallback);
       return [
         {
           id: "kids-safe",
