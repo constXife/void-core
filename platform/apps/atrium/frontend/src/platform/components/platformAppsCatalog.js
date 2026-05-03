@@ -1,25 +1,25 @@
-export async function loadWorkspaceProducts(workspacePath, lang) {
-  const response = await fetch(workspacePath, { credentials: "include" });
+export async function loadProductCatalog(catalogPath, lang) {
+  const response = await fetch(catalogPath, { credentials: "same-origin" });
   if (!response.ok) {
-    throw new Error(`Failed to load Atrium workspace product catalog: ${response.status}`);
+    throw new Error(`Failed to load product catalog: ${response.status}`);
   }
   const payload = await response.json();
-  return productsFromWorkspace(payload, lang);
+  return productsFromCatalog(payload, lang);
 }
 
-export function productsFromWorkspace(payload, lang) {
-  const entries = payload?.workspace?.current_space?.entries?.items;
+export function productsFromCatalog(payload, lang) {
+  const entries = payload?.products;
   if (!Array.isArray(entries)) return [];
   return entries
     .filter((entry) => entry?.classification === "official-product")
     .sort((left, right) => Number(left?.order || 0) - Number(right?.order || 0))
     .map((entry) => {
-      const key = String(entry?.key || entry?.resource || "").trim().toLowerCase();
+      const key = String(entry?.key || "").trim().toLowerCase();
       if (!key) return null;
       return {
         key,
         accent: key[0]?.toUpperCase() || "?",
-        href: String(entry?.url || "").trim(),
+        href: String(entry?.href || "").trim(),
         label: localizedText(entry?.title, lang) || key
       };
     })

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { LayoutGrid } from "lucide-vue-next";
 import PlatformDropdownAnchor from "./PlatformDropdownAnchor.vue";
-import { loadWorkspaceProducts } from "./platformAppsCatalog.js";
+import { loadProductCatalog } from "./platformAppsCatalog.js";
 
 const props = defineProps({
   currentProduct: {
@@ -21,9 +21,9 @@ const props = defineProps({
     type: Array,
     default: undefined
   },
-  workspacePath: {
+  catalogPath: {
     type: String,
-    default: "/atrium/workspace"
+    default: "/product-catalog.json"
   }
 });
 
@@ -71,7 +71,7 @@ const items = computed(() =>
 
 onMounted(async () => {
   if (Array.isArray(props.products)) return;
-  workspaceProducts.value = await loadWorkspaceProducts(props.workspacePath, props.lang);
+  workspaceProducts.value = await loadProductCatalog(props.catalogPath, props.lang);
 });
 
 function resolveProductHref(productKey) {

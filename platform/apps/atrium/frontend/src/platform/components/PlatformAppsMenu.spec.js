@@ -13,51 +13,43 @@ describe("PlatformAppsMenu", () => {
     vi.unstubAllGlobals();
   });
 
-  it("loads official product surfaces from the Atrium workspace", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
+  it("loads official product surfaces from the product catalog", async () => {
+    const fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          workspace: {
-            current_space: {
-              entries: {
-                items: [
-                  {
-                    key: "rauthy",
-                    classification: "official-profile",
-                    title: "Rauthy",
-                    url: "https://id.arkham.void",
-                    order: 1
-                  },
-                  {
-                    key: "atrium",
-                    classification: "official-product",
-                    title: { translations: { en: "Atrium", ru: "Атриум" } },
-                    url: "https://atrium.arkham.void",
-                    order: 2
-                  },
-                  {
-                    key: "calendar",
-                    classification: "official-product",
-                    title: { translations: { en: "Calendar", ru: "Календарь" } },
-                    url: "https://calendar.arkham.void",
-                    order: 3
-                  },
-                  {
-                    key: "mailpit",
-                    classification: "client-owned",
-                    title: "Mailpit",
-                    url: "https://mail.arkham.void",
-                    order: 4
-                  }
-                ]
-              }
+          products: [
+            {
+              key: "rauthy",
+              classification: "official-profile",
+              title: "Rauthy",
+              href: "https://id.arkham.void",
+              order: 1
+            },
+            {
+              key: "atrium",
+              classification: "official-product",
+              title: { translations: { en: "Atrium", ru: "Атриум" } },
+              href: "https://atrium.arkham.void",
+              order: 2
+            },
+            {
+              key: "calendar",
+              classification: "official-product",
+              title: { translations: { en: "Calendar", ru: "Календарь" } },
+              href: "https://calendar.arkham.void",
+              order: 3
+            },
+            {
+              key: "mailpit",
+              classification: "client-owned",
+              title: "Mailpit",
+              href: "https://mail.arkham.void",
+              order: 4
             }
-          }
+          ]
         })
-      })
-    );
+      });
+    vi.stubGlobal("fetch", fetch);
 
     const wrapper = mount(PlatformAppsMenu, {
       props: {
@@ -76,6 +68,7 @@ describe("PlatformAppsMenu", () => {
       .findAll("a.platform-apps-menu__item")
       .map((item) => item.attributes("href"));
 
+    expect(fetch).toHaveBeenCalledWith("/product-catalog.json", { credentials: "same-origin" });
     expect(labels).toEqual(["Atrium", "Calendar"]);
     expect(hrefs).toEqual([
       "https://atrium.arkham.void",
