@@ -322,8 +322,8 @@ in {
         default = {};
         example = lib.literalExpression ''
           {
-            arkham-assets = {};
-            arkham-static = {
+            site-assets = {};
+            site-static = {
               website.enable = true;
             };
           }
@@ -339,7 +339,7 @@ in {
           options = {
             bucket = lib.mkOption {
               type = bucketNameType;
-              example = "arkham-assets";
+              example = "site-assets";
               description = "Target bucket name.";
             };
 
@@ -372,7 +372,7 @@ in {
         example = lib.literalExpression ''
           [
             {
-              bucket = "arkham-assets";
+              bucket = "site-assets";
               serviceAccount = "assets";
               read = true;
               write = true;
@@ -386,7 +386,7 @@ in {
         type = lib.types.lines;
         default = "";
         example = ''
-          garage bucket alias arkham-assets assets
+          garage bucket alias site-assets assets
         '';
         description = ''
           Extra shell commands appended to the end of the provisioning service.

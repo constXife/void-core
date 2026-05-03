@@ -118,7 +118,7 @@ pkgs.writeShellScriptBin "atrium_backend_dev" ''
     export VOID_ATRIUM_WIDGETS_PATH="$widgets_path"
     export FRONTEND_DEV_URL="''${FRONTEND_DEV_URL:-''${ATRIUM_FRONTEND_DEV_URL:-http://127.0.0.1:5173}}"
     export APP_ENV="''${APP_ENV:-dev}"
-    export AUTH_COOKIE_SECRET="''${AUTH_COOKIE_SECRET:-dev-cookie-secret}"
+    export AUTH_COOKIE_SECRET="''${AUTH_COOKIE_SECRET:?AUTH_COOKIE_SECRET must be set in the environment or platform/apps/atrium/.env}"
     export AUTH_COOKIE_SECURE="''${AUTH_COOKIE_SECURE:-0}"
 
     exec ${run}/bin/atrium_run

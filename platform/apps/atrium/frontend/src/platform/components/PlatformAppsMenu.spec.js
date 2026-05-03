@@ -22,28 +22,28 @@ describe("PlatformAppsMenu", () => {
               key: "rauthy",
               classification: "official-profile",
               title: "Rauthy",
-              href: "https://id.arkham.void",
+              href: "https://id.example.test",
               order: 1
             },
             {
               key: "atrium",
               classification: "official-product",
               title: { translations: { en: "Atrium", ru: "Атриум" } },
-              href: "https://atrium.arkham.void",
+              href: "https://atrium.example.test",
               order: 2
             },
             {
               key: "calendar",
               classification: "official-product",
               title: { translations: { en: "Calendar", ru: "Календарь" } },
-              href: "https://calendar.arkham.void",
+              href: "https://calendar.example.test",
               order: 3
             },
             {
               key: "mailpit",
               classification: "client-owned",
               title: "Mailpit",
-              href: "https://mail.arkham.void",
+              href: "https://mail.example.test",
               order: 4
             }
           ]
@@ -71,8 +71,8 @@ describe("PlatformAppsMenu", () => {
     expect(fetch).toHaveBeenCalledWith("/product-catalog.json", { credentials: "same-origin" });
     expect(labels).toEqual(["Atrium", "Calendar"]);
     expect(hrefs).toEqual([
-      "https://atrium.arkham.void",
-      "https://calendar.arkham.void"
+      "https://atrium.example.test",
+      "https://calendar.example.test"
     ]);
   });
 
@@ -83,7 +83,7 @@ describe("PlatformAppsMenu", () => {
     const wrapper = mount(PlatformAppsMenu, {
       props: {
         currentProduct: "atrium",
-        domain: "arkham.void",
+        domain: "example.test",
         products: [
           { key: "atrium", label: "Atrium", accent: "A" },
           { key: "calendar", label: "Calendar", accent: "C" }
@@ -104,8 +104,8 @@ describe("PlatformAppsMenu", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(labels).toEqual(["Atrium", "Calendar"]);
     expect(hrefs).toEqual([
-      "https://atrium.arkham.void/",
-      "https://calendar.arkham.void/"
+      "https://atrium.example.test/",
+      "https://calendar.example.test/"
     ]);
   });
 });
