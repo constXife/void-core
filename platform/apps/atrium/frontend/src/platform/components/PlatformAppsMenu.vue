@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { LayoutGrid } from "lucide-vue-next";
 import PlatformDropdownAnchor from "./PlatformDropdownAnchor.vue";
+import { loadWorkspaceProducts } from "./platformAppsCatalog.js";
 
 const props = defineProps({
   currentProduct: {
@@ -18,12 +19,11 @@ const props = defineProps({
   },
   products: {
     type: Array,
-    default: () => [
-      { key: "atrium", label: "Atrium", accent: "A" },
-      { key: "calendar", label: "Calendar", accent: "C" },
-      { key: "inventory", label: "Inventory", accent: "I" },
-      { key: "finance", label: "Finance", accent: "F" }
-    ]
+    default: undefined
+  },
+  workspacePath: {
+    type: String,
+    default: "/atrium/workspace"
   }
 });
 
@@ -41,8 +41,21 @@ const localized = computed(() => {
   };
 });
 
+const workspaceProducts = ref([]);
+const open = ref(false);
+
+const sourceProducts = computed(() =>
+  Array.isArray(props.products) ? props.products : workspaceProducts.value
+);
+
+const productKeys = computed(() =>
+  sourceProducts.value
+    .map((item) => String(item?.key || "").trim().toLowerCase())
+    .filter(Boolean)
+);
+
 const items = computed(() =>
-  props.products
+  sourceProducts.value
     .map((item) => {
       const key = String(item?.key || "").trim().toLowerCase();
       if (!key) return null;
@@ -56,9 +69,10 @@ const items = computed(() =>
     .filter(Boolean)
 );
 
-const productKeys = computed(() => items.value.map((item) => item.key));
-
-const open = ref(false);
+onMounted(async () => {
+  if (Array.isArray(props.products)) return;
+  workspaceProducts.value = await loadWorkspaceProducts(props.workspacePath, props.lang);
+});
 
 function resolveProductHref(productKey) {
   if (props.domain) {

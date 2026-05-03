@@ -1,5 +1,5 @@
-import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { flushPromises, mount } from "@vue/test-utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import PlatformAppsMenu from "./PlatformAppsMenu.vue";
 
@@ -9,14 +9,64 @@ async function openMenu(wrapper) {
 }
 
 describe("PlatformAppsMenu", () => {
-  it("shows the default product surfaces", async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("loads official product surfaces from the Atrium workspace", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            current_space: {
+              entries: {
+                items: [
+                  {
+                    key: "rauthy",
+                    classification: "official-profile",
+                    title: "Rauthy",
+                    url: "https://id.arkham.void",
+                    order: 1
+                  },
+                  {
+                    key: "atrium",
+                    classification: "official-product",
+                    title: { translations: { en: "Atrium", ru: "Атриум" } },
+                    url: "https://atrium.arkham.void",
+                    order: 2
+                  },
+                  {
+                    key: "calendar",
+                    classification: "official-product",
+                    title: { translations: { en: "Calendar", ru: "Календарь" } },
+                    url: "https://calendar.arkham.void",
+                    order: 3
+                  },
+                  {
+                    key: "mailpit",
+                    classification: "client-owned",
+                    title: "Mailpit",
+                    url: "https://mail.arkham.void",
+                    order: 4
+                  }
+                ]
+              }
+            }
+          }
+        })
+      })
+    );
+
     const wrapper = mount(PlatformAppsMenu, {
       props: {
         currentProduct: "atrium",
-        domain: "arkham.void"
+        lang: "en"
       }
     });
 
+    await flushPromises();
     await openMenu(wrapper);
 
     const labels = wrapper
@@ -26,12 +76,43 @@ describe("PlatformAppsMenu", () => {
       .findAll("a.platform-apps-menu__item")
       .map((item) => item.attributes("href"));
 
-    expect(labels).toEqual(["Atrium", "Calendar", "Inventory", "Finance"]);
+    expect(labels).toEqual(["Atrium", "Calendar"]);
+    expect(hrefs).toEqual([
+      "https://atrium.arkham.void",
+      "https://calendar.arkham.void"
+    ]);
+  });
+
+  it("supports explicit products without loading workspace data", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+
+    const wrapper = mount(PlatformAppsMenu, {
+      props: {
+        currentProduct: "atrium",
+        domain: "arkham.void",
+        products: [
+          { key: "atrium", label: "Atrium", accent: "A" },
+          { key: "calendar", label: "Calendar", accent: "C" }
+        ]
+      }
+    });
+
+    await flushPromises();
+    await openMenu(wrapper);
+
+    const labels = wrapper
+      .findAll(".platform-apps-menu__item-label")
+      .map((item) => item.text());
+    const hrefs = wrapper
+      .findAll("a.platform-apps-menu__item")
+      .map((item) => item.attributes("href"));
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(labels).toEqual(["Atrium", "Calendar"]);
     expect(hrefs).toEqual([
       "https://atrium.arkham.void/",
-      "https://calendar.arkham.void/",
-      "https://inventory.arkham.void/",
-      "https://finance.arkham.void/"
+      "https://calendar.arkham.void/"
     ]);
   });
 });
