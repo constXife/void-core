@@ -12,7 +12,7 @@ Canonical integration points live in:
 Normative boundary:
 - users should be able to get a functionally usable `Atrium` from `void-core` alone;
 - if a host/runtime path is required for the baseline shell, it belongs in `void-core`;
-- downstream repositories such as `void` may extend the shell, but should not be mandatory for first boot or first use.
+- downstream product repositories may extend the shell, but should not be mandatory for first boot or first use.
 
 Canonical frontend header composition now lives in:
 - `frontend/src/platform/components/README.md`
@@ -63,7 +63,7 @@ host delegation remains available only through explicit `ATRIUM_HOST_MODE=shim` 
 - Override the client root explicitly: `ATRIUM_CLIENT_ROOT_PATH=/path/to/client-root task backend-dev`
 
 `task run`, `task backend-dev`, and `task fixture-dev` default to `ATRIUM_HOST_MODE=preview`, so
-they work from `void-core` alone. The launcher does not auto-detect or build a sibling `../void`
+they work from `void-core` alone. The launcher does not auto-detect or build a sibling downstream
 checkout. A downstream compatibility host is an explicit opt-in path, for example:
 `ATRIUM_HOST_MODE=shim ATRIUM_DOWNSTREAM_HOST_BIN=/path/to/void-atrium-web task backend-dev`.
 

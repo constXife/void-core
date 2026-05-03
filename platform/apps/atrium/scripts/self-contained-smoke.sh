@@ -19,7 +19,7 @@ trap cleanup EXIT INT TERM
 
 env \
   -u ATRIUM_HOST_MODE \
-  VOID_REPO_ROOT=/definitely/not/void \
+  VOID_REPO_ROOT=/definitely/not/downstream-product-repo \
   VOID_CORE_REPO_ROOT="$void_core_repo_root" \
   VOID_CORE_ATRIUM_APP_DIR="$atrium_app_dir" \
   VOID_ATRIUM_WEB_LISTEN_ADDRESS=127.0.0.1 \

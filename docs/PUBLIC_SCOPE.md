@@ -16,7 +16,7 @@ Public scope must be explicit, not assumed.
 
 Important clarification:
 - `shared` does not automatically mean `void-core`;
-- both `void-core` and downstream repositories such as `void` may contain reusable capabilities;
+- both `void-core` and downstream product repositories may contain reusable capabilities;
 - the boundary is defined by the public/open foundation promise, not by abstract "sharedness" alone.
 
 ## What may live in `void-core`
@@ -38,7 +38,7 @@ The intended extension model is:
 - higher-level product and distribution layers in separate repositories;
 - client-specific overlays in separate deployment repositories.
 
-A downstream repository such as `void` may still own shared reusable capabilities when they are not part of the public foundation baseline.
+A downstream product repository may still own shared reusable capabilities when they are not part of the public foundation baseline.
 
 ## What must not live in `void-core`
 
@@ -70,7 +70,7 @@ That does not include:
 - downstream product-specific host UIs such as calendar, inventory, or finance surfaces;
 - product-specific backend handlers that exist only to serve one downstream product host.
 
-Those belong in downstream product repositories such as `void`.
+Those belong in downstream product repositories.
 
 ## Change discipline
 
@@ -116,5 +116,5 @@ Examples of behavior that should stay downstream:
 
 A useful rule of thumb:
 - if the change defines a reusable reference or contract that multiple downstream products should share and publish as part of the foundation baseline, it is a candidate for `void-core`;
-- if the change is shared but belongs to a closed product/distribution contour, it may stay in a downstream repository such as `void`;
+- if the change is shared but belongs to a closed product/distribution contour, it may stay in a downstream product repository;
 - if the change defines how one product interprets, aggregates, or presents that contract, it stays in the downstream product repository.

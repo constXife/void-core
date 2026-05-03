@@ -103,7 +103,7 @@ The inventory above should be interpreted with these rules:
 ## Relationship to products
 
 `void-core` describes reusable components.
-Product repositories such as `void` describe how those components are packaged into a product contour.
+Downstream product repositories describe how those components are packaged into a product contour.
 
 Examples:
 - `Caddy` belongs here as a foundation ingress baseline.

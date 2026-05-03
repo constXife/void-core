@@ -40,7 +40,7 @@ The boundary for `Atrium` is not just "public shell source code".
 Normatively:
 - users should be able to obtain a working `Atrium` from `void-core` alone;
 - the functional host/runtime path, package path, and baseline NixOS integration for the foundation shell belong here;
-- downstream repositories such as `void` may extend `Atrium` with product-facing composition, private defaults, and closed integrations, but should not be a prerequisite for a functional baseline shell.
+- downstream product repositories may extend `Atrium` with product-facing composition, private defaults, and closed integrations, but should not be a prerequisite for a functional baseline shell.
 - downstream host delegation remains an explicit compatibility path, not the default baseline runtime.
 
 ## What Belongs In Atrium
@@ -64,7 +64,7 @@ The `Atrium` source tree should not become the place for:
 - product bundles that are specific to one segment only.
 - product-specific host surfaces such as downstream calendar, inventory, or finance UIs.
 
-Those concerns belong in `void`, client deployment repositories, or future product layers.
+Those concerns belong in downstream product repositories, client deployment repositories, or future product layers.
 
 ## Packaging Model
 
