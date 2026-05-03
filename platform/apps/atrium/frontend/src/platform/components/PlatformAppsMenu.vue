@@ -18,7 +18,12 @@ const props = defineProps({
   },
   products: {
     type: Array,
-    default: () => [{ key: "atrium", label: "Atrium", accent: "A" }]
+    default: () => [
+      { key: "atrium", label: "Atrium", accent: "A" },
+      { key: "calendar", label: "Calendar", accent: "C" },
+      { key: "inventory", label: "Inventory", accent: "I" },
+      { key: "finance", label: "Finance", accent: "F" }
+    ]
   }
 });
 
