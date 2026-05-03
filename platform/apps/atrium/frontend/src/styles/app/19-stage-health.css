@@ -1,0 +1,159 @@
+@utility stage-scroll {
+  @apply relative z-10 flex overflow-x-auto h-screen w-screen;
+  scroll-snap-type: x mandatory;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility stage-scroll-low {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+
+@utility stage-panel {
+  @apply min-w-screen px-8 pt-28 pb-36;
+  scroll-snap-align: center;
+}
+
+@utility stage-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+@utility stage-title {
+  @apply text-2xl font-semibold tracking-wide;
+}
+
+@utility stage-subtitle {
+  @apply text-sm text-white/50 mt-1;
+}
+
+@utility health-pill {
+  @apply hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  & strong {
+    @apply text-white/90;
+  }
+}
+
+@utility health-container {
+  /* Health Container & Dropdown */
+  @apply relative;
+}
+
+@utility health-badge {
+  @apply absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center;
+  background: rgba(248, 81, 73, 1);
+  color: white;
+  animation: pulse 1.5s ease-in-out infinite;
+  animation-duration: calc(1.5s * var(--fx-motion));
+  box-shadow: 0 0 8px rgba(248, 81, 73, 0.6);
+}
+
+@utility health-dropdown {
+  @apply absolute top-full right-0 mt-2 w-80 rounded-xl p-4 z-50;
+  background: rgba(18, 22, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(var(--fx-blur-strong));
+  -webkit-backdrop-filter: blur(var(--fx-blur-strong));
+  box-shadow: 0 calc(20px * var(--fx-shadow-strong))
+    calc(60px * var(--fx-shadow-strong)) rgba(0, 0, 0, 0.5);
+}
+
+@utility health-dropdown-header {
+  @apply flex items-center justify-between mb-3;
+
+  & .section-title {
+    @apply mb-0;
+  }
+}
+
+@utility health-summary {
+  @apply flex flex-wrap items-center gap-3 pb-3 mb-3;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility health-stat {
+  @apply flex items-center gap-1.5 text-xs text-white/70;
+}
+
+@utility health-issues {
+  @apply flex flex-col gap-2 pb-3 mb-3;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility health-issue {
+  @apply flex items-center gap-2;
+}
+
+@utility health-issue-title {
+  @apply flex-1 text-sm text-white/90 truncate;
+}
+
+@utility health-events {
+  @apply flex flex-col gap-2;
+
+  & .section-title {
+    @apply mb-2;
+  }
+}
+
+@utility health-event {
+  @apply flex items-center gap-2 text-xs;
+}
+
+@utility health-event-time {
+  @apply text-white/40 font-mono w-12 flex-shrink-0;
+}
+
+@utility health-event-text {
+  @apply text-white/70 truncate;
+}
+
+@utility health-empty {
+  @apply text-white/40 text-sm text-center py-4;
+}
+
+@utility stage-dots {
+  @apply fixed left-1/2 -translate-x-1/2 flex gap-2 z-20;
+  bottom: 140px;
+
+  &.dots-no-dock {
+    bottom: 60px;
+  }
+
+  @media (max-width: 640px) {
+    bottom: 92px;
+
+    &.dots-no-dock {
+      bottom: 32px;
+    }
+  }
+}
+
+@utility dots-no-dock {
+  &.stage-dots {
+    bottom: 60px;
+  }
+
+  @media (max-width: 640px) {
+    &.stage-dots {
+      bottom: 32px;
+    }
+  }
+}
+
+@utility dot {
+  @apply w-2.5 h-2.5 rounded-full bg-white/20;
+
+  &.active {
+    @apply bg-white/80;
+  }
+}

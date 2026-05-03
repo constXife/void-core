@@ -293,6 +293,37 @@ Admin-only routes require an authenticated Atrium admin session from the Rust we
 - `GET /api/me` - current auth/session payload
 - `GET /api/auth/modes` - available auth modes
 
+## Refactor state
+
+The Rust preview host is split by responsibility under `host-rust/src/preview/`:
+entrypoint/shim, server loop, route handlers, catalog loading, response rendering,
+mutations, file writes, static files, parsing, localization, and encoding.
+
+Frontend split state:
+- `frontend/src/app.css` is now only the stylesheet entrypoint; domain utilities
+  live in `frontend/src/styles/app/`;
+- `frontend/src/composables/useAtriumDashboard.js` now delegates dashboard
+  state/data, interactions, inline editing, forms, and provisioning snapshot
+  helpers to bounded composables;
+- `frontend/src/composables/useAtriumAdminData.js` is now a bounded admin
+  aggregator; spaces/editing, memberships, directory/content, forms, and mapping
+  helpers live under `frontend/src/composables/admin/`;
+- `frontend/src/composables/useAtriumResources.js` is now a bounded resource
+  aggregator; formatting, popover state, actions, and surface-card mapping live
+  under `frontend/src/composables/resources/`;
+- `frontend/src/stores/atrium-app.js` no longer owns clock/todo/calendar/booking
+  widget runtime directly; that runtime lives in `useAtriumWidgetRuntime.js`;
+- `frontend/src/stores/atrium-app.js` also delegates router/navigation, window
+  listeners/hotkeys, presentation helpers, workspace route lifecycle, and widget
+  scope filtering to bounded `frontend/src/composables/app/` modules.
+
+Remaining frontend refactor:
+- stop treating `frontend/src/stores/atrium-app.js` as the application facade for
+  every admin/resource/dashboard method; components should import bounded stores or
+  composables directly;
+- split large dashboard surfaces and route shells after store ownership is
+  narrowed, so UI files stop carrying editor, data, and presentation at once.
+
 Not part of shipped `v0` API:
 - announcements CRUD;
 - service catalog CRUD;

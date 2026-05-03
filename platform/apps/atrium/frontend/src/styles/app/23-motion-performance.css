@@ -1,0 +1,86 @@
+@layer components {
+
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 8px 2px rgba(63, 185, 80, 0.5); }
+    50% { box-shadow: 0 0 16px 4px rgba(63, 185, 80, 0.7); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(-50%); }
+    20% { transform: translateX(calc(-50% - 6px)); }
+    40% { transform: translateX(calc(-50% + 6px)); }
+    60% { transform: translateX(calc(-50% - 4px)); }
+    80% { transform: translateX(calc(-50% + 4px)); }
+  }
+
+  @keyframes dropdownIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes dropdownOut {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+
+  @keyframes onboardingIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes onboardingOut {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes hintSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  body[data-performance="low"] {
+    --fx-motion: 0;
+    --fx-blur-sm: 0px;
+    --fx-blur-md: 0px;
+    --fx-blur: 0px;
+    --fx-blur-strong: 0px;
+    --fx-shadow: 0;
+    --fx-shadow-strong: 0;
+    --fx-glass-mult: 0;
+  }
+}

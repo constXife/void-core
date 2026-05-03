@@ -1,0 +1,176 @@
+@utility dashboard-placeholders-container {
+  /* Empty State Hero */
+  /* Dashboard Placeholder Blocks */
+  @apply flex flex-col items-center gap-6 py-8;
+}
+
+@utility dashboard-placeholders-grid {
+  @apply grid gap-4 w-full max-w-3xl;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+@utility dashboard-placeholder {
+  @apply flex flex-col items-center justify-center gap-3 p-8 rounded-2xl cursor-pointer transition-all duration-300 text-center;
+  min-height: 180px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+
+  &:hover {
+    background: rgba(88, 166, 255, 0.06);
+    border-color: rgba(88, 166, 255, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(88, 166, 255, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:hover .placeholder-icon {
+    @apply text-blue-500;
+  }
+
+  &:hover .placeholder-title {
+    @apply text-white/90;
+  }
+}
+
+@utility placeholder-icon {
+  @apply w-10 h-10 text-white/30 transition-colors;
+
+  .dashboard-placeholder:hover & {
+    @apply text-blue-500;
+  }
+
+  .placeholder-admin:hover & {
+    @apply text-status-online;
+  }
+}
+
+@utility placeholder-title {
+  @apply text-base font-semibold text-white/70 transition-colors;
+
+  .dashboard-placeholder:hover & {
+    @apply text-white/90;
+  }
+}
+
+@utility placeholder-hint {
+  @apply text-xs text-white/40;
+}
+
+@utility add-block-btn {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200;
+  background: rgba(88, 166, 255, 0.15);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  color: rgba(88, 166, 255, 0.95);
+
+  &:hover {
+    background: rgba(88, 166, 255, 0.25);
+    border-color: rgba(88, 166, 255, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(88, 166, 255, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@utility placeholder-footer {
+  @apply text-xs text-white/35 mt-2;
+}
+
+@utility placeholders-kids {
+  /* Kids Space Placeholder Styles */
+  @apply py-12;
+}
+
+@utility placeholders-grid-kids {
+  @apply gap-6;
+  grid-template-columns: repeat(3, minmax(140px, 180px));
+  justify-content: center;
+}
+
+@utility placeholder-kids {
+  @apply rounded-3xl p-6;
+  min-height: 160px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border: 3px dashed rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(163, 113, 247, 0.15) 0%,
+      rgba(88, 166, 255, 0.1) 100%
+    );
+    border-color: rgba(163, 113, 247, 0.5);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(163, 113, 247, 0.2);
+  }
+
+  &:hover .placeholder-icon-kids {
+    @apply text-purple-500;
+    transform: scale(1.1);
+  }
+
+  &:hover .placeholder-title-kids {
+    @apply text-white;
+  }
+}
+
+@utility placeholder-icon-kids {
+  @apply w-14 h-14 text-white/50 transition-all;
+
+  .placeholder-kids:hover & {
+    @apply text-purple-500;
+    transform: scale(1.1);
+  }
+}
+
+@utility placeholder-title-kids {
+  @apply text-xl font-bold text-white/80 mt-3;
+
+  .placeholder-kids:hover & {
+    @apply text-white;
+  }
+}
+
+@utility add-block-btn-kids {
+  @apply text-base px-8 py-4 rounded-2xl;
+  background: linear-gradient(
+    135deg,
+    rgba(163, 113, 247, 0.2) 0%,
+    rgba(88, 166, 255, 0.15) 100%
+  );
+  border-color: rgba(163, 113, 247, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+
+  &:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(163, 113, 247, 0.3) 0%,
+      rgba(88, 166, 255, 0.25) 100%
+    );
+    border-color: rgba(163, 113, 247, 0.6);
+  }
+}
+
+@utility placeholder-admin {
+  /* Admin Space Placeholder Styles */
+  border-color: rgba(63, 185, 80, 0.2);
+
+  &:hover {
+    background: rgba(63, 185, 80, 0.08);
+    border-color: rgba(63, 185, 80, 0.4);
+    box-shadow: 0 8px 32px rgba(63, 185, 80, 0.1);
+  }
+
+  &:hover .placeholder-icon {
+    @apply text-status-online;
+  }
+}

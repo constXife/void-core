@@ -1,0 +1,125 @@
+@utility header-actions {
+  @apply flex items-center gap-2;
+}
+
+@utility header-divider {
+  @apply w-px h-6 mx-1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@utility header-tools {
+  @apply flex items-center gap-1;
+}
+
+@utility health-btn {
+  @apply relative;
+
+  &.pill-ok {
+    color: rgba(63, 185, 80, 0.9);
+  }
+
+  &.pill-warning {
+    color: rgba(210, 153, 34, 0.9);
+  }
+
+  &.pill-danger {
+    color: rgba(248, 81, 73, 0.9);
+  }
+}
+
+@utility pill-ok {
+  &.health-btn {
+    color: rgba(63, 185, 80, 0.9);
+  }
+  color: rgba(63, 185, 80, 0.9);
+  border-color: rgba(63, 185, 80, 0.3);
+}
+
+@utility pill-warning {
+  &.health-btn {
+    color: rgba(210, 153, 34, 0.9);
+  }
+  color: rgba(210, 153, 34, 0.9);
+  border-color: rgba(210, 153, 34, 0.3);
+}
+
+@utility pill-danger {
+  &.health-btn {
+    color: rgba(248, 81, 73, 0.9);
+  }
+  color: rgba(248, 81, 73, 0.9);
+  border-color: rgba(248, 81, 73, 0.3);
+}
+
+@utility user-menu-container {
+  /* User Menu */
+  @apply relative;
+}
+
+@utility user-menu-trigger {
+  @apply flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition-duration: calc(200ms * var(--fx-motion));
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+@utility user-avatar {
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold;
+  background: linear-gradient(
+    135deg,
+    rgba(88, 166, 255, 0.3) 0%,
+    rgba(163, 113, 247, 0.3) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@utility user-avatar-admin {
+  background: linear-gradient(
+    135deg,
+    rgba(63, 185, 80, 0.4) 0%,
+    rgba(88, 166, 255, 0.3) 100%
+  );
+  border-color: rgba(63, 185, 80, 0.3);
+}
+
+@utility user-dropdown {
+  @apply absolute top-full right-0 mt-2 w-64 rounded-xl p-3 z-50;
+  background: rgba(18, 22, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(var(--fx-blur-strong));
+  -webkit-backdrop-filter: blur(var(--fx-blur-strong));
+  box-shadow: 0 calc(20px * var(--fx-shadow-strong))
+    calc(60px * var(--fx-shadow-strong)) rgba(0, 0, 0, 0.5);
+}
+
+@utility user-dropdown-label-icon {
+  @apply flex items-center gap-2 text-xs;
+}
+
+@utility tooltip-trigger {
+  @apply inline-flex items-center;
+}
+
+@utility tooltip-bubble {
+  position: fixed;
+  z-index: 60;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(18, 22, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(var(--fx-blur-sm));
+  -webkit-backdrop-filter: blur(var(--fx-blur-sm));
+  box-shadow: 0 calc(10px * var(--fx-shadow)) calc(28px * var(--fx-shadow))
+    rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  opacity: 1;
+}

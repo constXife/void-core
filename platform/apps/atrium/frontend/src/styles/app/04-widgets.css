@@ -1,0 +1,164 @@
+@utility clock-widget {
+  @apply flex flex-col items-start gap-2;
+}
+
+@utility clock-time {
+  @apply text-4xl md:text-5xl font-semibold tracking-tight text-white/95;
+}
+
+@utility clock-date {
+  @apply text-sm uppercase tracking-[0.3em] text-white/60;
+}
+
+@utility widget-calendar {
+  @apply flex flex-col gap-4;
+}
+
+@utility calendar-compact {
+  @apply gap-2;
+
+  & .calendar-date {
+    @apply text-xl;
+  }
+
+  & .calendar-events {
+    @apply gap-1;
+  }
+}
+
+@utility calendar-date {
+  .calendar-compact & {
+    @apply text-xl;
+  }
+  @apply text-3xl font-semibold tracking-wide text-white/90;
+}
+
+@utility calendar-events {
+  .calendar-compact & {
+    @apply gap-1;
+  }
+  @apply flex flex-col gap-2 text-sm text-white/80;
+}
+
+@utility calendar-event {
+  @apply flex items-center gap-2;
+}
+
+@utility event-dot {
+  @apply w-2 h-2 rounded-full flex-shrink-0;
+}
+
+@utility event-dot-normal {
+  @apply bg-white/40;
+}
+
+@utility event-dot-urgent {
+  @apply bg-red-400;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
+}
+
+@utility event-dot-done {
+  @apply bg-status-online;
+}
+
+@utility event-time {
+  @apply text-white/60 text-xs uppercase tracking-wider;
+}
+
+@utility event-title {
+  @apply text-white/90 truncate;
+}
+
+@utility calendar-empty {
+  @apply text-xs uppercase tracking-widest text-white/40;
+}
+
+@utility widget-todo {
+  @apply flex flex-col gap-2;
+}
+
+@utility todo-list {
+  @apply flex flex-col gap-2;
+}
+
+@utility todo-item {
+  @apply flex items-center gap-3 text-sm text-white/90 px-3 py-2 rounded-xl bg-white/5 transition-colors;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  &.done {
+    @apply text-white/40 line-through;
+  }
+
+  &.done .todo-check {
+    @apply border-status-online text-status-online;
+  }
+}
+
+@utility done {
+  &.todo-item {
+    @apply text-white/40 line-through;
+  }
+
+  &.todo-item .todo-check {
+    @apply border-status-online text-status-online;
+  }
+}
+
+@utility todo-check {
+  @apply w-6 h-6 rounded-full border border-white/20 flex items-center justify-center text-xs text-white/80;
+
+  .todo-item.done & {
+    @apply border-status-online text-status-online;
+  }
+}
+
+@utility todo-text {
+  @apply flex-1 text-left;
+}
+
+@utility todo-empty {
+  @apply text-xs uppercase tracking-widest text-white/40;
+}
+
+@utility widget-booking {
+  @apply flex flex-col gap-3;
+}
+
+@utility booking-header {
+  @apply flex items-center justify-between gap-2;
+}
+
+@utility booking-resource {
+  @apply text-base font-semibold text-white/90;
+}
+
+@utility booking-status {
+  @apply text-xs uppercase tracking-[0.2em] px-2 py-1 rounded-full;
+}
+
+@utility booking-status-free {
+  @apply bg-status-online/20 text-status-online;
+}
+
+@utility booking-status-busy {
+  @apply bg-red-500/20 text-red-300;
+}
+
+@utility booking-status-warn {
+  @apply bg-yellow-500/20 text-yellow-200;
+}
+
+@utility booking-bar {
+  @apply w-full h-2 rounded-full bg-white/10 overflow-hidden;
+}
+
+@utility booking-bar-fill {
+  @apply h-full bg-white/60;
+}
+
+@utility booking-cta {
+  @apply text-xs uppercase tracking-widest text-white/60;
+}

@@ -1,0 +1,61 @@
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility url-subtle {
+  /* URL styling - very subtle */
+  @apply text-[10px] truncate;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+    color: var(--ink-primary);
+  }
+
+body {
+    @apply min-h-screen font-sans;
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in srgb, var(--accent-primary) 22%, transparent) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, color-mix(in srgb, var(--accent-purple) 18%, transparent) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 30% at 50% 50%, color-mix(in srgb, var(--status-online) 10%, transparent) 0%, transparent 60%),
+      var(--surface-base);
+    background-attachment: fixed;
+    overflow: hidden;
+    --fx-motion: 1;
+    --fx-blur-sm: 8px;
+    --fx-blur-md: 12px;
+    --fx-blur: 16px;
+    --fx-blur-strong: 20px;
+    --fx-shadow: 1;
+    --fx-shadow-strong: 1;
+  --fx-glass-mult: 1;
+}
+
+  * {
+    @apply box-border;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/20;
+  }
+}

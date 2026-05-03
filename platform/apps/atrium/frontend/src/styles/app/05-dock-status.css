@@ -1,0 +1,134 @@
+@utility card-clock {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  padding: 18px;
+  width: 100%;
+}
+
+@utility card-clock-warm {
+  background: rgba(255, 226, 153, 0.24);
+  border: 1px solid rgba(255, 199, 87, 0.35);
+  border-radius: 20px;
+  padding: 18px;
+  width: 100%;
+}
+
+@utility status-glow-online {
+  @apply bg-status-online;
+  box-shadow: 0 0 8px 2px rgba(63, 185, 80, 0.5);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@utility status-glow-offline {
+  @apply bg-status-offline;
+  box-shadow: 0 0 6px 1px rgba(248, 81, 73, 0.4);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@utility status-glow-warning {
+  @apply bg-status-warning;
+  box-shadow: 0 0 6px 1px rgba(210, 153, 34, 0.4);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@utility status-glow-pending {
+  @apply bg-status-pending;
+  box-shadow: 0 0 6px 1px rgba(88, 166, 255, 0.4);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@utility dock-icon {
+  /* Dock Icon */
+  @apply relative flex items-center justify-center w-16 h-16 text-white font-semibold text-lg transition-all duration-200 cursor-pointer;
+  border-radius: 20px; /* squircle */
+  background: transparent;
+  border: none;
+
+  &:hover {
+    @apply scale-110;
+    filter: drop-shadow(
+      0 8px 24px rgba(0, 0, 0, calc(0.35 * var(--fx-shadow)))
+    );
+    transition-duration: calc(200ms * var(--fx-motion));
+  }
+
+  &.offline {
+    @apply opacity-40;
+    filter: grayscale(0.6);
+  }
+
+  & .status-indicator {
+    @apply absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2;
+    border-color: rgba(16, 18, 22, 0.8);
+  }
+
+  &:hover .dock-tooltip {
+    @apply opacity-100;
+    transform: translateX(-50%) translateY(calc(-4px * var(--fx-motion)));
+  }
+
+  &:hover .dock-tooltip {
+    @apply opacity-100;
+    transform: translateX(-50%) translateY(-4px);
+  }
+
+  @media (max-width: 640px) {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    font-size: 14px;
+
+    & .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-width: 2px;
+    }
+  }
+
+  & .service-badge {
+    @apply -top-1.5 -right-1.5;
+  }
+}
+
+@utility status-indicator {
+  .dock-icon & {
+    @apply absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2;
+    border-color: rgba(16, 18, 22, 0.8);
+  }
+
+  @media (max-width: 640px) {
+    .dock-icon & {
+      width: 12px;
+      height: 12px;
+      border-width: 2px;
+    }
+  }
+}
+
+@utility dock-tooltip {
+  /* Dock Tooltip */
+  @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 pointer-events-none transition-all duration-200;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(var(--fx-blur-sm));
+
+  .dock-icon:hover & {
+    @apply opacity-100;
+    transform: translateX(-50%) translateY(calc(-4px * var(--fx-motion)));
+  }
+
+  /* Enhanced dock tooltip */
+  @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 pointer-events-none transition-all duration-200;
+  background: rgba(18, 22, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(var(--fx-blur-sm));
+  -webkit-backdrop-filter: blur(var(--fx-blur-sm));
+  box-shadow: 0 calc(8px * var(--fx-shadow-strong))
+    calc(24px * var(--fx-shadow-strong)) rgba(0, 0, 0, 0.3);
+  transition-duration: calc(200ms * var(--fx-motion));
+
+  .dock-icon:hover & {
+    @apply opacity-100;
+    transform: translateX(-50%) translateY(-4px);
+  }
+}

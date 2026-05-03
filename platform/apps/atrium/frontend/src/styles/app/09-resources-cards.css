@@ -1,0 +1,178 @@
+@utility resource-card {
+  @apply relative flex min-h-[140px] flex-col gap-4 rounded-2xl px-4 py-4 transition;
+  width: 180px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(var(--fx-blur-md));
+  -webkit-backdrop-filter: blur(var(--fx-blur-md));
+
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    @apply pointer-events-none absolute inset-0 rounded-2xl;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.03) 40%,
+      rgba(255, 255, 255, 0.12)
+    );
+    opacity: 0.6;
+  }
+
+  &:not(.disabled):hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 calc(10px * var(--fx-shadow)) calc(18px * var(--fx-shadow))
+      rgba(0, 0, 0, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:not(.disabled):hover::before {
+    opacity: 0.7;
+  }
+
+  &.disabled {
+    @apply opacity-60 pointer-events-none;
+  }
+
+  @media (min-width: 1024px) {
+    width: 200px;
+  }
+}
+
+@utility resource-card-expandable {
+  padding-bottom: 2.6rem;
+  cursor: default;
+}
+
+@utility resource-detail-toggle {
+  @apply absolute bottom-0 left-0 right-0 flex items-center justify-center gap-2 rounded-b-2xl border-t border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-wider text-white/60 transition;
+
+  &:hover {
+    @apply border-white/30 bg-white/10 text-white/80;
+  }
+
+  &.active {
+    border-color: rgba(88, 166, 255, 0.7);
+    color: rgba(88, 166, 255, 0.9);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.45);
+    background: rgba(88, 166, 255, 0.12);
+  }
+
+  &.active .resource-detail-toggle-icon {
+    transform: rotate(180deg);
+  }
+}
+
+@utility active {
+  &.resource-detail-toggle {
+    border-color: rgba(88, 166, 255, 0.7);
+    color: rgba(88, 166, 255, 0.9);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.45);
+    background: rgba(88, 166, 255, 0.12);
+  }
+
+  &.resource-detail-toggle .resource-detail-toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  &.palette-item {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  &.space-picker-item {
+    border-color: rgba(88, 166, 255, 0.45);
+    background: rgba(88, 166, 255, 0.12);
+  }
+
+  &.space-picker-pin {
+    color: rgba(88, 166, 255, 0.95);
+    border-color: rgba(88, 166, 255, 0.4);
+    background: rgba(88, 166, 255, 0.15);
+  }
+
+  &.dot {
+    @apply bg-white/80;
+  }
+}
+
+@utility resource-detail-toggle-icon {
+  height: 14px;
+  width: 14px;
+  transition: transform 0.2s ease;
+
+  .resource-detail-toggle.active & {
+    transform: rotate(180deg);
+  }
+}
+
+@utility resource-detail-toggle-label {
+  @apply text-[10px] uppercase tracking-[0.2em];
+}
+
+@utility disabled {
+  &.resource-card {
+    @apply opacity-60 pointer-events-none;
+  }
+}
+
+@utility resource-card-tile {
+  &::after {
+    content: '';
+    @apply pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.2),transparent_60%)];
+  }
+}
+
+@utility resource-icon {
+  @apply flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-base font-semibold text-white/80;
+
+  & img {
+    @apply h-8 w-8 object-contain;
+  }
+}
+
+@utility resource-icon-tile {
+  @apply bg-white/15;
+}
+
+@utility resource-meta {
+  @apply flex min-w-0 flex-1 flex-col gap-1;
+}
+
+@utility resource-title-row {
+  @apply flex items-center gap-2 min-w-0;
+}
+
+@utility resource-title-link {
+  @apply truncate text-white/90 text-base font-semibold underline-offset-4;
+
+  &:hover {
+    @apply underline text-white;
+  }
+}
+
+@utility resource-open-link {
+  @apply flex items-center justify-center text-white/50 transition;
+
+  &:hover {
+    @apply text-white/80;
+  }
+}
+
+@utility resource-open-icon {
+  @apply h-4 w-4;
+}
+
+@utility resource-title {
+  @apply truncate text-white/90 text-base font-semibold;
+}
+
+@utility resource-desc {
+  @apply line-clamp-2 text-[12px] text-white/55;
+  min-height: 2.6em;
+}

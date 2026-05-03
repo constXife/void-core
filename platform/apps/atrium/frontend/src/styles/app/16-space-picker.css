@@ -1,0 +1,113 @@
+@utility space-picker-scrim {
+  @apply fixed inset-0 z-20;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+@utility space-picker {
+  @apply fixed z-30;
+  background: rgba(12, 18, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(var(--fx-blur));
+  box-shadow: 0 calc(24px * var(--fx-shadow-strong))
+    calc(60px * var(--fx-shadow-strong)) rgba(0, 0, 0, 0.4);
+}
+
+@utility space-picker-dropdown {
+  @apply rounded-2xl w-[360px];
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@utility space-picker-sheet {
+  @apply left-0 right-0 bottom-0 rounded-t-3xl;
+  max-height: 80vh;
+}
+
+@utility space-picker-header {
+  @apply flex items-center justify-between px-5 pt-5 pb-3;
+}
+
+@utility space-picker-title {
+  @apply text-base font-semibold text-white/90;
+}
+
+@utility space-picker-subtitle {
+  @apply text-xs text-white/40;
+}
+
+@utility space-picker-search {
+  @apply mx-5 mb-3 flex items-center gap-2 rounded-xl px-3 py-2;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility space-picker-input {
+  @apply w-full bg-transparent text-sm text-white/80 outline-hidden;
+}
+
+@utility space-picker-body {
+  @apply px-5 pb-5 overflow-y-auto;
+  max-height: 60vh;
+}
+
+@utility space-picker-section {
+  @apply mb-4;
+}
+
+@utility space-picker-section-title {
+  @apply text-[11px] uppercase tracking-widest text-white/40 mb-2;
+}
+
+@utility space-picker-list {
+  @apply flex flex-col gap-2;
+}
+
+@utility space-picker-item {
+  @apply flex items-center gap-3 px-3 py-2 rounded-xl transition-colors cursor-pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &.active {
+    border-color: rgba(88, 166, 255, 0.45);
+    background: rgba(88, 166, 255, 0.12);
+  }
+}
+
+@utility space-picker-icon {
+  @apply w-9 h-9 rounded-xl flex items-center justify-center text-xs font-semibold;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@utility space-picker-info {
+  @apply flex flex-col flex-1 text-left;
+}
+
+@utility space-picker-name {
+  @apply text-sm font-semibold text-white/90;
+}
+
+@utility space-picker-meta {
+  @apply text-[11px] text-white/40;
+}
+
+@utility space-picker-pin {
+  @apply w-8 h-8 rounded-lg flex items-center justify-center transition-colors;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+
+  &.active {
+    color: rgba(88, 166, 255, 0.95);
+    border-color: rgba(88, 166, 255, 0.4);
+    background: rgba(88, 166, 255, 0.15);
+  }
+}
+
+@utility space-picker-empty {
+  @apply text-sm text-white/40 text-center py-4;
+}

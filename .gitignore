@@ -2,3 +2,5 @@
 .DS_Store
 platform/apps/atrium/frontend/dist/
 target/
+result
+result-*

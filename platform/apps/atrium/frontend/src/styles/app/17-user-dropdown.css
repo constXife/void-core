@@ -1,0 +1,101 @@
+@utility user-dropdown-header {
+  @apply flex items-center gap-3 px-2 py-2;
+}
+
+@utility user-dropdown-avatar {
+  @apply w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0;
+  background: linear-gradient(
+    135deg,
+    rgba(88, 166, 255, 0.3) 0%,
+    rgba(163, 113, 247, 0.3) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@utility user-dropdown-info {
+  @apply flex-1 min-w-0;
+}
+
+@utility user-dropdown-email {
+  @apply text-sm text-white/90 truncate;
+}
+
+@utility user-dropdown-role {
+  @apply mt-0.5;
+}
+
+@utility user-dropdown-divider {
+  @apply my-2;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@utility user-dropdown-section {
+  @apply px-2 py-2;
+}
+
+@utility user-dropdown-section-compact {
+  @apply flex items-center gap-3;
+
+  & .user-dropdown-label {
+    @apply mb-0;
+  }
+
+  & .user-dropdown-select {
+    @apply flex-1;
+    min-width: 0;
+  }
+}
+
+@utility user-dropdown-label {
+  .user-dropdown-section-compact & {
+    @apply mb-0;
+  }
+  @apply text-[11px] uppercase tracking-widest text-white/40 mb-2;
+}
+
+@utility user-dropdown-select {
+  .user-dropdown-section-compact & {
+    @apply flex-1;
+    min-width: 0;
+  }
+  @apply w-full text-sm;
+}
+
+@utility user-dropdown-note {
+  @apply mt-2 text-[11px] text-white/50;
+}
+
+@utility user-dropdown-item {
+  @apply flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/80 transition-colors;
+  transition-duration: calc(150ms * var(--fx-motion));
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+@utility user-dropdown-item-danger {
+  color: rgba(248, 81, 73, 0.9);
+
+  &:hover {
+    background: rgba(248, 81, 73, 0.15);
+    color: rgba(248, 81, 73, 1);
+  }
+}
+
+@utility dropdown-enter-active {
+  /* Dropdown animation */
+  animation: dropdownIn calc(0.2s * var(--fx-motion)) ease-out;
+}
+
+@utility dropdown-leave-active {
+  animation: dropdownOut calc(0.15s * var(--fx-motion)) ease-in;
+}
+
+@utility rotate-180 {
+  transform: rotate(180deg);
+  transition: transform calc(0.2s * var(--fx-motion)) ease;
+}

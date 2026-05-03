@@ -1,0 +1,193 @@
+@utility space-switcher-container {
+  @apply flex-1 flex justify-center;
+}
+
+@utility space-switcher-row {
+  @apply flex items-center gap-3;
+  position: relative;
+
+  &.has-prev::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 26px;
+    height: 2px;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+  }
+
+  &.has-next::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 26px;
+    height: 2px;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+  }
+
+  &.has-prev::before {
+    left: -28px;
+    background: linear-gradient(
+      90deg,
+      rgba(88, 166, 255, 0),
+      rgba(88, 166, 255, 0.7)
+    );
+  }
+
+  &.has-next::after {
+    right: -28px;
+    background: linear-gradient(
+      90deg,
+      rgba(88, 166, 255, 0.7),
+      rgba(88, 166, 255, 0)
+    );
+  }
+}
+
+@utility has-prev {
+  &.space-switcher-row::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 26px;
+    height: 2px;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+  }
+
+  &.space-switcher-row::before {
+    left: -28px;
+    background: linear-gradient(
+      90deg,
+      rgba(88, 166, 255, 0),
+      rgba(88, 166, 255, 0.7)
+    );
+  }
+}
+
+@utility has-next {
+  & .space-switcher-row::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 26px;
+    height: 2px;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+  }
+
+  &.space-switcher-row::after {
+    right: -28px;
+    background: linear-gradient(
+      90deg,
+      rgba(88, 166, 255, 0.7),
+      rgba(88, 166, 255, 0)
+    );
+  }
+}
+
+@utility space-switcher-trigger {
+  @apply flex items-center gap-3 px-3 py-2 rounded-full transition-colors;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@utility space-switcher-icon {
+  @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@utility space-switcher-text {
+  @apply flex flex-col text-left;
+}
+
+@utility space-switcher-title {
+  @apply text-sm font-semibold text-white/90;
+}
+
+@utility space-switcher-subtitle {
+  @apply text-[11px] text-white/40;
+}
+
+@utility space-switcher-side {
+  @apply items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 160px;
+  transition:
+    transform calc(180ms * var(--fx-motion)) ease,
+    opacity calc(180ms * var(--fx-motion)) ease,
+    background-color calc(180ms * var(--fx-motion)) ease,
+    border-color calc(180ms * var(--fx-motion)) ease,
+    color calc(180ms * var(--fx-motion)) ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+@utility space-switcher-side-icon {
+  @apply w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@utility space-switcher-side-title {
+  @apply truncate;
+}
+
+@utility space-switcher-side-chevron {
+  @apply h-3.5 w-3.5 text-white/50;
+}
+
+@utility space-center-enter-active {
+  transition:
+    opacity calc(180ms * var(--fx-motion)) ease,
+    transform calc(180ms * var(--fx-motion)) ease;
+}
+
+@utility space-center-leave-active {
+  transition:
+    opacity calc(180ms * var(--fx-motion)) ease,
+    transform calc(180ms * var(--fx-motion)) ease;
+}
+
+@utility space-center-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@utility space-center-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@utility space-side-enter-active {
+  transition:
+    opacity calc(180ms * var(--fx-motion)) ease,
+    transform calc(180ms * var(--fx-motion)) ease;
+}
+
+@utility space-side-leave-active {
+  transition:
+    opacity calc(180ms * var(--fx-motion)) ease,
+    transform calc(180ms * var(--fx-motion)) ease;
+}
+
+@utility space-side-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+@utility space-side-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}

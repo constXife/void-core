@@ -1,0 +1,100 @@
+@utility btn {
+  /* Buttons */
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200;
+
+  &:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  &[disabled] {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  &:disabled:hover {
+    @apply bg-white/5 text-gray-400 border-white/10;
+  }
+
+  &[disabled]:hover {
+    @apply bg-white/5 text-gray-400 border-white/10;
+  }
+}
+
+@utility btn-primary {
+  @apply bg-blue-500 text-white hover:bg-blue-500/90;
+}
+
+@utility btn-ghost {
+  @apply bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-gray-100 hover:border-white/20 backdrop-blur-sm;
+}
+
+@utility btn-danger {
+  @apply bg-status-offline/20 text-status-offline border border-status-offline/30 hover:bg-status-offline/30;
+
+  /* Danger button variant */
+  @apply bg-status-offline/80 text-white border-transparent hover:bg-status-offline;
+}
+
+@utility btn-icon {
+  @apply w-9 h-9 p-0;
+}
+
+@utility card-glass {
+  /* Glass Cards */
+  @apply relative rounded-2xl p-5 transition-all duration-300;
+  min-height: 120px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, calc(0.1 * var(--fx-glass-mult))),
+    rgba(255, 255, 255, calc(0.04 * var(--fx-glass-mult)))
+  );
+  border: 1px solid rgba(255, 255, 255, calc(0.16 * var(--fx-glass-mult)));
+  backdrop-filter: blur(var(--fx-blur-md));
+  -webkit-backdrop-filter: blur(var(--fx-blur-md));
+  transition-duration: calc(300ms * var(--fx-motion));
+
+  &:hover {
+    background: rgba(255, 255, 255, calc(0.1 * var(--fx-glass-mult)));
+    border-color: rgba(255, 255, 255, calc(0.2 * var(--fx-glass-mult)));
+    transform: translateY(calc(-2px * var(--fx-motion)));
+    box-shadow: 0 calc(12px * var(--fx-shadow)) calc(40px * var(--fx-shadow))
+      rgba(0, 0, 0, 0.3);
+  }
+
+  &.offline {
+    @apply opacity-50;
+    filter: grayscale(0.4);
+  }
+  backdrop-filter: blur(var(--fx-blur));
+  -webkit-backdrop-filter: blur(var(--fx-blur));
+}
+
+@utility offline {
+  &.card-glass {
+    @apply opacity-50;
+    filter: grayscale(0.4);
+  }
+
+  &.dock-icon {
+    @apply opacity-40;
+    filter: grayscale(0.6);
+  }
+}
+
+@utility card-offline {
+  @apply opacity-75 cursor-not-allowed;
+  filter: grayscale(0.6);
+  border-color: rgba(248, 81, 73, 0.2);
+  background: rgba(248, 81, 73, 0.02);
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: rgba(248, 81, 73, 0.2);
+    background: rgba(248, 81, 73, 0.05);
+  }
+}
+
+@utility card-degraded {
+  border-color: rgba(210, 153, 34, 0.35);
+  box-shadow: 0 0 18px rgba(210, 153, 34, 0.18);
+}

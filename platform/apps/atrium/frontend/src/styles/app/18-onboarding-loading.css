@@ -1,0 +1,137 @@
+@utility onboarding-overlay {
+  /* Onboarding Hints */
+  @apply fixed inset-0 z-50;
+  pointer-events: none;
+}
+
+@utility onboarding-hint {
+  @apply absolute;
+  pointer-events: auto;
+
+  .onboarding-hint-enter-active & {
+    animation: hintSlideIn calc(0.4s * var(--fx-motion)) ease-out 0.1s both;
+  }
+}
+
+@utility onboarding-hint-admin {
+  top: 70px;
+  right: 100px;
+}
+
+@utility onboarding-hint-search {
+  top: 70px;
+  right: 180px;
+}
+
+@utility onboarding-hint-arrow {
+  @apply absolute -top-2 right-6 w-4 h-4;
+  background: rgba(18, 22, 30, 0.98);
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(88, 166, 255, 0.3);
+  border-top: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+@utility onboarding-hint-content {
+  @apply rounded-xl p-5;
+  min-width: 280px;
+  max-width: 320px;
+  background: rgba(18, 22, 30, 0.98);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(88, 166, 255, 0.1);
+}
+
+@utility onboarding-hint-title {
+  @apply flex items-center gap-2 text-base font-semibold text-white mb-2;
+}
+
+@utility onboarding-hint-text {
+  @apply text-sm text-white/70 mb-4 leading-relaxed;
+
+  & kbd {
+    @apply px-1.5 py-0.5 rounded-sm text-xs font-mono;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+@utility onboarding-hint-actions {
+  @apply flex items-center gap-2;
+}
+
+@utility btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+
+@utility onboarding-hint-enter-active {
+  /* Onboarding hint animations */
+  animation: onboardingIn calc(0.3s * var(--fx-motion)) ease-out;
+
+  & .onboarding-hint {
+    animation: hintSlideIn calc(0.4s * var(--fx-motion)) ease-out 0.1s both;
+  }
+}
+
+@utility onboarding-hint-leave-active {
+  animation: onboardingOut calc(0.2s * var(--fx-motion)) ease-in;
+}
+
+@utility spaces-banner {
+  @apply fixed top-20 left-1/2 -translate-x-1/2 z-20;
+}
+
+@utility spaces-loading {
+  @apply relative z-10 flex min-h-screen items-center justify-center gap-3 text-white/70 px-8;
+}
+
+@utility spaces-auth {
+  @apply relative z-10 flex min-h-screen items-center justify-center gap-3 text-white/70 px-8;
+}
+
+@utility skeleton-shell {
+  @apply w-full max-w-5xl flex flex-col gap-6;
+}
+
+@utility skeleton-header {
+  @apply flex items-center gap-4;
+}
+
+@utility skeleton-pill {
+  @apply h-10 w-10 rounded-xl;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@utility skeleton-lines {
+  @apply flex flex-col gap-2;
+}
+
+@utility skeleton-line {
+  @apply h-3 rounded-full;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.06)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer calc(1.4s * var(--fx-motion)) ease-in-out infinite;
+}
+
+@utility skeleton-grid {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+@utility skeleton-card {
+  @apply h-32 rounded-2xl;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.08)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer calc(1.6s * var(--fx-motion)) ease-in-out infinite;
+}

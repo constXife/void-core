@@ -1,0 +1,142 @@
+@utility dock {
+  @apply fixed left-1/2 -translate-x-1/2 flex items-center gap-3 z-20;
+  bottom: 36px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 18px;
+  backdrop-filter: blur(var(--fx-blur));
+  -webkit-backdrop-filter: blur(var(--fx-blur));
+
+  @media (max-width: 640px) {
+    left: 0;
+    right: 0;
+    transform: none;
+    bottom: 0;
+    width: 100%;
+    border-radius: 0;
+    padding: 8px 12px;
+    gap: 10px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    background: rgba(10, 12, 16, 0.9);
+    -webkit-overflow-scrolling: touch;
+  }
+  backdrop-filter: blur(var(--fx-blur));
+  -webkit-backdrop-filter: blur(var(--fx-blur));
+}
+
+@utility dock-row {
+  @media (max-width: 640px) {
+    width: max-content;
+  }
+  @apply flex items-center gap-3;
+}
+
+@utility card-list {
+  @apply px-4 py-3;
+}
+
+@utility admin-modal {
+  max-width: 900px;
+}
+
+@utility service-icon {
+  @apply flex items-center justify-center w-14 h-14 rounded-2xl flex-shrink-0;
+  background: transparent;
+  border: none;
+
+  &.is-fallback {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(var(--fx-blur-sm));
+    -webkit-backdrop-filter: blur(var(--fx-blur-sm));
+  }
+}
+
+@utility service-icon-dock {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  &.is-fallback {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(var(--fx-blur-sm));
+    -webkit-backdrop-filter: blur(var(--fx-blur-sm));
+  }
+}
+
+@utility is-fallback {
+  &.service-icon-dock {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(var(--fx-blur-sm));
+    -webkit-backdrop-filter: blur(var(--fx-blur-sm));
+  }
+
+  &.service-icon {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(var(--fx-blur-sm));
+    -webkit-backdrop-filter: blur(var(--fx-blur-sm));
+  }
+}
+
+@utility service-icon-img {
+  filter: drop-shadow(
+    0 calc(6px * var(--fx-shadow)) calc(14px * var(--fx-shadow))
+      rgba(0, 0, 0, 0.35)
+  );
+}
+
+@utility widget-timeline {
+  /* Timeline Widget */
+  @apply flex flex-col gap-2;
+}
+
+@utility timeline-list {
+  @apply flex flex-col gap-2 max-h-48 overflow-y-auto;
+}
+
+@utility timeline-item {
+  @apply flex items-center gap-3 px-3 py-2 rounded-xl text-sm;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@utility timeline-icon {
+  @apply text-base flex-shrink-0;
+}
+
+@utility timeline-time {
+  @apply text-xs text-white/40 font-mono flex-shrink-0;
+}
+
+@utility timeline-text {
+  @apply text-white/80 truncate flex-1;
+}
+
+@utility timeline-empty {
+  @apply text-xs uppercase tracking-widest text-white/40 py-4 text-center;
+}
+
+@utility service-badge {
+  /* Service Badge */
+  @apply absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full text-xs font-semibold flex items-center justify-center;
+  background: rgba(248, 81, 73, 0.95);
+  color: white;
+  box-shadow: 0 2px 8px rgba(248, 81, 73, 0.4);
+
+  .dock-icon & {
+    @apply -top-1.5 -right-1.5;
+  }
+}
+
+@utility dock-empty {
+  /* Dock empty state */
+  @apply flex items-center gap-2 text-white/40 text-xs px-4 py-2;
+}

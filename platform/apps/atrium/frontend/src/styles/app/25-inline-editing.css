@@ -1,0 +1,118 @@
+/* ============================================
+   INLINE BLOCK EDITING
+   ============================================ */
+.dashboard-block {
+  position: relative;
+}
+
+.block-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(calc(4px * var(--fx-glass-mult)));
+  -webkit-backdrop-filter: blur(calc(4px * var(--fx-glass-mult)));
+  opacity: 0;
+  transition: opacity calc(0.2s * var(--fx-motion)) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.dashboard-block:hover .block-edit-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.block-edit-btn {
+  @apply flex items-center justify-center w-10 h-10 rounded-xl text-white/80 transition-all duration-200;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.block-edit-btn:hover {
+  @apply text-white;
+  background: rgba(88, 166, 255, 0.3);
+  border-color: rgba(88, 166, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.block-edit-btn-danger:hover {
+  background: rgba(248, 81, 73, 0.3);
+  border-color: rgba(248, 81, 73, 0.5);
+}
+
+/* Row editing */
+.dashboard-row-hoverable {
+  position: relative;
+  transition: background 0.15s ease;
+  padding-right: 28px;
+}
+
+.dashboard-row-hoverable:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: -2px -4px;
+  padding: 2px 28px 2px 4px;
+}
+
+.row-delete-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  @apply flex items-center justify-center w-5 h-5 rounded-sm text-white/50 transition-all duration-150;
+  background: transparent;
+}
+
+.row-delete-btn:hover {
+  @apply text-status-offline;
+  background: rgba(248, 81, 73, 0.2);
+}
+
+/* Add Block Button */
+.add-block-inline {
+  @apply flex items-center justify-center gap-2 px-4 py-6 rounded-2xl text-white/50 font-medium transition-all duration-200;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  grid-column: span 6;
+  min-height: 100px;
+}
+
+.add-block-inline:hover {
+  @apply text-white;
+  background: rgba(88, 166, 255, 0.1);
+  border-color: rgba(88, 166, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Inline Popover */
+.inline-popover {
+  @apply rounded-2xl p-6;
+  background: rgba(15, 20, 26, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 calc(20px * var(--fx-shadow-strong)) calc(50px * var(--fx-shadow-strong)) rgba(0, 0, 0, 0.5);
+  min-width: 360px;
+  max-width: 420px;
+  backdrop-filter: blur(var(--fx-blur-strong));
+  -webkit-backdrop-filter: blur(var(--fx-blur-strong));
+}
+
+.inline-popover-header {
+  @apply flex items-center justify-between;
+}
+
+@media (max-width: 768px) {
+  .add-block-inline {
+    grid-column: span 12;
+  }
+  
+  .inline-popover {
+    min-width: 300px;
+    max-width: calc(100vw - 32px);
+    margin: 16px;
+  }
+}

@@ -1,0 +1,123 @@
+@utility dashboard-actions {
+  @apply grid grid-cols-2 gap-2;
+}
+
+@utility dashboard-text {
+  @apply text-sm text-white/80 leading-relaxed;
+}
+
+@utility dashboard-sidebar-form {
+  @apply flex flex-col gap-2;
+}
+
+@utility dashboard-field {
+  @apply flex flex-col gap-1 text-[11px] text-white/50;
+
+  & span {
+    @apply uppercase tracking-wider;
+  }
+}
+
+@utility dashboard-block-editor {
+  @apply absolute z-20 w-[320px] rounded-2xl p-4;
+  background: rgba(12, 18, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(var(--fx-blur));
+  box-shadow: 0 calc(24px * var(--fx-shadow-strong))
+    calc(60px * var(--fx-shadow-strong)) rgba(0, 0, 0, 0.35);
+}
+
+@utility dashboard-editor-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+@utility block-picker-modal {
+  max-width: 720px;
+}
+
+@utility block-picker-grid {
+  @apply grid gap-3 sm:grid-cols-2;
+}
+
+@utility block-picker-card {
+  @apply flex items-start gap-3 p-4 rounded-2xl text-left transition-colors;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition-duration: calc(200ms * var(--fx-motion));
+
+  &:hover {
+    background: rgba(88, 166, 255, 0.12);
+    border-color: rgba(88, 166, 255, calc(0.35 * var(--fx-glass-mult)));
+  }
+}
+
+@utility block-picker-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center;
+  background: rgba(88, 166, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@utility block-picker-title {
+  @apply text-sm font-semibold text-white/90;
+}
+
+@utility block-picker-desc {
+  @apply text-[11px] text-white/50 mt-1;
+}
+
+@utility dashboard-editor-modal {
+  max-width: 980px;
+}
+
+@utility dashboard-editor {
+  @apply grid gap-6 lg:grid-cols-2;
+}
+
+@utility dashboard-editor-preview {
+  @apply rounded-2xl p-4;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility dashboard-editor-controls {
+  @apply max-h-[70vh] overflow-auto pr-1;
+}
+
+@utility dashboard-editor-block {
+  padding: 12px;
+}
+
+@utility tabs {
+  /* Tabs */
+  @apply inline-flex rounded-lg p-1 gap-1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@utility tab {
+  @apply px-4 py-2 text-sm font-medium rounded-md transition-colors;
+  color: rgba(255, 255, 255, 0.5);
+  transition-duration: calc(200ms * var(--fx-motion));
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+@utility tab-active {
+  @apply text-gray-100;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@utility modal-backdrop {
+  /* Modal */
+  @apply fixed inset-0 flex items-center justify-center p-4 z-50;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(calc(4px * var(--fx-glass-mult)));
+}
+
+@utility modal-content {
+  @apply rounded-2xl p-6 w-full max-w-lg shadow-2xl;
+  background: rgba(26, 34, 44, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(var(--fx-blur-strong));
+}

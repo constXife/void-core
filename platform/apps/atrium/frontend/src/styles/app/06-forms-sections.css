@@ -1,0 +1,62 @@
+@utility chip {
+  /* Chips / Tags */
+  @apply inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-md uppercase tracking-wider;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@utility chip-online {
+  @apply bg-status-online/20 text-status-online;
+}
+
+@utility chip-offline {
+  @apply bg-status-offline/20 text-status-offline;
+}
+
+@utility chip-warning {
+  @apply bg-status-warning/20 text-status-warning;
+}
+
+@utility chip-critical {
+  @apply bg-status-offline/20 text-status-offline;
+}
+
+@utility chip-muted {
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+@utility input {
+  /* Form elements */
+  @apply w-full px-3 py-2 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-hidden transition-colors;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:focus {
+    @apply border-blue-500 ring-1 ring-blue-500/30;
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+@utility select {
+  @apply px-3 py-2 rounded-lg text-gray-100 focus:outline-hidden transition-colors cursor-pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:focus {
+    @apply border-blue-500;
+  }
+}
+
+@utility section-title {
+  /* Section Titles */
+  @apply text-[11px] font-medium uppercase tracking-[0.3em] mb-4;
+  color: rgba(255, 255, 255, 0.35);
+
+  .health-dropdown-header & {
+    @apply mb-0;
+  }
+
+  .health-events & {
+    @apply mb-2;
+  }
+}
