@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
-import { Plus, Trash2 } from "lucide-vue-next";
+import { Plus, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-vue-next";
 import AssistantSidebarItem from "./AssistantSidebarItem.vue";
 
 const props = defineProps({
@@ -8,7 +8,8 @@ const props = defineProps({
   trashed: { type: Array, default: () => [] },
   trashedLoaded: { type: Boolean, default: false },
   activeId: { type: String, default: "" },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  collapsed: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([
@@ -17,7 +18,9 @@ const emit = defineEmits([
   "rename",
   "delete",
   "restore",
-  "open-trash"
+  "open-trash",
+  "toggle-collapsed",
+  "resize-start"
 ]);
 
 const trashOpen = ref(false);
@@ -33,15 +36,28 @@ const toggleTrash = () => {
 </script>
 
 <template>
-  <aside class="assistant-sidebar">
-    <button
-      type="button"
-      class="assistant-sidebar__new"
-      @click="emit('new-chat')"
-    >
-      <Plus :size="14" />
-      <span>Новый чат</span>
-    </button>
+  <aside class="assistant-sidebar" :class="{ 'assistant-sidebar--collapsed': collapsed }">
+    <div class="assistant-sidebar__top">
+      <button
+        type="button"
+        class="assistant-sidebar__new"
+        :title="collapsed ? 'Новый чат' : ''"
+        @click="emit('new-chat')"
+      >
+        <Plus :size="14" />
+        <span class="assistant-sidebar__new-label">Новый чат</span>
+      </button>
+      <button
+        type="button"
+        class="assistant-sidebar__toggle"
+        :title="collapsed ? 'Развернуть сайдбар' : 'Свернуть сайдбар'"
+        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="emit('toggle-collapsed')"
+      >
+        <PanelLeftOpen v-if="collapsed" :size="14" />
+        <PanelLeftClose v-else :size="14" />
+      </button>
+    </div>
 
     <div class="assistant-sidebar__list">
       <p v-if="loading && groups.length === 0" class="assistant-sidebar__hint">
@@ -57,15 +73,17 @@ const toggleTrash = () => {
         class="assistant-sidebar__group"
       >
         <h3 class="assistant-sidebar__group-title">{{ group.label }}</h3>
-        <AssistantSidebarItem
-          v-for="session in group.items"
-          :key="session.id"
-          :session="session"
-          :active="session.id === activeId"
-          @select="(id) => emit('select', id)"
-          @rename="(session) => emit('rename', session)"
-          @delete="(session) => emit('delete', session)"
-        />
+        <TransitionGroup name="assistant-sidebar-row" tag="div" class="assistant-sidebar__group-items" appear>
+          <AssistantSidebarItem
+            v-for="session in group.items"
+            :key="session.id"
+            :session="session"
+            :active="session.id === activeId"
+            @select="(id) => emit('select', id)"
+            @rename="(session) => emit('rename', session)"
+            @delete="(session) => emit('delete', session)"
+          />
+        </TransitionGroup>
       </div>
     </div>
 
@@ -93,5 +111,13 @@ const toggleTrash = () => {
         />
       </div>
     </div>
+
+    <button
+      v-if="!collapsed"
+      type="button"
+      class="assistant-sidebar__resize-handle"
+      :aria-label="'Resize sidebar'"
+      @mousedown.prevent="(event) => emit('resize-start', event)"
+    />
   </aside>
 </template>

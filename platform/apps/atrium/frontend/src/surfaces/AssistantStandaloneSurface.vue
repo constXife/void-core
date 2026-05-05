@@ -9,6 +9,12 @@ import { useAssistantStore } from "../stores/assistant.js";
 import { useAssistantSessionsStore } from "../stores/assistant-sessions.js";
 
 const STORAGE_KEY_SIDEBAR = "void.assistant.sidebar.collapsed";
+const STORAGE_KEY_SIDEBAR_WIDTH = "void.assistant.sidebar.width";
+const STORAGE_KEY_PREFERRED_TARGET = "void.assistant.preferred_target_id";
+
+const SIDEBAR_MIN_WIDTH = 220;
+const SIDEBAR_MAX_WIDTH = 480;
+const SIDEBAR_DEFAULT_WIDTH = 280;
 
 const SUGGESTIONS = [
   "Объясни код",
@@ -40,12 +46,54 @@ const {
 } = storeToRefs(sessionsStore);
 
 const sidebarCollapsed = ref(loadSidebarPreference());
+const sidebarWidth = ref(clampSidebarWidth(loadSidebarWidth()));
+const preferredTargetId = ref(loadPreferredTarget());
 
-const targetLabel = computed(() => {
-  const targetId = currentSession.value?.target_id || selectedTargetId.value;
-  if (!targetId) return "";
-  const match = targets.value.find((target) => target.id === targetId);
-  return match ? `${match.provider_label} · ${match.model}` : targetId;
+const sidebarStyle = computed(() => ({
+  "--assistant-sidebar-width": `${sidebarWidth.value}px`
+}));
+
+let resizeStartX = 0;
+let resizeStartWidth = 0;
+
+const onSidebarToggle = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value;
+};
+
+const onSidebarResizeStart = (event) => {
+  if (sidebarCollapsed.value) return;
+  resizeStartX = event.clientX;
+  resizeStartWidth = sidebarWidth.value;
+  document.body.style.cursor = "col-resize";
+  document.body.style.userSelect = "none";
+  document.addEventListener("mousemove", onSidebarResizeMove);
+  document.addEventListener("mouseup", onSidebarResizeEnd, { once: true });
+};
+
+const onSidebarResizeMove = (event) => {
+  const delta = event.clientX - resizeStartX;
+  sidebarWidth.value = clampSidebarWidth(resizeStartWidth + delta);
+};
+
+const onSidebarResizeEnd = () => {
+  document.removeEventListener("mousemove", onSidebarResizeMove);
+  document.body.style.cursor = "";
+  document.body.style.userSelect = "";
+  saveSidebarWidth(sidebarWidth.value);
+};
+
+const targetIdSet = computed(() => new Set(targets.value.map((target) => target.id)));
+
+// Какая модель показывается в picker'е и используется при send.
+// Target открытой сессии не подменяется silently: если он пропал из catalog,
+// picker покажет недоступное состояние, а send получит честную backend-ошибку.
+const composerTargetId = computed(() => {
+  const sessionTarget = currentSession.value?.target_id || "";
+  if (sessionTarget) return sessionTarget;
+  if (preferredTargetId.value && targetIdSet.value.has(preferredTargetId.value)) {
+    return preferredTargetId.value;
+  }
+  return selectedTargetId.value || "";
 });
 
 const composerDisabled = computed(() => loaded.value && !enabled.value);
@@ -55,7 +103,7 @@ const onChooseSuggestion = (text) => {
 };
 
 const onSend = async () => {
-  await sessionsStore.send({ targetId: selectedTargetId.value });
+  await sessionsStore.send({ targetId: composerTargetId.value });
   if (currentSessionId.value && route.params.id !== currentSessionId.value) {
     router.replace({ name: "assistant-chat", params: { id: currentSessionId.value } });
   }
@@ -66,7 +114,18 @@ const onStop = () => {
 };
 
 const onRegenerate = () => {
-  sessionsStore.regenerateLast({ targetId: selectedTargetId.value });
+  sessionsStore.regenerateLast({ targetId: composerTargetId.value });
+};
+
+const onSelectTarget = async (targetId) => {
+  if (!targetId || targetId === composerTargetId.value) return;
+  if (currentSession.value) {
+    await sessionsStore.changeSessionTarget(currentSession.value.id, targetId);
+    return;
+  }
+  // В draft-режиме обновляем пользовательское предпочтение для новых чатов.
+  preferredTargetId.value = targetId;
+  savePreferredTarget(targetId);
 };
 
 const onSelect = (id) => {
@@ -162,12 +221,62 @@ function saveSidebarPreference(value) {
     /* localStorage недоступен — допустимо, это лишь device-local convenience */
   }
 }
+
+function loadSidebarWidth() {
+  if (typeof window === "undefined") return SIDEBAR_DEFAULT_WIDTH;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_SIDEBAR_WIDTH);
+    if (!raw) return SIDEBAR_DEFAULT_WIDTH;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : SIDEBAR_DEFAULT_WIDTH;
+  } catch {
+    return SIDEBAR_DEFAULT_WIDTH;
+  }
+}
+
+function saveSidebarWidth(value) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY_SIDEBAR_WIDTH, String(value));
+  } catch {
+    /* see saveSidebarPreference */
+  }
+}
+
+function clampSidebarWidth(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return SIDEBAR_DEFAULT_WIDTH;
+  return Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, Math.round(numeric)));
+}
+
+function loadPreferredTarget() {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(STORAGE_KEY_PREFERRED_TARGET) || "");
+  } catch {
+    return "";
+  }
+}
+
+function savePreferredTarget(value) {
+  if (typeof window === "undefined") return;
+  try {
+    if (value) {
+      window.localStorage.setItem(STORAGE_KEY_PREFERRED_TARGET, value);
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY_PREFERRED_TARGET);
+    }
+  } catch {
+    /* localStorage недоступен — допустимо, это лишь device-local convenience */
+  }
+}
 </script>
 
 <template>
   <section
     class="assistant-standalone"
     :class="{ 'assistant-standalone--sidebar-collapsed': sidebarCollapsed }"
+    :style="sidebarStyle"
   >
     <AssistantSidebar
       :groups="groupedSessions"
@@ -175,12 +284,15 @@ function saveSidebarPreference(value) {
       :trashed-loaded="trashedLoaded"
       :active-id="currentSessionId"
       :loading="loadingSessions && sessions.length === 0"
+      :collapsed="sidebarCollapsed"
       @new-chat="onNewChat"
       @select="onSelect"
       @rename="onRename"
       @delete="onDelete"
       @restore="onRestore"
       @open-trash="onOpenTrash"
+      @toggle-collapsed="onSidebarToggle"
+      @resize-start="onSidebarResizeStart"
     />
 
     <main class="assistant-standalone__main">
@@ -190,6 +302,7 @@ function saveSidebarPreference(value) {
         :loading="loadingCurrent"
         :has-session="Boolean(currentSession)"
         :suggestions="SUGGESTIONS"
+        :session-key="currentSessionId || 'draft'"
         @regenerate="onRegenerate"
         @choose-suggestion="onChooseSuggestion"
       />
@@ -198,10 +311,14 @@ function saveSidebarPreference(value) {
         v-model="draft"
         :streaming="streaming"
         :can-send="canSend"
-        :model-label="targetLabel"
+        :targets="targets"
+        :selected-target-id="composerTargetId"
+        :preferred-target-id="preferredTargetId"
+        :picker-disabled="composerDisabled || streaming"
         :disabled="composerDisabled"
         @send="onSend"
         @stop="onStop"
+        @select-target="onSelectTarget"
       />
 
       <p v-if="status" class="assistant-standalone__status" role="status">

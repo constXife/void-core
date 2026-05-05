@@ -1,16 +1,20 @@
 <script setup>
 import { computed, nextTick, ref, watch } from "vue";
 import { ArrowUp, Square } from "lucide-vue-next";
+import AssistantModelPicker from "./AssistantModelPicker.vue";
 
 const props = defineProps({
   modelValue: { type: String, default: "" },
   streaming: { type: Boolean, default: false },
   canSend: { type: Boolean, default: false },
-  modelLabel: { type: String, default: "" },
+  targets: { type: Array, default: () => [] },
+  selectedTargetId: { type: String, default: "" },
+  preferredTargetId: { type: String, default: "" },
+  pickerDisabled: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(["update:modelValue", "send", "stop"]);
+const emit = defineEmits(["update:modelValue", "send", "stop", "select-target"]);
 
 const textareaRef = ref(null);
 
@@ -76,12 +80,20 @@ watch(
         :aria-label="streaming ? 'Stop generating' : 'Send message'"
         @click="onSendClick"
       >
-        <Square v-if="streaming" :size="16" />
-        <ArrowUp v-else :size="16" />
+        <Transition name="assistant-composer__send-icon" mode="out-in">
+          <Square v-if="streaming" key="stop" :size="16" />
+          <ArrowUp v-else key="send" :size="16" />
+        </Transition>
       </button>
     </div>
-    <p v-if="modelLabel" class="assistant-composer__hint">
-      {{ modelLabel }}
-    </p>
+    <div v-if="targets.length" class="assistant-composer__hint">
+      <AssistantModelPicker
+        :targets="targets"
+        :selected-id="selectedTargetId"
+        :preferred-id="preferredTargetId"
+        :disabled="pickerDisabled"
+        @select="(id) => emit('select-target', id)"
+      />
+    </div>
   </form>
 </template>

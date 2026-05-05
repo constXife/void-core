@@ -106,6 +106,19 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     return session;
   };
 
+  const changeSessionTarget = async (id, targetId) => {
+    const payload = await fetchJson(`${SESSIONS_URL}/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ target_id: targetId })
+    });
+    const updated = normalizeSession(payload);
+    sessions.value = sessions.value.map((session) => (session.id === id ? updated : session));
+    if (currentSession.value?.id === id) {
+      currentSession.value = updated;
+    }
+    return updated;
+  };
+
   const renameSession = async (id, title) => {
     const payload = await fetchJson(`${SESSIONS_URL}/${id}`, {
       method: "PATCH",
@@ -288,6 +301,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   return {
     abort,
     canSend,
+    changeSessionTarget,
     createSession,
     currentLoaded,
     currentMessages,

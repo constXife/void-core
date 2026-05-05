@@ -21,10 +21,11 @@ const emit = defineEmits(["choose"]);
 
     <div v-if="suggestions.length" class="assistant-empty__suggestions">
       <button
-        v-for="suggestion in suggestions"
+        v-for="(suggestion, index) in suggestions"
         :key="suggestion"
         type="button"
         class="assistant-empty__chip"
+        :style="{ '--chip-index': index }"
         @click="emit('choose', suggestion)"
       >
         {{ suggestion }}
