@@ -10,14 +10,14 @@ const appStore = useAtriumAppStore();
 const scrollRef = ref(null);
 
 const {
-  activeProfile,
+  activeTarget,
   canSend,
   draft,
   isOpen,
   messages,
-  profiles,
-  selectedProfileId,
-  streaming
+  selectedTargetId,
+  streaming,
+  targets
 } = storeToRefs(assistantStore);
 const { currentLang } = storeToRefs(appStore);
 
@@ -28,7 +28,7 @@ const labels = computed(() => {
       empty: "Нет сообщений",
       input: "Сообщение",
       newChat: "Очистить",
-      profile: "Профиль",
+      model: "Модель",
       send: "Отправить",
       stop: "Остановить",
       stopped: "Остановлено"
@@ -39,7 +39,7 @@ const labels = computed(() => {
     empty: "No messages",
     input: "Message",
     newChat: "Clear",
-    profile: "Profile",
+    model: "Model",
     send: "Send",
     stop: "Stop",
     stopped: "Stopped"
@@ -91,18 +91,18 @@ watch(
       </div>
     </header>
 
-    <div v-if="profiles.length > 1" class="atrium-assistant__profile">
-      <label class="atrium-assistant__profile-label" for="atrium-assistant-profile">
-        {{ labels.profile }}
+    <div v-if="targets.length > 1" class="atrium-assistant__profile">
+      <label class="atrium-assistant__profile-label" for="atrium-assistant-target">
+        {{ labels.model }}
       </label>
       <select
-        id="atrium-assistant-profile"
-        v-model="selectedProfileId"
+        id="atrium-assistant-target"
+        v-model="selectedTargetId"
         class="atrium-assistant__profile-select"
         :disabled="streaming"
       >
-        <option v-for="profile in profiles" :key="profile.id" :value="profile.id">
-          {{ profile.label }}
+        <option v-for="target in targets" :key="target.id" :value="target.id">
+          {{ target.label }}
         </option>
       </select>
     </div>
@@ -129,8 +129,8 @@ watch(
     </div>
 
     <footer class="atrium-assistant__footer">
-      <div v-if="activeProfile" class="atrium-assistant__model">
-        {{ activeProfile.label }} · {{ activeProfile.model }}
+      <div v-if="activeTarget" class="atrium-assistant__model">
+        {{ activeTarget.provider_label }} · {{ activeTarget.model }}
       </div>
 
       <form class="atrium-assistant__form" @submit.prevent="submit">

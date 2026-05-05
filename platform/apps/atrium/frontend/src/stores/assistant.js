@@ -8,9 +8,10 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
   const loaded = ref(false);
   const enabled = ref(false);
   const isOpen = ref(false);
-  const profiles = ref([]);
-  const defaultProfileId = ref("");
-  const selectedProfileId = ref("");
+  const providers = ref([]);
+  const targets = ref([]);
+  const defaultTargetId = ref("");
+  const selectedTargetId = ref("");
   const messages = ref([]);
   const draft = ref("");
   const streaming = ref(false);
@@ -18,18 +19,18 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
 
   let activeAbort = null;
 
-  const activeProfile = computed(() =>
-    profiles.value.find((profile) => profile.id === selectedProfileId.value) || null
+  const activeTarget = computed(() =>
+    targets.value.find((target) => target.id === selectedTargetId.value) || null
   );
 
   const visible = computed(() => loaded.value && enabled.value);
   const canSend = computed(() => enabled.value && !streaming.value && draft.value.trim().length > 0);
 
-  const loadProfiles = async ({ force = false } = {}) => {
+  const loadModels = async ({ force = false } = {}) => {
     if (loaded.value && !force) return enabled.value;
 
     try {
-      const response = await fetch("/atrium/assistant/profiles", {
+      const response = await fetch("/atrium/assistant/models", {
         credentials: "include",
         headers: {
           Accept: "application/json"
@@ -41,15 +42,16 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
         return false;
       }
       if (!response.ok) {
-        throw new Error(response.statusText || "Assistant profile request failed");
+        throw new Error(response.statusText || "Assistant models request failed");
       }
 
       const payload = await response.json();
-      profiles.value = Array.isArray(payload.profiles) ? payload.profiles : [];
-      defaultProfileId.value = String(payload.default_profile_id || "");
-      enabled.value = payload.enabled === true && profiles.value.length > 0;
-      selectedProfileId.value = profiles.value.some((profile) => profile.id === defaultProfileId.value)
-        ? defaultProfileId.value
+      providers.value = Array.isArray(payload.providers) ? payload.providers : [];
+      targets.value = Array.isArray(payload.targets) ? payload.targets : [];
+      defaultTargetId.value = String(payload.default_target_id || "");
+      enabled.value = payload.enabled === true && targets.value.length > 0;
+      selectedTargetId.value = targets.value.some((target) => target.id === defaultTargetId.value)
+        ? defaultTargetId.value
         : "";
       loaded.value = true;
       if (!enabled.value) isOpen.value = false;
@@ -61,7 +63,7 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
   };
 
   const open = async () => {
-    const available = await loadProfiles();
+    const available = await loadModels();
     if (!available) return;
     isOpen.value = true;
   };
@@ -111,7 +113,7 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          profile_id: selectedProfileId.value || undefined,
+          target_id: selectedTargetId.value || undefined,
           messages: [...outgoingMessages, { role: "user", content }]
         }),
         signal: activeAbort.signal
@@ -188,30 +190,32 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
     loaded.value = true;
     enabled.value = false;
     isOpen.value = false;
-    profiles.value = [];
-    defaultProfileId.value = "";
-    selectedProfileId.value = "";
+    providers.value = [];
+    targets.value = [];
+    defaultTargetId.value = "";
+    selectedTargetId.value = "";
   };
 
   return {
     abort,
-    activeProfile,
+    activeTarget,
     canSend,
     clear,
     close,
-    defaultProfileId,
+    defaultTargetId,
     draft,
     enabled,
     isOpen,
-    loadProfiles,
+    loadModels,
     loaded,
     messages,
     open,
-    profiles,
-    selectedProfileId,
+    providers,
+    selectedTargetId,
     send,
     status,
     streaming,
+    targets,
     visible
   };
 });

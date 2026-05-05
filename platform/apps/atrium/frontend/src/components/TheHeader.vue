@@ -36,11 +36,11 @@ const openHome = () => {
 };
 
 onMounted(() => {
-  assistantStore.loadProfiles();
+  assistantStore.loadModels();
 });
 
 watch(me, () => {
-  assistantStore.loadProfiles({ force: true });
+  assistantStore.loadModels({ force: true });
 });
 </script>
 
