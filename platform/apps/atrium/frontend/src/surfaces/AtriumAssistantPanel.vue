@@ -9,6 +9,13 @@ const assistantStore = useAssistantStore();
 const appStore = useAtriumAppStore();
 const scrollRef = ref(null);
 
+const props = defineProps({
+  embedded: {
+    type: Boolean,
+    default: true
+  }
+});
+
 const {
   activeTarget,
   canSend,
@@ -31,7 +38,8 @@ const labels = computed(() => {
       model: "Модель",
       send: "Отправить",
       stop: "Остановить",
-      stopped: "Остановлено"
+      stopped: "Остановлено",
+      title: "Assistant"
     };
   }
   return {
@@ -42,7 +50,8 @@ const labels = computed(() => {
     model: "Model",
     send: "Send",
     stop: "Stop",
-    stopped: "Stopped"
+      stopped: "Stopped",
+      title: "Assistant"
   };
 });
 
@@ -63,15 +72,21 @@ watch(
 </script>
 
 <template>
-  <aside v-if="isOpen" class="atrium-assistant" aria-label="Atrium assistant">
+  <aside
+    v-if="embedded ? isOpen : true"
+    class="atrium-assistant"
+    :class="{ 'atrium-assistant--product': !embedded }"
+    aria-label="Void Assistant"
+  >
     <header class="atrium-assistant__header">
       <div class="atrium-assistant__title">
         <MessageCircle :size="18" />
-        <span>Atrium</span>
+        <span>{{ labels.title }}</span>
       </div>
 
       <div class="atrium-assistant__header-actions">
         <button
+          v-if="embedded"
           type="button"
           class="atrium-assistant__text-button"
           :disabled="streaming || messages.length === 0"

@@ -86,8 +86,8 @@ watch(me, () => {
           v-if="assistantStore.visible"
           type="button"
           class="atrium-header__assistant"
-          aria-label="Atrium assistant"
-          title="Atrium assistant"
+          aria-label="Void Assistant"
+          title="Void Assistant"
           @click="assistantStore.open"
         >
           <MessageCircle :size="17" />

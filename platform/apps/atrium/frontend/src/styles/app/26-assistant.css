@@ -19,6 +19,14 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
+.atrium-assistant--product {
+  position: relative;
+  inset: auto;
+  width: min(58rem, calc(100vw - 2rem));
+  height: min(44rem, calc(100vh - 8.5rem));
+  margin: 0 auto;
+}
+
 .atrium-assistant__header,
 .atrium-assistant__footer,
 .atrium-assistant__profile {
@@ -219,5 +227,12 @@
   .atrium-assistant {
     inset: 5.1rem 0.65rem 0.65rem;
     width: auto;
+  }
+
+  .atrium-assistant--product {
+    position: relative;
+    inset: auto;
+    width: min(100%, calc(100vw - 1rem));
+    height: calc(100vh - 6.5rem);
   }
 }

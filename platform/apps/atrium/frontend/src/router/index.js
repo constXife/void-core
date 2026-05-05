@@ -3,6 +3,7 @@ import AppLayout from "../layouts/AppLayout.vue";
 import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
+import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
 import AdminContentRoute from "../pages/admin/AdminContentRoute.vue";
@@ -11,6 +12,13 @@ import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
 import AdminOverviewRoute from "../pages/admin/AdminOverviewRoute.vue";
 import AdminSpacesRoute from "../pages/admin/AdminSpacesRoute.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
+
+function isAssistantHost() {
+  if (typeof window === "undefined") return false;
+  return String(window.location.hostname || "").toLowerCase().startsWith("assistant.");
+}
+
+const assistantHost = isAssistantHost();
 
 const routes = [
   {
@@ -39,15 +47,25 @@ const routes = [
   },
   {
     path: "/",
-    component: AppLayout,
-    meta: { workspace: true },
+    component: assistantHost ? AssistantProductRoute : AppLayout,
+    meta: assistantHost ? { authRequired: true } : { workspace: true },
     children: [
-      {
-        path: "",
-        name: "home",
-        component: AtriumHomePage
-      }
+      ...(assistantHost
+        ? []
+        : [
+            {
+              path: "",
+              name: "home",
+              component: AtriumHomePage
+            }
+          ])
     ]
+  },
+  {
+    path: "/assistant",
+    name: "assistant",
+    component: AssistantProductRoute,
+    meta: { authRequired: true }
   },
   {
     path: "/space/:spaceSlug",

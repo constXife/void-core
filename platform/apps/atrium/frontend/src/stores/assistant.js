@@ -4,7 +4,7 @@ import { readAssistantSseEvents } from "../lib/assistant-sse.js";
 
 let nextMessageId = 1;
 
-export const useAssistantStore = defineStore("atrium-assistant", () => {
+export const useAssistantStore = defineStore("void-assistant", () => {
   const loaded = ref(false);
   const enabled = ref(false);
   const isOpen = ref(false);
@@ -30,7 +30,7 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
     if (loaded.value && !force) return enabled.value;
 
     try {
-      const response = await fetch("/atrium/assistant/models", {
+      const response = await fetch("/assistant/models", {
         credentials: "include",
         headers: {
           Accept: "application/json"
@@ -106,7 +106,7 @@ export const useAssistantStore = defineStore("atrium-assistant", () => {
     activeAbort = new AbortController();
 
     try {
-      const response = await fetch("/atrium/assistant/chat", {
+      const response = await fetch("/assistant/chat", {
         method: "POST",
         credentials: "include",
         headers: {
