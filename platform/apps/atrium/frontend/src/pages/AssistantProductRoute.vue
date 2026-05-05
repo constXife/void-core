@@ -1,47 +1,38 @@
 <script setup>
 import { Bot } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
-import { computed, onMounted } from "vue";
+import { computed } from "vue";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformHeaderBrand from "../platform/components/PlatformHeaderBrand.vue";
 import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
 import PlatformUserDropdown from "../platform/components/UserDropdown.vue";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
-import AtriumAssistantPanel from "../surfaces/AtriumAssistantPanel.vue";
-import { useAssistantStore } from "../stores/assistant.js";
+import AssistantStandaloneSurface from "../surfaces/AssistantStandaloneSurface.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useAuthStore } from "../stores/auth.js";
 import { useUiStore } from "../stores/ui.js";
 
 const appStore = useAtriumAppStore();
-const assistantStore = useAssistantStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const { authEnabled, loginPageUrl, me } = storeToRefs(authStore);
 const { currentLang, languageLabels } = storeToRefs(uiStore);
 const { themeSelection } = storeToRefs(appStore);
-const { enabled, loaded } = storeToRefs(assistantStore);
 
 const labels = computed(() => {
   if (currentLang.value === "ru") {
     return {
       login: "Войти",
       product: "Void Assistant",
-      subtitle: "Чат",
-      unavailable: "Assistant выключен"
+      subtitle: "Чат"
     };
   }
   return {
     login: "Sign in",
     product: "Void Assistant",
-    subtitle: "Chat",
-    unavailable: "Assistant is disabled"
+    subtitle: "Chat"
   };
-});
-
-onMounted(() => {
-  assistantStore.loadModels({ force: true });
 });
 
 const setLang = (lang) => {
@@ -93,12 +84,7 @@ const logout = async () => {
       </template>
     </PlatformHeaderFrame>
 
-    <section class="assistant-product-main">
-      <AtriumAssistantPanel v-if="enabled" :embedded="false" />
-      <div v-else-if="loaded" class="assistant-product-state">
-        {{ labels.unavailable }}
-      </div>
-    </section>
+    <AssistantStandaloneSurface />
   </main>
 </template>
 
@@ -106,6 +92,7 @@ const logout = async () => {
 .assistant-product-root {
   min-height: 100vh;
   color: var(--ink-primary);
+  background: var(--surface-base);
 }
 
 .assistant-product-header__actions {
@@ -126,23 +113,5 @@ const logout = async () => {
     rgba(15, 18, 24, 0.84);
   color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
-}
-
-.assistant-product-main {
-  min-height: calc(100vh - 5.4rem);
-  display: grid;
-  align-items: center;
-  padding: 5.2rem 1rem 1rem;
-}
-
-.assistant-product-state {
-  width: min(32rem, calc(100vw - 2rem));
-  margin: 0 auto;
-  padding: 1rem;
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  background: rgba(13, 18, 24, 0.88);
-  color: var(--ink-secondary);
-  text-align: center;
 }
 </style>

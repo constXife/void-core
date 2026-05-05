@@ -56,7 +56,9 @@ export const useAssistantStore = defineStore("void-assistant", () => {
       loaded.value = true;
       if (!enabled.value) isOpen.value = false;
       return enabled.value;
-    } catch {
+    } catch (error) {
+      console.error("void-assistant: loadModels failed", error);
+      status.value = String(error?.message || "Assistant load failed");
       disableAssistant();
       return false;
     }

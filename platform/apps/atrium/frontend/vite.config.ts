@@ -26,7 +26,8 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/api": "http://localhost:8080",
         "/atrium": "http://localhost:8080",
-        "/auth": "http://localhost:8080"
+        "/auth": "http://localhost:8080",
+        "^/assistant/(models|chat|sessions)(/.*)?$": "http://localhost:8080"
       }
     },
     test: {

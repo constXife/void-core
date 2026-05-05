@@ -49,18 +49,26 @@ const routes = [
     path: "/",
     component: assistantHost ? AssistantProductRoute : AppLayout,
     meta: assistantHost ? { authRequired: true } : { workspace: true },
-    children: [
-      ...(assistantHost
-        ? []
-        : [
-            {
-              path: "",
-              name: "home",
-              component: AtriumHomePage
-            }
-          ])
-    ]
+    children: assistantHost
+      ? []
+      : [
+          {
+            path: "",
+            name: "home",
+            component: AtriumHomePage
+          }
+        ]
   },
+  ...(assistantHost
+    ? [
+        {
+          path: "/c/:id",
+          name: "assistant-chat",
+          component: AssistantProductRoute,
+          meta: { authRequired: true }
+        }
+      ]
+    : []),
   {
     path: "/assistant",
     name: "assistant",
