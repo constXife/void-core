@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         "/api": "http://localhost:8080",
+        "/atrium": "http://localhost:8080",
         "/auth": "http://localhost:8080"
       }
     },

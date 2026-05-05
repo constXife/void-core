@@ -1,0 +1,223 @@
+.atrium-assistant {
+  position: fixed;
+  right: 1rem;
+  top: 5.4rem;
+  bottom: 1rem;
+  z-index: 45;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  width: min(26rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(13, 18, 24, 0.94);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+  color: var(--ink-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.atrium-assistant__header,
+.atrium-assistant__footer,
+.atrium-assistant__profile {
+  border-color: var(--glass-border);
+}
+
+.atrium-assistant__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.atrium-assistant__title,
+.atrium-assistant__header-actions,
+.atrium-assistant__form {
+  display: flex;
+  align-items: center;
+}
+
+.atrium-assistant__title {
+  min-width: 0;
+  gap: 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.atrium-assistant__header-actions {
+  gap: 0.45rem;
+}
+
+.atrium-assistant__icon-button,
+.atrium-assistant__text-button {
+  border: 1px solid var(--glass-border);
+  color: var(--ink-secondary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.atrium-assistant__icon-button {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.atrium-assistant__text-button {
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.atrium-assistant__icon-button:hover:not(:disabled),
+.atrium-assistant__text-button:hover:not(:disabled) {
+  color: var(--ink-primary);
+  border-color: var(--glass-border-hover);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.atrium-assistant__icon-button:disabled,
+.atrium-assistant__text-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.atrium-assistant__profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.atrium-assistant__profile-label,
+.atrium-assistant__model {
+  color: var(--ink-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.atrium-assistant__profile-select,
+.atrium-assistant__input {
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--ink-primary);
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.atrium-assistant__profile-select {
+  min-width: 0;
+  padding: 0.48rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+.atrium-assistant__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.85rem;
+}
+
+.atrium-assistant__empty {
+  margin: auto;
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+}
+
+.atrium-assistant__message {
+  max-width: 88%;
+  padding: 0.7rem 0.78rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.atrium-assistant__message p {
+  margin: 0;
+}
+
+.atrium-assistant__message--user {
+  align-self: flex-end;
+  border-color: rgba(88, 166, 255, 0.34);
+  background: rgba(88, 166, 255, 0.16);
+}
+
+.atrium-assistant__message--assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.atrium-assistant__message--error {
+  border-color: rgba(248, 81, 73, 0.32);
+  background: rgba(248, 81, 73, 0.1);
+}
+
+.atrium-assistant__cursor {
+  display: block;
+  width: 0.55rem;
+  height: 1rem;
+  border-radius: 2px;
+  background: var(--accent-primary);
+  animation: atrium-assistant-cursor 0.8s steps(2, start) infinite;
+}
+
+.atrium-assistant__footer {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.atrium-assistant__model {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atrium-assistant__form {
+  gap: 0.55rem;
+}
+
+.atrium-assistant__input {
+  min-width: 0;
+  width: 100%;
+  resize: none;
+  padding: 0.7rem 0.78rem;
+  font: inherit;
+  line-height: 1.35;
+}
+
+.atrium-assistant__send {
+  flex: 0 0 auto;
+}
+
+@keyframes atrium-assistant-cursor {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@media (max-width: 720px) {
+  .atrium-assistant {
+    inset: 5.1rem 0.65rem 0.65rem;
+    width: auto;
+  }
+}

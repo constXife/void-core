@@ -6,6 +6,7 @@ import TheHeader from "../components/TheHeader.vue";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useUiStore } from "../stores/ui.js";
+import AtriumAssistantPanel from "../surfaces/AtriumAssistantPanel.vue";
 import AtriumDashboardOverlays from "../surfaces/AtriumDashboardOverlays.vue";
 import AtriumTrustFooter from "../surfaces/AtriumTrustFooter.vue";
 
@@ -35,5 +36,6 @@ const { navigateToPrivacy, t } = appStore;
     />
 
     <AtriumDashboardOverlays />
+    <AtriumAssistantPanel v-if="!isKioskMode" />
   </main>
 </template>

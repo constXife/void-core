@@ -1,6 +1,7 @@
 <script setup>
-import { Activity } from "lucide-vue-next";
+import { Activity, MessageCircle } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
+import { onMounted, watch } from "vue";
 import AtriumSpaceSwitcher from "./AtriumSpaceSwitcher.vue";
 import UserDropdown from "./UserDropdown.vue";
 import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
@@ -8,11 +9,13 @@ import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformHeaderBrand from "../platform/components/PlatformHeaderBrand.vue";
 import PlatformDropdownAnchor from "../platform/components/PlatformDropdownAnchor.vue";
 import PlatformUserMenuTrigger from "../platform/components/PlatformUserMenuTrigger.vue";
+import { useAssistantStore } from "../stores/assistant.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useAuthStore } from "../stores/auth.js";
 import { useUiStore } from "../stores/ui.js";
 
 const appStore = useAtriumAppStore();
+const assistantStore = useAssistantStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 
@@ -31,6 +34,14 @@ const {
 const openHome = () => {
   appStore.navigateTo("/");
 };
+
+onMounted(() => {
+  assistantStore.loadProfiles();
+});
+
+watch(me, () => {
+  assistantStore.loadProfiles({ force: true });
+});
 </script>
 
 <template>
@@ -71,6 +82,17 @@ const openHome = () => {
 
         <PlatformAppsMenu current-product="atrium" :lang="currentLang" />
 
+        <button
+          v-if="assistantStore.visible"
+          type="button"
+          class="atrium-header__assistant"
+          aria-label="Atrium assistant"
+          title="Atrium assistant"
+          @click="assistantStore.open"
+        >
+          <MessageCircle :size="17" />
+        </button>
+
         <template v-if="authEnabled">
           <PlatformDropdownAnchor
             v-if="me"
@@ -102,6 +124,7 @@ const openHome = () => {
 
 <style scoped>
 .atrium-header__login,
+.atrium-header__assistant,
 .atrium-header__lang-select {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -112,6 +135,23 @@ const openHome = () => {
     0 10px 24px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+.atrium-header__assistant {
+  display: inline-grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.atrium-header__assistant:hover {
+  color: rgba(255, 255, 255, 0.96);
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
+    rgba(20, 28, 38, 0.9);
 }
 
 .atrium-header__actions {
