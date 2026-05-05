@@ -22,20 +22,15 @@ const timestamp = computed(() => formatTimestamp(props.message.created_at));
 const fullTimestamp = computed(() => props.message.created_at || "");
 
 function formatTimestamp(value) {
+  // Дата выводится через day-separator выше по conversation, время в самом
+  // сообщении даёт только HH:MM. Полная ISO остаётся в title и datetime
+  // атрибутах для hover-tooltip и a11y.
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const now = new Date();
-  const sameDay =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
   const hh = String(date.getHours()).padStart(2, "0");
   const mm = String(date.getMinutes()).padStart(2, "0");
-  if (sameDay) return `${hh}:${mm}`;
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mo = String(date.getMonth() + 1).padStart(2, "0");
-  return `${dd}.${mo} ${hh}:${mm}`;
+  return `${hh}:${mm}`;
 }
 
 const copyContent = async () => {
@@ -71,6 +66,8 @@ const onRegenerate = () => {
       <AssistantMarkdown
         v-if="message.content || !isStreamingTail"
         :content="message.content"
+        :time-text="isStreamingTail ? '' : timestamp"
+        :time-iso="fullTimestamp"
       />
       <span v-if="showCursor" class="assistant-message__cursor" aria-hidden="true" />
       <p v-if="message.error" class="assistant-message__error-line">
@@ -81,34 +78,28 @@ const onRegenerate = () => {
         Generation stopped.
       </p>
 
-      <div class="assistant-message__meta">
-        <time
-          v-if="timestamp"
-          class="assistant-message__time"
-          :datetime="fullTimestamp"
-          :title="fullTimestamp"
-        >{{ timestamp }}</time>
-
-        <div v-if="isAssistant && !isStreamingTail" class="assistant-message__actions">
-          <button
-            v-if="message.content"
-            type="button"
-            class="assistant-message__action"
-            @click="copyContent"
-            :aria-label="'Copy message'"
-          >
-            <Copy :size="14" />
-          </button>
-          <button
-            v-if="showRegenerate"
-            type="button"
-            class="assistant-message__action"
-            @click="onRegenerate"
-            :aria-label="'Regenerate response'"
-          >
-            <RotateCcw :size="14" />
-          </button>
-        </div>
+      <div
+        v-if="isAssistant && !isStreamingTail && (message.content || showRegenerate)"
+        class="assistant-message__actions"
+      >
+        <button
+          v-if="message.content"
+          type="button"
+          class="assistant-message__action"
+          @click="copyContent"
+          :aria-label="'Copy message'"
+        >
+          <Copy :size="14" />
+        </button>
+        <button
+          v-if="showRegenerate"
+          type="button"
+          class="assistant-message__action"
+          @click="onRegenerate"
+          :aria-label="'Regenerate response'"
+        >
+          <RotateCcw :size="14" />
+        </button>
       </div>
     </div>
   </article>

@@ -12,6 +12,42 @@ const props = defineProps({
   sessionKey: { type: String, default: "draft" }
 });
 
+const messagesWithSeparators = computed(() => {
+  const result = [];
+  let lastDayKey = "";
+  for (const message of props.messages) {
+    const { key, label } = describeMessageDay(message.created_at);
+    if (key && key !== lastDayKey) {
+      result.push({ kind: "separator", id: `sep-${key}`, label });
+      lastDayKey = key;
+    }
+    result.push({ kind: "message", id: message.id, message });
+  }
+  return result;
+});
+
+function describeMessageDay(value) {
+  if (!value) return { key: "", label: "" };
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { key: "", label: "" };
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  if (startOfDay === startOfToday) return { key, label: "Сегодня" };
+  if (startOfDay === startOfToday - dayMs) return { key, label: "Вчера" };
+  const months = [
+    "января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря"
+  ];
+  const sameYear = date.getFullYear() === now.getFullYear();
+  const label = sameYear
+    ? `${date.getDate()} ${months[date.getMonth()]}`
+    : `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  return { key, label };
+}
+
 const emit = defineEmits(["regenerate", "choose-suggestion"]);
 
 const scrollerRef = ref(null);
@@ -23,6 +59,11 @@ const lastAssistantId = computed(() => {
     }
   }
   return null;
+});
+
+const lastMessageId = computed(() => {
+  if (!props.messages.length) return null;
+  return props.messages[props.messages.length - 1].id;
 });
 
 const showEmpty = computed(() => !props.hasSession || props.messages.length === 0);
@@ -53,18 +94,22 @@ watch(
           Загружаем чат…
         </p>
         <TransitionGroup v-else name="assistant-message" tag="div" class="assistant-conversation__list" appear>
-          <AssistantMessage
-            v-for="(message, index) in messages"
-            :key="message.id"
-            :message="message"
-            :streaming="streaming && message.id === lastAssistantId"
-            :show-regenerate="
-              !streaming &&
-              message.role === 'assistant' &&
-              index === messages.length - 1
-            "
-            @regenerate="emit('regenerate')"
-          />
+          <template v-for="entry in messagesWithSeparators" :key="entry.id">
+            <div v-if="entry.kind === 'separator'" class="assistant-day-separator">
+              {{ entry.label }}
+            </div>
+            <AssistantMessage
+              v-else
+              :message="entry.message"
+              :streaming="streaming && entry.message.id === lastAssistantId"
+              :show-regenerate="
+                !streaming &&
+                entry.message.role === 'assistant' &&
+                entry.message.id === lastMessageId
+              "
+              @regenerate="emit('regenerate')"
+            />
+          </template>
         </TransitionGroup>
       </div>
     </Transition>
