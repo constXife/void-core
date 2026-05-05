@@ -62,21 +62,29 @@ const onRegenerate = () => {
       <Bot :size="16" />
     </div>
 
-    <div class="assistant-message__body">
-      <AssistantMarkdown
-        v-if="message.content || !isStreamingTail"
-        :content="message.content"
-        :time-text="isStreamingTail ? '' : timestamp"
-        :time-iso="fullTimestamp"
-      />
-      <span v-if="showCursor" class="assistant-message__cursor" aria-hidden="true" />
-      <p v-if="message.error" class="assistant-message__error-line">
-        <AlertCircle :size="14" />
-        <span>{{ message.content || "Assistant error" }}</span>
-      </p>
-      <p v-else-if="message.stopped" class="assistant-message__stopped-line">
-        Generation stopped.
-      </p>
+    <div class="assistant-message__stack">
+      <div class="assistant-message__body">
+        <AssistantMarkdown
+          v-if="message.content || !isStreamingTail"
+          :content="message.content"
+        />
+        <span v-if="showCursor" class="assistant-message__cursor" aria-hidden="true" />
+        <p v-if="message.error" class="assistant-message__error-line">
+          <AlertCircle :size="14" />
+          <span>{{ message.content || "Assistant error" }}</span>
+        </p>
+        <p v-else-if="message.stopped" class="assistant-message__stopped-line">
+          Generation stopped.
+        </p>
+      </div>
+
+      <div v-if="timestamp && !isStreamingTail" class="assistant-message__meta">
+        <time
+          class="assistant-message__time"
+          :datetime="fullTimestamp"
+          :title="fullTimestamp"
+        >{{ timestamp }}</time>
+      </div>
 
       <div
         v-if="isAssistant && !isStreamingTail && (message.content || showRegenerate)"

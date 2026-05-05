@@ -510,27 +510,49 @@
   color: var(--ink-muted);
 }
 
-/* Inline timestamp, аппендится в последний параграф markdown'а через
- * AssistantMarkdown.injectInlineTime. Сидит на baseline последней строки. */
-.assistant-time-inline {
-  margin-left: 0.5rem;
+/* Stack-обёртка под body + meta + actions, чтобы у user-сообщений мета жила
+ * СНАРУЖИ пузыря, а не внутри. Для assistant — просто колонка. */
+.assistant-message__stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.assistant-message--user .assistant-message__stack {
+  align-items: flex-end;
+}
+
+.assistant-message--assistant .assistant-message__stack {
+  flex: 1 1 auto;
+  align-items: flex-start;
+}
+
+/* Time под сообщением: tight-row, baseline-aligned под последней строкой
+ * контента. Контраст приглушённый, но читаемый (opacity 0.9 + ink-secondary). */
+.assistant-message__meta {
+  margin-top: 4px;
+  line-height: 1;
+  display: flex;
+}
+
+.assistant-message--user .assistant-message__meta {
+  padding-right: 4px;
+}
+
+.assistant-message--assistant .assistant-message__meta {
+  padding-left: 2px;
+}
+
+.assistant-message__time {
   font-size: var(--text-2xs, 10px);
-  color: var(--ink-muted);
+  color: var(--ink-secondary);
   font-variant-numeric: tabular-nums;
-  opacity: 0.6;
-  white-space: nowrap;
+  opacity: 0.9;
   transition: opacity var(--duration-fast, 150ms) var(--ease-default, ease);
 }
 
-.assistant-message:hover .assistant-time-inline {
-  opacity: 0.95;
-}
-
-/* Если последний блок markdown'а — pre/table, time встаёт под ним отдельной
- * строкой; компенсируем margin для читаемости. */
-.assistant-markdown > .assistant-time-inline {
-  display: block;
-  margin: 0.3rem 0 0;
+.assistant-message:hover .assistant-message__time {
+  opacity: 1;
 }
 
 .assistant-message__actions {
