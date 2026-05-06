@@ -33,8 +33,12 @@ export function renderMarkdown(markdown, options = {}) {
 function createMarkdownRenderer(options) {
   const renderer = new Renderer();
   const renderDiagrams = options.renderDiagrams === true;
+  const renderTable = renderer.table.bind(renderer);
 
   renderer.html = (token) => escapeHtml(token.text || token.raw || "");
+  renderer.table = (token) => (
+    `<div class="assistant-markdown__table-scroll">${renderTable(token)}</div>`
+  );
   renderer.code = (token) => {
     const language = normalizeLanguage(token.lang);
     const code = String(token.text || "");

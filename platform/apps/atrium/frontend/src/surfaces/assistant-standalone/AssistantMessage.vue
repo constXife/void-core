@@ -17,9 +17,12 @@ const isStreamingTail = computed(
   () => props.streaming && isAssistant.value && !props.message.error
 );
 const showCursor = computed(() => isStreamingTail.value);
-
 const timestamp = computed(() => formatTimestamp(props.message.created_at));
 const fullTimestamp = computed(() => props.message.created_at || "");
+const showActions = computed(
+  () => isAssistant.value && !isStreamingTail.value && (props.message.content || props.showRegenerate)
+);
+const showFooter = computed(() => (timestamp.value && !isStreamingTail.value) || showActions.value);
 
 function formatTimestamp(value) {
   // Дата выводится через day-separator выше по conversation, время в самом
@@ -79,36 +82,33 @@ const onRegenerate = () => {
         </p>
       </div>
 
-      <div v-if="timestamp && !isStreamingTail" class="assistant-message__meta">
+      <div v-if="showFooter" class="assistant-message__footer">
         <time
+          v-if="timestamp && !isStreamingTail"
           class="assistant-message__time"
           :datetime="fullTimestamp"
           :title="fullTimestamp"
         >{{ timestamp }}</time>
-      </div>
-
-      <div
-        v-if="isAssistant && !isStreamingTail && (message.content || showRegenerate)"
-        class="assistant-message__actions"
-      >
-        <button
-          v-if="message.content"
-          type="button"
-          class="assistant-message__action"
-          @click="copyContent"
-          :aria-label="'Copy message'"
-        >
-          <Copy :size="14" />
-        </button>
-        <button
-          v-if="showRegenerate"
-          type="button"
-          class="assistant-message__action"
-          @click="onRegenerate"
-          :aria-label="'Regenerate response'"
-        >
-          <RotateCcw :size="14" />
-        </button>
+        <div v-if="showActions" class="assistant-message__actions">
+          <button
+            v-if="message.content"
+            type="button"
+            class="assistant-message__action"
+            @click="copyContent"
+            :aria-label="'Copy message'"
+          >
+            <Copy :size="14" />
+          </button>
+          <button
+            v-if="showRegenerate"
+            type="button"
+            class="assistant-message__action"
+            @click="onRegenerate"
+            :aria-label="'Regenerate response'"
+          >
+            <RotateCcw :size="14" />
+          </button>
+        </div>
       </div>
     </div>
   </article>

@@ -496,7 +496,7 @@
 .assistant-message--assistant .assistant-message__body {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 78ch;
+  max-width: min(58rem, 100%);
 }
 
 .assistant-message__avatar {
@@ -545,7 +545,7 @@
   color: var(--ink-muted);
 }
 
-/* Stack-обёртка под body + meta + actions, чтобы у user-сообщений мета жила
+/* Stack-обёртка под body + footer, чтобы у user-сообщений мета жила
  * СНАРУЖИ пузыря, а не внутри. Для assistant — просто колонка. */
 .assistant-message__stack {
   display: flex;
@@ -562,19 +562,23 @@
   align-items: flex-start;
 }
 
-/* Time под сообщением: tight-row, baseline-aligned под последней строкой
- * контента. Контраст приглушённый, но читаемый (opacity 0.9 + ink-secondary). */
-.assistant-message__meta {
+/* Footer под сообщением: timestamp и actions живут на одной baseline-строке. */
+.assistant-message__footer {
   margin-top: 4px;
   line-height: 1;
   display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.7rem;
 }
 
-.assistant-message--user .assistant-message__meta {
+.assistant-message--user .assistant-message__footer {
+  justify-content: flex-end;
   padding-right: 4px;
 }
 
-.assistant-message--assistant .assistant-message__meta {
+.assistant-message--assistant .assistant-message__footer {
+  justify-content: flex-start;
   padding-left: 2px;
 }
 
@@ -591,10 +595,10 @@
 }
 
 .assistant-message__actions {
-  margin-top: 0.3rem;
   display: flex;
-  gap: 0.3rem;
-  opacity: 0;
+  align-items: center;
+  gap: 0.2rem;
+  opacity: 0.58;
   transition: opacity var(--duration-fast, 150ms) var(--ease-default, ease);
 }
 
@@ -653,6 +657,7 @@
   font-size: 15px;
   color: var(--ink-primary);
   overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .assistant-message--assistant .assistant-markdown {
@@ -687,6 +692,10 @@
 
 .assistant-markdown p {
   margin: 0.6em 0;
+}
+
+.assistant-message--assistant .assistant-markdown :is(p, ul, ol, blockquote, h1, h2, h3, h4) {
+  max-width: 78ch;
 }
 
 .assistant-markdown > :first-child {
@@ -741,6 +750,50 @@
   background: transparent;
   border: none;
   padding: 0;
+}
+
+.assistant-markdown__table-scroll {
+  max-width: 100%;
+  margin: 0.85rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-raised) 82%, transparent);
+  scrollbar-width: thin;
+}
+
+.assistant-markdown table {
+  width: 100%;
+  min-width: min(44rem, calc(100vw - 4rem));
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 0.94em;
+  line-height: 1.48;
+}
+
+.assistant-markdown th,
+.assistant-markdown td {
+  min-width: 8rem;
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--border-default);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.assistant-markdown th {
+  color: var(--ink-primary);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--surface-overlay) 70%, transparent);
+}
+
+.assistant-markdown td {
+  color: color-mix(in srgb, var(--ink-primary) 92%, white 8%);
+}
+
+.assistant-markdown tr:last-child td {
+  border-bottom: 0;
 }
 
 .assistant-markdown blockquote {

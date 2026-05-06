@@ -36,6 +36,13 @@ describe("atrium markdown sanitization", () => {
     expect(html).toContain("flowchart TD");
   });
 
+  it("wraps markdown tables in a horizontal scroll container", () => {
+    const html = renderMarkdown("| Вещество | Роль |\n| --- | --- |\n| CO₂ | Фотосинтез |");
+    expect(html).toContain("assistant-markdown__table-scroll");
+    expect(html).toContain("<table>");
+    expect(html).toContain("<td>CO₂</td>");
+  });
+
   it("sanitizes rendered svg fragments", () => {
     const svg = sanitizeSvg('<svg><script>alert(1)</script><g onclick="x()"></g></svg>');
     expect(svg).toContain("<svg");
