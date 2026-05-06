@@ -72,4 +72,21 @@ describe("atrium markdown sanitization", () => {
     expect(svg).toContain("Атмосфера");
     expect(sanitizeSvg(svg)).toContain("Атмосфера");
   });
+
+  it("keeps Mermaid node labels when html nodes are emitted inside label groups", () => {
+    const svg = normalizeMermaidSvgLabels(`
+      <svg xmlns="http://www.w3.org/2000/svg">
+        <g class="node">
+          <rect width="120" height="40"></rect>
+          <g class="label" transform="translate(60, 20)">
+            <span class="nodeLabel"><p>Растения</p></span>
+          </g>
+        </g>
+      </svg>
+    `);
+    expect(svg).toContain("<text");
+    expect(svg).toContain("class=\"nodeLabel\"");
+    expect(svg).toContain("Растения");
+    expect(sanitizeSvg(svg)).toContain("Растения");
+  });
 });

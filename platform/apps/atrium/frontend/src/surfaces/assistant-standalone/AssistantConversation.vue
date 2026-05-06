@@ -6,6 +6,7 @@ import AssistantEmptyState from "./AssistantEmptyState.vue";
 const props = defineProps({
   messages: { type: Array, default: () => [] },
   streaming: { type: Boolean, default: false },
+  streamingStatus: { type: String, default: "" },
   loading: { type: Boolean, default: false },
   hasSession: { type: Boolean, default: false },
   suggestions: { type: Array, default: () => [] },
@@ -48,7 +49,7 @@ function describeMessageDay(value) {
   return { key, label };
 }
 
-const emit = defineEmits(["regenerate", "choose-suggestion"]);
+const emit = defineEmits(["regenerate", "delete-message", "choose-suggestion"]);
 
 const scrollerRef = ref(null);
 
@@ -67,6 +68,11 @@ const lastMessageId = computed(() => {
 });
 
 const showEmpty = computed(() => !props.hasSession || props.messages.length === 0);
+
+function isDeletablePair(messageId) {
+  const index = props.messages.findIndex((message) => message.id === messageId);
+  return index > 0 && props.messages[index - 1]?.role === "user";
+}
 
 const scrollToBottom = () => {
   const node = scrollerRef.value;
@@ -102,12 +108,17 @@ watch(
               v-else
               :message="entry.message"
               :streaming="streaming && entry.message.id === lastAssistantId"
+              :streaming-status="streamingStatus"
               :show-regenerate="
                 !streaming &&
                 entry.message.role === 'assistant' &&
                 entry.message.id === lastMessageId
               "
+              :show-delete="
+                !streaming && entry.message.role === 'assistant' && isDeletablePair(entry.message.id)
+              "
               @regenerate="emit('regenerate')"
+              @delete="(id) => emit('delete-message', id)"
             />
           </template>
         </TransitionGroup>

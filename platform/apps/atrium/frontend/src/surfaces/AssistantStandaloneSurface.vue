@@ -46,11 +46,13 @@ const {
   currentSessionId,
   draft,
   streaming,
+  streamingStatus,
   status,
   loadingSessions,
   loadingCurrent,
   canSend
 } = storeToRefs(sessionsStore);
+const { pendingMessageDeletion } = storeToRefs(sessionsStore);
 
 const sidebarCollapsed = ref(loadSidebarPreference());
 const sidebarWidth = ref(clampSidebarWidth(loadSidebarWidth()));
@@ -122,6 +124,14 @@ const onStop = () => {
 
 const onRegenerate = () => {
   sessionsStore.regenerateLast({ targetId: composerTargetId.value });
+};
+
+const onDeleteMessage = (messageId) => {
+  sessionsStore.deleteMessagePair(messageId);
+};
+
+const onUndoMessageDelete = () => {
+  sessionsStore.undoMessageDeletion();
 };
 
 const onSelectTarget = async (targetId) => {
@@ -315,11 +325,13 @@ function savePreferredTarget(value) {
       <AssistantConversation
         :messages="currentMessages"
         :streaming="streaming"
+        :streaming-status="streamingStatus"
         :loading="loadingCurrent"
         :has-session="Boolean(currentSession)"
         :suggestions="SUGGESTIONS"
         :session-key="currentSessionId || 'draft'"
         @regenerate="onRegenerate"
+        @delete-message="onDeleteMessage"
         @choose-suggestion="onChooseSuggestion"
       />
 
@@ -340,6 +352,18 @@ function savePreferredTarget(value) {
       <p v-if="status" class="assistant-standalone__status" role="status">
         {{ status }}
       </p>
+
+      <div
+        v-if="pendingMessageDeletion"
+        class="assistant-standalone__undo"
+        role="status"
+        aria-live="polite"
+      >
+        <span>Пара сообщений удалена</span>
+        <button type="button" class="assistant-standalone__undo-button" @click="onUndoMessageDelete">
+          Отменить
+        </button>
+      </div>
     </main>
   </section>
 </template>

@@ -525,9 +525,29 @@
   animation-duration: calc(800ms * var(--fx-motion, 1));
 }
 
+.assistant-message__streaming-line {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: var(--text-sm, 13px);
+  color: var(--ink-secondary);
+}
+
+.assistant-message__streaming-line svg {
+  color: var(--accent-purple);
+  animation: assistant-running-spin calc(900ms * var(--fx-motion, 1)) linear infinite;
+}
+
 @keyframes assistant-cursor-blink {
   to {
     opacity: 0;
+  }
+}
+
+@keyframes assistant-running-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -648,6 +668,11 @@
   background: var(--glass-bg-hover);
   border-color: var(--border-default);
   color: var(--ink-primary);
+}
+
+.assistant-message__action--danger:hover {
+  border-color: color-mix(in srgb, var(--status-warning, #ef4444) 42%, transparent);
+  color: var(--status-warning, #ef4444);
 }
 
 /* ---- Markdown body ---- */
@@ -847,6 +872,11 @@
 .assistant-mermaid__canvas svg :is(text, tspan, .label, .nodeLabel, .edgeLabel) {
   fill: var(--ink-primary) !important;
   color: var(--ink-primary) !important;
+}
+
+.assistant-mermaid__canvas svg foreignObject :is(div, span, p) {
+  color: var(--ink-primary) !important;
+  background: transparent !important;
 }
 
 .assistant-mermaid__canvas svg :is(.node rect, .node circle, .node ellipse, .node polygon, .node path) {
@@ -1184,6 +1214,44 @@
   border-radius: 6px;
   color: var(--ink-primary);
   font-size: var(--text-xs, 11px);
+}
+
+.assistant-standalone__undo {
+  position: absolute;
+  left: 50%;
+  bottom: 6.2rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(28rem, calc(100% - 2rem));
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-raised) 92%, black 8%);
+  box-shadow: var(--shadow-popover, 0 18px 40px rgba(0, 0, 0, 0.22));
+  color: var(--ink-primary);
+  font-size: var(--text-sm, 13px);
+  transform: translateX(-50%);
+}
+
+.assistant-standalone__undo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.8rem;
+  padding: 0 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 44%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent-purple) 18%, transparent);
+  color: var(--ink-primary);
+  font-size: var(--text-xs, 11px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.assistant-standalone__undo-button:hover {
+  background: color-mix(in srgb, var(--accent-purple) 28%, transparent);
 }
 
 /* ============================================

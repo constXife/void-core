@@ -39,6 +39,13 @@ export function normalizeMermaidSvgLabels(svg) {
     foreignObject.replaceWith(createSvgTextLabel(document, foreignObject, label));
   }
 
+  for (const labelGroup of Array.from(document.querySelectorAll(".node .label"))) {
+    if (labelGroup.querySelector("text")) continue;
+    const label = labelGroup.textContent?.replace(/\s+/g, " ").trim();
+    if (!label) continue;
+    labelGroup.replaceChildren(createCenteredSvgTextLabel(document, label));
+  }
+
   return new XMLSerializer().serializeToString(document.documentElement);
 }
 
@@ -113,6 +120,18 @@ function createSvgTextLabel(document, foreignObject, label) {
   text.setAttribute("class", className);
   text.setAttribute("x", String(x + width / 2));
   text.setAttribute("y", String(y + height / 2));
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("dominant-baseline", "middle");
+  text.textContent = label;
+  return text;
+}
+
+function createCenteredSvgTextLabel(document, label) {
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const text = document.createElementNS(svgNamespace, "text");
+  text.setAttribute("class", "nodeLabel");
+  text.setAttribute("x", "0");
+  text.setAttribute("y", "0");
   text.setAttribute("text-anchor", "middle");
   text.setAttribute("dominant-baseline", "middle");
   text.textContent = label;

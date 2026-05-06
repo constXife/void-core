@@ -12,6 +12,7 @@ import {
 
 const SESSIONS_URL = "/assistant/sessions";
 const TRASHED_URL = "/assistant/sessions/trashed";
+const MESSAGE_DELETE_UNDO_MS = 5000;
 
 export const useAssistantSessionsStore = defineStore("void-assistant-sessions", () => {
   const sessions = ref([]);
@@ -29,10 +30,14 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
 
   const draft = ref("");
   const streaming = ref(false);
+  const streamingPhase = ref("");
+  const streamingStatus = computed(() => describeStreamingPhase(streamingPhase.value));
   const status = ref("");
+  const pendingMessageDeletion = ref(null);
 
   let activeAbort = null;
   let activeRunId = "";
+  let pendingMessageDeletionInternal = null;
 
   const groupedSessions = computed(() => groupSessionsByDate(sessions.value));
   const canSend = computed(() => !streaming.value && draft.value.trim().length > 0);
@@ -86,7 +91,10 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     try {
       const payload = await fetchJson(`${SESSIONS_URL}/${currentSessionId.value}`);
       currentSession.value = normalizeSession(payload);
-      currentMessages.value = normalizeMessageList(payload?.messages);
+      currentMessages.value = filterPendingDeletedMessages(
+        currentSessionId.value,
+        normalizeMessageList(payload?.messages)
+      );
       activeRun = normalizeRun(payload?.active_run);
       currentLoaded.value = true;
       status.value = "";
@@ -166,6 +174,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const send = async ({ targetId } = {}) => {
     const content = draft.value.trim();
     if (!content || streaming.value) return;
+    if (!(await commitPendingMessageDeletion())) return;
 
     let session = currentSession.value;
     if (!session) {
@@ -182,6 +191,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     currentMessages.value = [...currentMessages.value, optimisticUser, optimisticAssistant];
     draft.value = "";
     streaming.value = true;
+    streamingPhase.value = "creating";
     status.value = "";
 
     activeAbort = new AbortController();
@@ -198,6 +208,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       if (!activeRunId) {
         throw new Error("Assistant run create returned empty id");
       }
+      streamingPhase.value = "queued";
       const serverUserMessageId = String(
         payload?.user_message_id || payload?.run?.user_message_id || ""
       );
@@ -229,6 +240,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       }
     } finally {
       streaming.value = false;
+      streamingPhase.value = "";
       activeAbort = null;
       activeRunId = "";
     }
@@ -237,6 +249,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const resumeRun = async (run) => {
     if (!shouldResumeRun(run)) return;
     streaming.value = true;
+    streamingPhase.value = run.status || "running";
     status.value = "";
     activeAbort = new AbortController();
     activeRunId = run.id;
@@ -257,6 +270,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       }
     } finally {
       streaming.value = false;
+      streamingPhase.value = "";
       activeAbort = null;
       activeRunId = "";
     }
@@ -273,6 +287,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const abort = () => {
     const runId = activeRunId;
     if (runId) {
+      streamingPhase.value = "cancelling";
       cancelAssistantRun(runId).catch((error) => {
         console.error("void-assistant: cancel run failed", error);
       });
@@ -283,10 +298,12 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
     activeRunId = "";
     streaming.value = false;
+    streamingPhase.value = "";
   };
 
   const regenerateLast = async ({ targetId } = {}) => {
     if (streaming.value || !currentSession.value) return;
+    if (!(await commitPendingMessageDeletion())) return;
     const messages = currentMessages.value;
     const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
     const lastUser = [...messages].reverse().find((message) => message.role === "user");
@@ -298,19 +315,85 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     await send({ targetId });
   };
 
+  const deleteMessagePair = async (messageId) => {
+    if (streaming.value || !currentSessionId.value) return;
+    if (!(await commitPendingMessageDeletion())) return;
+    const pair = resolveMessagePair(currentMessages.value, messageId);
+    if (!pair) return;
+    const messageIds = new Set(pair.messages.map((message) => message.id));
+    const deletion = {
+      sessionId: currentSessionId.value,
+      requestMessageId: String(messageId),
+      anchorIndex: pair.anchorIndex,
+      messages: pair.messages,
+      messageIds,
+      timer: null
+    };
+    currentMessages.value = currentMessages.value.filter((message) => !messageIds.has(message.id));
+    pendingMessageDeletionInternal = deletion;
+    deletion.timer = window.setTimeout(() => {
+      commitPendingMessageDeletion();
+    }, MESSAGE_DELETE_UNDO_MS);
+    pendingMessageDeletion.value = publicDeletion(deletion);
+  };
+
+  const undoMessageDeletion = () => {
+    const deletion = pendingMessageDeletionInternal;
+    if (!deletion) return;
+    if (deletion.timer) {
+      window.clearTimeout(deletion.timer);
+    }
+    if (currentSessionId.value === deletion.sessionId) {
+      currentMessages.value = restoreDeletedMessages(currentMessages.value, deletion);
+    }
+    pendingMessageDeletionInternal = null;
+    pendingMessageDeletion.value = null;
+  };
+
+  const commitPendingMessageDeletion = async () => {
+    const deletion = pendingMessageDeletionInternal;
+    if (!deletion) return true;
+    if (deletion.timer) {
+      window.clearTimeout(deletion.timer);
+    }
+    pendingMessageDeletionInternal = null;
+    pendingMessageDeletion.value = null;
+    try {
+      await fetchJson(
+        `${SESSIONS_URL}/${deletion.sessionId}/messages/${deletion.requestMessageId}`,
+        { method: "DELETE" }
+      );
+      updateSessionMessageCount(deletion.sessionId, -deletion.messages.length);
+      return true;
+    } catch (error) {
+      if (currentSessionId.value === deletion.sessionId) {
+        currentMessages.value = restoreDeletedMessages(currentMessages.value, deletion);
+      }
+      reportError("Failed to delete assistant message pair", error);
+      return false;
+    }
+  };
+
   const applyStreamEvent = (event, assistantMessageId) => {
+    if (event.event === "queued" || event.event === "running") {
+      streamingPhase.value = event.event;
+      return;
+    }
     if (event.event === "delta") {
+      streamingPhase.value = "receiving";
       const text = String(event.json?.text || "");
       if (text) appendAssistantText(assistantMessageId, text);
       return;
     }
     if (event.event === "error") {
+      streamingPhase.value = "failed";
       markMessage(assistantMessageId, {
         error: true,
         content: String(event.json?.message || "Assistant provider error")
       });
     }
     if (event.event === "cancelled") {
+      streamingPhase.value = "cancelled";
       markMessage(assistantMessageId, { stopped: true });
     }
   };
@@ -332,6 +415,23 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     sessions.value = sessions.value
       .map((session) => (session.id === id ? { ...session, updated_at: now } : session))
       .sort((left, right) => (right.updated_at || "").localeCompare(left.updated_at || ""));
+  };
+
+  const updateSessionMessageCount = (id, delta) => {
+    sessions.value = sessions.value.map((session) => {
+      if (session.id !== id) return session;
+      return {
+        ...session,
+        message_count: Math.max(0, session.message_count + delta),
+        updated_at: new Date().toISOString()
+      };
+    });
+  };
+
+  const filterPendingDeletedMessages = (sessionId, messages) => {
+    const deletion = pendingMessageDeletionInternal;
+    if (!deletion || deletion.sessionId !== sessionId) return messages;
+    return messages.filter((message) => !deletion.messageIds.has(message.id));
   };
 
   const reportError = (label, error) => {
@@ -357,6 +457,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     loadingSessions,
     loadingTrashed,
     regenerateLast,
+    deleteMessagePair,
     reloadCurrent,
     renameSession,
     restoreSession,
@@ -367,6 +468,10 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     softDeleteSession,
     status,
     streaming,
+    streamingPhase,
+    streamingStatus,
+    pendingMessageDeletion,
+    undoMessageDeletion,
     trashedLoaded,
     trashedSessions
   };
@@ -452,6 +557,44 @@ function normalizeRun(payload) {
   };
 }
 
+function resolveMessagePair(messages, messageId) {
+  const index = messages.findIndex((message) => message.id === messageId);
+  if (index < 0) return null;
+  const message = messages[index];
+  if (message.role === "assistant") {
+    const previous = messages[index - 1];
+    if (previous?.role !== "user") return null;
+    return {
+      anchorIndex: index - 1,
+      messages: [previous, message]
+    };
+  }
+  if (message.role === "user") {
+    const next = messages[index + 1];
+    if (next?.role !== "assistant") return null;
+    return {
+      anchorIndex: index,
+      messages: [message, next]
+    };
+  }
+  return null;
+}
+
+function restoreDeletedMessages(messages, deletion) {
+  const existingIds = new Set(messages.map((message) => message.id));
+  const restored = deletion.messages.filter((message) => !existingIds.has(message.id));
+  if (restored.length === 0) return messages;
+  const before = messages.slice(0, deletion.anchorIndex);
+  const after = messages.slice(deletion.anchorIndex);
+  return [...before, ...restored, ...after];
+}
+
+function publicDeletion(deletion) {
+  return {
+    count: deletion.messages.length
+  };
+}
+
 function normalizeErrorMessage(error) {
   const message = String(error?.message || "").trim();
   if (!message) return "Assistant request failed";
@@ -460,6 +603,23 @@ function normalizeErrorMessage(error) {
     return String(payload.message || payload.error || "Assistant request failed");
   } catch {
     return message;
+  }
+}
+
+function describeStreamingPhase(phase) {
+  switch (phase) {
+    case "creating":
+      return "Создаем run…";
+    case "queued":
+      return "Run в очереди…";
+    case "running":
+      return "Модель начала обработку…";
+    case "receiving":
+      return "Модель отвечает…";
+    case "cancelling":
+      return "Останавливаем генерацию…";
+    default:
+      return "";
   }
 }
 
