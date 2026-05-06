@@ -6,7 +6,7 @@ pkgs.buildNpmPackage {
   pname = "atrium-frontend-dist";
   version = "0.1.0";
   src = src + "/frontend";
-  npmDepsHash = "sha256-BzY20S1Akxr9VsDelvdPgyP49TQ4aW7K1GdlZrF/OXY=";
+  npmDepsHash = "sha256-ZdXtbVzqW7RijGnwQNUETesW0NZ5v1RPJmk8vnChJjo=";
 
   npmBuildScript = "build";
 
