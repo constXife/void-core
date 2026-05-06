@@ -782,6 +782,25 @@
   margin: 0 auto;
 }
 
+.assistant-mermaid__canvas svg :is(text, .label, .nodeLabel, .edgeLabel) {
+  fill: var(--ink-primary);
+  color: var(--ink-primary);
+}
+
+.assistant-mermaid__canvas svg .edgeLabel,
+.assistant-mermaid__canvas svg .labelBkg {
+  background: var(--surface-overlay);
+}
+
+.assistant-mermaid__canvas svg :is(.edgePath path, .flowchart-link, .messageLine0, .messageLine1) {
+  stroke: var(--ink-secondary);
+}
+
+.assistant-mermaid__canvas svg :is(marker path, marker polygon) {
+  fill: var(--ink-secondary);
+  stroke: var(--ink-secondary);
+}
+
 .assistant-mermaid__source {
   margin: 0;
   border: 0;

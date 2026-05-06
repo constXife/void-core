@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { MoreHorizontal, Pencil, Trash2, RotateCcw } from "lucide-vue-next";
 
 const props = defineProps({
@@ -11,6 +11,7 @@ const props = defineProps({
 const emit = defineEmits(["select", "rename", "delete", "restore"]);
 
 const menuOpen = ref(false);
+const rootRef = ref(null);
 
 const placeholderTitle = "Без названия";
 
@@ -42,17 +43,39 @@ const onRestore = () => {
   closeMenu();
   emit("restore", props.session);
 };
+
+const onDocumentPointerDown = (event) => {
+  if (!menuOpen.value) return;
+  if (rootRef.value?.contains(event.target)) return;
+  closeMenu();
+};
+
+const onDocumentKeydown = (event) => {
+  if (event.key === "Escape") {
+    closeMenu();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onDocumentPointerDown, true);
+  document.addEventListener("keydown", onDocumentKeydown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+  document.removeEventListener("keydown", onDocumentKeydown);
+});
 </script>
 
 <template>
   <div
+    ref="rootRef"
     class="assistant-sidebar-item"
     :class="{
       'assistant-sidebar-item--active': active,
       'assistant-sidebar-item--trashed': trashed
     }"
     @click.stop="onSelect"
-    @mouseleave="closeMenu"
   >
     <span class="assistant-sidebar-item__title" :title="session.title">
       {{ session.title || placeholderTitle }}

@@ -33,6 +33,18 @@ describe("AssistantMarkdown", () => {
     await flushPromises();
 
     expect(mermaidRender).toHaveBeenCalledOnce();
+    expect(mermaidInitialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        securityLevel: "strict",
+        startOnLoad: false,
+        theme: "base",
+        themeVariables: expect.objectContaining({
+          primaryTextColor: expect.any(String),
+          primaryColor: expect.any(String),
+          lineColor: expect.any(String)
+        })
+      })
+    );
     expect(wrapper.find(".assistant-mermaid--rendered").exists()).toBe(true);
     expect(wrapper.find("svg").exists()).toBe(true);
   });
