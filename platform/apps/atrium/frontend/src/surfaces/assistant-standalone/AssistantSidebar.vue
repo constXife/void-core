@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { Plus, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-vue-next";
 import AssistantSidebarItem from "./AssistantSidebarItem.vue";
+import PlatformIdentityBrand from "../../platform/components/PlatformIdentityBrand.vue";
 
 const props = defineProps({
   groups: { type: Array, default: () => [] },
@@ -9,7 +10,8 @@ const props = defineProps({
   trashedLoaded: { type: Boolean, default: false },
   activeId: { type: String, default: "" },
   loading: { type: Boolean, default: false },
-  collapsed: { type: Boolean, default: false }
+  collapsed: { type: Boolean, default: false },
+  identity: { type: Object, required: true }
 });
 
 const emit = defineEmits([
@@ -37,8 +39,15 @@ const toggleTrash = () => {
 
 <template>
   <aside class="assistant-sidebar" :class="{ 'assistant-sidebar--collapsed': collapsed }">
-    <div v-if="$slots.brand" class="assistant-sidebar__brand">
-      <slot name="brand" />
+    <div class="assistant-sidebar__brand">
+      <slot name="brand" :identity="identity" :collapsed="collapsed">
+        <PlatformIdentityBrand
+          :identity="identity"
+          :collapsed="collapsed"
+          :mark-size="26"
+          :mark-rounded="6"
+        />
+      </slot>
     </div>
 
     <div class="assistant-sidebar__top">

@@ -36,6 +36,14 @@ The contract is composition-first:
   - `variant="glass"` for elevated shell branding;
   - `variant="flat"` for neutral bar-style headers.
 
+- `PlatformIdentityBrand.vue`
+  Reusable identity assembly for compact product/sidebar branding.
+  Takes an explicit identity object and does not know product names.
+
+- `PlatformIdentityMark.vue`
+  Data-driven SVG mark primitive for product identity data.
+  Product-specific mark paths live with the product surface, not in this foundation component.
+
 - `PlatformAppsMenu.vue`
   Shared applications switcher.
   Resolves links from either:

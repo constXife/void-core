@@ -11,6 +11,7 @@
   min-height: 100dvh;
   color: var(--ink-primary);
   background: var(--surface-base);
+  transition: grid-template-columns 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .assistant-standalone--sidebar-collapsed {
@@ -20,6 +21,13 @@
 @media (max-width: 1024px) {
   .assistant-standalone {
     grid-template-columns: 1fr;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-standalone {
+    transition: none;
   }
 }
 
@@ -42,7 +50,9 @@
 }
 
 .assistant-sidebar--collapsed .assistant-sidebar__brand {
-  display: none;
+  padding: 0.15rem 0 0.4rem;
+  display: flex;
+  justify-content: center;
 }
 
 .assistant-sidebar__top {

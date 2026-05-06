@@ -8,6 +8,13 @@ import AssistantComposer from "./assistant-standalone/AssistantComposer.vue";
 import { useAssistantStore } from "../stores/assistant.js";
 import { useAssistantSessionsStore } from "../stores/assistant-sessions.js";
 
+const props = defineProps({
+  identity: {
+    type: Object,
+    required: true
+  }
+});
+
 const STORAGE_KEY_SIDEBAR = "void.assistant.sidebar.collapsed";
 const STORAGE_KEY_SIDEBAR_WIDTH = "void.assistant.sidebar.width";
 const STORAGE_KEY_PREFERRED_TARGET = "void.assistant.preferred_target_id";
@@ -285,6 +292,7 @@ function savePreferredTarget(value) {
       :active-id="currentSessionId"
       :loading="loadingSessions && sessions.length === 0"
       :collapsed="sidebarCollapsed"
+      :identity="props.identity"
       @new-chat="onNewChat"
       @select="onSelect"
       @rename="onRename"
@@ -294,8 +302,8 @@ function savePreferredTarget(value) {
       @toggle-collapsed="onSidebarToggle"
       @resize-start="onSidebarResizeStart"
     >
-      <template v-if="$slots['sidebar-brand']" #brand>
-        <slot name="sidebar-brand" />
+      <template v-if="$slots['sidebar-brand']" #brand="{ identity, collapsed }">
+        <slot name="sidebar-brand" :identity="identity" :collapsed="collapsed" />
       </template>
     </AssistantSidebar>
 
