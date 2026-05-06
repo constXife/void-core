@@ -38,6 +38,9 @@ describe("AssistantMarkdown", () => {
         securityLevel: "strict",
         startOnLoad: false,
         theme: "base",
+        flowchart: {
+          htmlLabels: false
+        },
         themeVariables: expect.objectContaining({
           primaryTextColor: expect.any(String),
           primaryColor: expect.any(String),

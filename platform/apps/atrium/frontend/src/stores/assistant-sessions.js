@@ -78,14 +78,16 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     await reloadCurrent();
   };
 
-  const reloadCurrent = async () => {
+  const reloadCurrent = async ({ resumeActiveRun = true } = {}) => {
     if (!currentSessionId.value) return;
+    let activeRun = null;
     loadingCurrent.value = true;
     currentLoaded.value = false;
     try {
       const payload = await fetchJson(`${SESSIONS_URL}/${currentSessionId.value}`);
       currentSession.value = normalizeSession(payload);
       currentMessages.value = normalizeMessageList(payload?.messages);
+      activeRun = normalizeRun(payload?.active_run);
       currentLoaded.value = true;
       status.value = "";
     } catch (error) {
@@ -94,6 +96,9 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       reportError("Failed to load session", error);
     } finally {
       loadingCurrent.value = false;
+    }
+    if (resumeActiveRun && shouldResumeRun(activeRun)) {
+      resumeRun(activeRun);
     }
   };
 
@@ -211,6 +216,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
         onEvent: (event) => applyStreamEvent(event, assistantMessageId)
       });
       bumpSessionUpdatedAt(session.id);
+      await reloadCurrent({ resumeActiveRun: false });
     } catch (error) {
       if (error?.name === "AbortError") {
         markMessage(assistantMessageId, { stopped: true });
@@ -227,6 +233,42 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       activeRunId = "";
     }
   };
+
+  const resumeRun = async (run) => {
+    if (!shouldResumeRun(run)) return;
+    streaming.value = true;
+    status.value = "";
+    activeAbort = new AbortController();
+    activeRunId = run.id;
+    const assistantMessageId = run.assistant_message_id;
+
+    try {
+      await readAssistantRunEvents(run.id, {
+        signal: activeAbort.signal,
+        onEvent: (event) => applyStreamEvent(event, assistantMessageId)
+      });
+      bumpSessionUpdatedAt(run.session_id);
+      await reloadCurrent({ resumeActiveRun: false });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        markMessage(assistantMessageId, { stopped: true });
+      } else {
+        reportError("Assistant chat resume failed", error);
+      }
+    } finally {
+      streaming.value = false;
+      activeAbort = null;
+      activeRunId = "";
+    }
+  };
+
+  const shouldResumeRun = (run) =>
+    Boolean(
+      run?.id &&
+        run?.assistant_message_id &&
+        run?.session_id === currentSessionId.value &&
+        !streaming.value
+    );
 
   const abort = () => {
     const runId = activeRunId;
@@ -392,6 +434,22 @@ function normalizeMessageList(value) {
     error: Boolean(entry?.error),
     created_at: String(entry?.created_at || "")
   }));
+}
+
+function normalizeRun(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const id = String(payload.id || "");
+  const sessionId = String(payload.session_id || "");
+  const assistantMessageId = String(payload.assistant_message_id || "");
+  const status = String(payload.status || "");
+  if (!id || !sessionId || !assistantMessageId) return null;
+  if (status !== "queued" && status !== "running") return null;
+  return {
+    id,
+    session_id: sessionId,
+    assistant_message_id: assistantMessageId,
+    status
+  };
 }
 
 function normalizeErrorMessage(error) {

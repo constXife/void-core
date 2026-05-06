@@ -139,6 +139,9 @@ function createMermaidConfig() {
     startOnLoad: false,
     securityLevel: "strict",
     theme: "base",
+    flowchart: {
+      htmlLabels: false
+    },
     themeVariables: {
       background: surfaceBase,
       mainBkg: surfaceRaised,
