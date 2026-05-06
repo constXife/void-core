@@ -17,13 +17,25 @@ const props = defineProps({
 });
 
 const mark = computed(() => props.identity.mark);
+const imageMark = computed(() => mark.value.image);
 const rootStyle = computed(() => ({
   borderRadius: typeof props.rounded === "number" ? `${props.rounded}px` : props.rounded
 }));
 </script>
 
 <template>
+  <img
+    v-if="imageMark"
+    class="platform-identity-mark platform-identity-mark--image"
+    :src="imageMark.src"
+    :width="size"
+    :height="size"
+    alt=""
+    aria-hidden="true"
+    :style="rootStyle"
+  />
   <svg
+    v-else
     class="platform-identity-mark"
     :width="size"
     :height="size"
@@ -51,3 +63,10 @@ const rootStyle = computed(() => ({
     />
   </svg>
 </template>
+
+<style scoped>
+.platform-identity-mark--image {
+  display: block;
+  object-fit: contain;
+}
+</style>
