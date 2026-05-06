@@ -67,6 +67,7 @@ const onRegenerate = () => {
         <AssistantMarkdown
           v-if="message.content || !isStreamingTail"
           :content="message.content"
+          :render-diagrams="isAssistant && !message.error"
         />
         <span v-if="showCursor" class="assistant-message__cursor" aria-hidden="true" />
         <p v-if="message.error" class="assistant-message__error-line">

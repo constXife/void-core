@@ -33,11 +33,19 @@ describe("PlatformAppsMenu", () => {
               order: 2
             },
             {
+              key: "assistant",
+              classification: "official-product",
+              title: { translations: { en: "Assistant", ru: "Ассистент" } },
+              href: "https://assistant.example.test",
+              icon: { src: "/icons/assistant.png" },
+              order: 3
+            },
+            {
               key: "calendar",
               classification: "official-product",
               title: { translations: { en: "Calendar", ru: "Календарь" } },
               href: "https://calendar.example.test",
-              order: 3
+              order: 4
             },
             {
               key: "mailpit",
@@ -67,13 +75,18 @@ describe("PlatformAppsMenu", () => {
     const hrefs = wrapper
       .findAll("a.platform-apps-menu__item")
       .map((item) => item.attributes("href"));
+    const iconImages = wrapper
+      .findAll(".platform-apps-menu__item-icon-image")
+      .map((item) => item.attributes("src"));
 
     expect(fetch).toHaveBeenCalledWith("/product-catalog.json", { credentials: "same-origin" });
-    expect(labels).toEqual(["Atrium", "Calendar"]);
+    expect(labels).toEqual(["Atrium", "Assistant", "Calendar"]);
     expect(hrefs).toEqual([
       "https://atrium.example.test",
+      "https://assistant.example.test",
       "https://calendar.example.test"
     ]);
+    expect(iconImages).toEqual(["/icons/assistant.png"]);
   });
 
   it("supports explicit products without loading workspace data", async () => {
@@ -86,6 +99,7 @@ describe("PlatformAppsMenu", () => {
         domain: "example.test",
         products: [
           { key: "atrium", label: "Atrium", accent: "A" },
+          { key: "assistant", label: "Assistant", icon: { src: "/icons/void-assistant-header.png" } },
           { key: "calendar", label: "Calendar", accent: "C" }
         ]
       }
@@ -102,10 +116,16 @@ describe("PlatformAppsMenu", () => {
       .map((item) => item.attributes("href"));
 
     expect(fetch).not.toHaveBeenCalled();
-    expect(labels).toEqual(["Atrium", "Calendar"]);
+    const iconImages = wrapper
+      .findAll(".platform-apps-menu__item-icon-image")
+      .map((item) => item.attributes("src"));
+
+    expect(labels).toEqual(["Atrium", "Assistant", "Calendar"]);
     expect(hrefs).toEqual([
       "https://atrium.example.test/",
+      "https://assistant.example.test/",
       "https://calendar.example.test/"
     ]);
+    expect(iconImages).toEqual(["/icons/void-assistant-header.png"]);
   });
 });

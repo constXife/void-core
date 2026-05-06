@@ -1,7 +1,12 @@
 import DOMPurify from "dompurify";
-import { marked } from "marked";
+import { Renderer, marked } from "marked";
 
-marked.setOptions({ breaks: true });
+const MARKDOWN_OPTIONS = {
+  breaks: true,
+  gfm: true
+};
+
+const MERMAID_LANGUAGE = "mermaid";
 
 export function sanitizeHtml(html) {
   if (!html) return "";
@@ -10,9 +15,67 @@ export function sanitizeHtml(html) {
   });
 }
 
-export function renderMarkdown(markdown) {
+export function sanitizeSvg(svg) {
+  if (!svg) return "";
+  return DOMPurify.sanitize(svg, {
+    USE_PROFILES: { svg: true, svgFilters: true }
+  });
+}
+
+export function renderMarkdown(markdown, options = {}) {
   if (!markdown) return "";
-  return sanitizeHtml(marked.parse(markdown));
+  return sanitizeHtml(marked.parse(markdown, {
+    ...MARKDOWN_OPTIONS,
+    renderer: createMarkdownRenderer(options)
+  }));
+}
+
+function createMarkdownRenderer(options) {
+  const renderer = new Renderer();
+  const renderDiagrams = options.renderDiagrams === true;
+
+  renderer.html = (token) => escapeHtml(token.text || token.raw || "");
+  renderer.code = (token) => {
+    const language = normalizeLanguage(token.lang);
+    const code = String(token.text || "");
+    if (renderDiagrams && language === MERMAID_LANGUAGE) {
+      return [
+        '<div class="assistant-mermaid" data-assistant-mermaid="true">',
+        '<div class="assistant-mermaid__canvas" aria-hidden="true"></div>',
+        '<pre class="assistant-mermaid__source"><code>',
+        escapeHtml(code),
+        "</code></pre>",
+        "</div>"
+      ].join("");
+    }
+    return [
+      "<pre><code",
+      language ? ` class="language-${escapeAttribute(language)}"` : "",
+      ">",
+      escapeHtml(code),
+      "</code></pre>\n"
+    ].join("");
+  };
+
+  return renderer;
+}
+
+function normalizeLanguage(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)[0];
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replaceAll('"', "&quot;");
 }
 
 export { marked };

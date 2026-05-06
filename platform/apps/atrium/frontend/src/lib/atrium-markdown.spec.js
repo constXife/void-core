@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { renderMarkdown, sanitizeHtml } from "./atrium-markdown.js";
+import { renderMarkdown, sanitizeHtml, sanitizeSvg } from "./atrium-markdown.js";
 
 describe("atrium markdown sanitization", () => {
-  it("strips script tags from rendered markdown", () => {
-    expect(renderMarkdown("hello<script>alert('xss')</script>world")).toBe("<p>helloworld</p>\n");
+  it("escapes raw html in rendered markdown", () => {
+    expect(renderMarkdown("hello<script>alert('xss')</script>world")).toBe(
+      "<p>hello&lt;script&gt;alert('xss')&lt;/script&gt;world</p>\n"
+    );
   });
 
   it("removes dangerous javascript hrefs", () => {
@@ -17,5 +19,27 @@ describe("atrium markdown sanitization", () => {
     expect(html).toContain("<img src=\"x\">");
     expect(html).not.toContain("onerror");
     expect(html).toContain("<p>ok</p>");
+  });
+
+  it("leaves mermaid fences as code unless diagrams are explicitly enabled", () => {
+    const html = renderMarkdown("```mermaid\nflowchart TD\n  A --> B\n```");
+    expect(html).toContain("<pre><code class=\"language-mermaid\">");
+    expect(html).not.toContain("data-assistant-mermaid");
+  });
+
+  it("renders assistant mermaid fences as explicit diagram placeholders", () => {
+    const html = renderMarkdown("```mermaid\nflowchart TD\n  A --> B\n```", {
+      renderDiagrams: true
+    });
+    expect(html).toContain("data-assistant-mermaid=\"true\"");
+    expect(html).toContain("assistant-mermaid__source");
+    expect(html).toContain("flowchart TD");
+  });
+
+  it("sanitizes rendered svg fragments", () => {
+    const svg = sanitizeSvg('<svg><script>alert(1)</script><g onclick="x()"></g></svg>');
+    expect(svg).toContain("<svg");
+    expect(svg).not.toContain("<script");
+    expect(svg).not.toContain("onclick");
   });
 });

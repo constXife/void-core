@@ -63,6 +63,7 @@ const items = computed(() =>
         key,
         accent: item?.accent || key[0]?.toUpperCase() || "?",
         href: item?.href || resolveProductHref(key),
+        icon: item?.icon,
         label: item?.label || key
       };
     })
@@ -138,7 +139,16 @@ function resolveProductHref(productKey) {
             :title="!item.href ? localized.unavailable : item.label"
             @click="close"
           >
-            <span class="platform-apps-menu__item-icon">{{ item.accent }}</span>
+            <span class="platform-apps-menu__item-icon">
+              <img
+                v-if="item.icon?.src"
+                class="platform-apps-menu__item-icon-image"
+                :src="item.icon.src"
+                alt=""
+                aria-hidden="true"
+              />
+              <span v-else>{{ item.accent }}</span>
+            </span>
             <span class="platform-apps-menu__item-label">{{ item.label }}</span>
           </component>
         </div>
@@ -256,6 +266,14 @@ function resolveProductHref(productKey) {
   color: rgba(255, 255, 255, 0.92);
   font-size: 0.85rem;
   font-weight: 700;
+  overflow: hidden;
+}
+
+.platform-apps-menu__item-icon-image {
+  width: 1.55rem;
+  height: 1.55rem;
+  display: block;
+  object-fit: contain;
 }
 
 .platform-apps-menu__item-label {

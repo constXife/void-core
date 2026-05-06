@@ -20,10 +20,18 @@ export function productsFromCatalog(payload, lang) {
         key,
         accent: key[0]?.toUpperCase() || "?",
         href: String(entry?.href || "").trim(),
+        icon: normalizeIcon(entry?.icon),
         label: localizedText(entry?.title, lang) || key
       };
     })
     .filter(Boolean);
+}
+
+function normalizeIcon(value) {
+  if (!value || typeof value !== "object") return undefined;
+  const src = String(value.src || "").trim();
+  if (!src) return undefined;
+  return { src };
 }
 
 function localizedText(value, lang) {

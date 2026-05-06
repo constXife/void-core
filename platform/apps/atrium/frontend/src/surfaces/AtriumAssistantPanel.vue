@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { computed, nextTick, ref, watch } from "vue";
 import { useAssistantStore } from "../stores/assistant.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
+import AssistantMarkdown from "./assistant-standalone/AssistantMarkdown.vue";
 
 const assistantStore = useAssistantStore();
 const appStore = useAtriumAppStore();
@@ -137,7 +138,11 @@ watch(
           'atrium-assistant__message--error': message.error
         }"
       >
-        <p v-if="message.content">{{ message.content }}</p>
+        <AssistantMarkdown
+          v-if="message.content"
+          :content="message.content"
+          :render-diagrams="message.role === 'assistant' && !message.error"
+        />
         <p v-else-if="message.stopped">{{ labels.stopped }}</p>
         <span v-else class="atrium-assistant__cursor" />
       </article>

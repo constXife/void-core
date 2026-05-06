@@ -752,6 +752,49 @@
   border-radius: 0 6px 6px 0;
 }
 
+.assistant-mermaid {
+  margin: 0.9rem 0;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.assistant-mermaid__canvas {
+  display: none;
+  padding: 0.8rem;
+  overflow-x: auto;
+}
+
+.assistant-mermaid--rendered .assistant-mermaid__canvas,
+.assistant-mermaid--error .assistant-mermaid__canvas {
+  display: block;
+}
+
+.assistant-mermaid--rendered .assistant-mermaid__source {
+  display: none;
+}
+
+.assistant-mermaid__canvas svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.assistant-mermaid__source {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--glass-bg);
+}
+
+.assistant-mermaid__error {
+  margin: 0;
+  color: var(--danger-ink, #b42318);
+  font-size: var(--text-sm, 13px);
+}
+
 /* ---- Composer ---- */
 
 .assistant-composer {
