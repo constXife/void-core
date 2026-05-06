@@ -19,6 +19,7 @@ vi.mock("mermaid", () => ({
 afterEach(() => {
   mermaidInitialize.mockClear();
   mermaidRender.mockClear();
+  document.body.innerHTML = "";
 });
 
 describe("AssistantMarkdown", () => {
@@ -50,6 +51,52 @@ describe("AssistantMarkdown", () => {
     );
     expect(wrapper.find(".assistant-mermaid--rendered").exists()).toBe(true);
     expect(wrapper.find("svg").exists()).toBe(true);
+  });
+
+  it("keeps Mermaid node labels visible after svg sanitization", async () => {
+    mermaidRender.mockResolvedValueOnce({
+      svg: `
+        <svg xmlns="http://www.w3.org/2000/svg">
+          <g class="node">
+            <rect width="120" height="40"></rect>
+            <g class="label">
+              <foreignObject x="-60" y="-20" width="120" height="40">
+                <div xmlns="http://www.w3.org/1999/xhtml">
+                  <span class="nodeLabel"><p>Атмосфера</p></span>
+                </div>
+              </foreignObject>
+            </g>
+          </g>
+        </svg>
+      `
+    });
+
+    const wrapper = mount(AssistantMarkdown, {
+      props: {
+        content: "```mermaid\nflowchart TD\n  A[Атмосфера]\n```",
+        renderDiagrams: true
+      }
+    });
+
+    await flushPromises();
+
+    expect(wrapper.html()).toContain("Атмосфера");
+    expect(wrapper.html()).not.toContain("foreignObject");
+  });
+
+  it("opens Mermaid diagrams in a larger preview on click", async () => {
+    const wrapper = mount(AssistantMarkdown, {
+      props: {
+        content: "```mermaid\nflowchart TD\n  A --> B\n```",
+        renderDiagrams: true
+      }
+    });
+
+    await flushPromises();
+    await wrapper.find(".assistant-mermaid__canvas").trigger("click");
+
+    expect(document.body.querySelector(".assistant-diagram-lightbox")).toBeTruthy();
+    expect(document.body.querySelector(".assistant-diagram-lightbox svg")).toBeTruthy();
   });
 
   it("keeps mermaid blocks as code when diagram rendering is disabled", async () => {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { renderMarkdown, sanitizeHtml, sanitizeSvg } from "./atrium-markdown.js";
+import {
+  normalizeMermaidSvgLabels,
+  renderMarkdown,
+  sanitizeHtml,
+  sanitizeSvg
+} from "./atrium-markdown.js";
 
 describe("atrium markdown sanitization", () => {
   it("escapes raw html in rendered markdown", () => {
@@ -48,5 +53,23 @@ describe("atrium markdown sanitization", () => {
     expect(svg).toContain("<svg");
     expect(svg).not.toContain("<script");
     expect(svg).not.toContain("onclick");
+  });
+
+  it("converts Mermaid foreignObject labels to plain svg text", () => {
+    const svg = normalizeMermaidSvgLabels(`
+      <svg xmlns="http://www.w3.org/2000/svg">
+        <g class="label">
+          <foreignObject x="-40" y="-12" width="80" height="24">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+              <span class="nodeLabel"><p>Атмосфера</p></span>
+            </div>
+          </foreignObject>
+        </g>
+      </svg>
+    `);
+    expect(svg).not.toContain("foreignObject");
+    expect(svg).toContain("class=\"nodeLabel\"");
+    expect(svg).toContain("Атмосфера");
+    expect(sanitizeSvg(svg)).toContain("Атмосфера");
   });
 });

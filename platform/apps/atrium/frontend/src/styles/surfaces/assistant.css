@@ -819,6 +819,15 @@
   overflow-x: auto;
 }
 
+.assistant-mermaid--zoomable .assistant-mermaid__canvas {
+  cursor: zoom-in;
+}
+
+.assistant-mermaid--zoomable .assistant-mermaid__canvas:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: -4px;
+}
+
 .assistant-mermaid--rendered .assistant-mermaid__canvas,
 .assistant-mermaid--error .assistant-mermaid__canvas {
   display: block;
@@ -870,6 +879,68 @@
   margin: 0;
   color: var(--danger-ink, #b42318);
   font-size: var(--text-sm, 13px);
+}
+
+.assistant-diagram-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  background: color-mix(in srgb, var(--surface-base) 82%, black 18%);
+  backdrop-filter: blur(14px);
+}
+
+.assistant-diagram-lightbox__panel {
+  position: relative;
+  width: min(92vw, 86rem);
+  max-height: 88vh;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  box-shadow: 0 24px 70px color-mix(in srgb, black 55%, transparent);
+  overflow: hidden;
+}
+
+.assistant-diagram-lightbox__canvas {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  max-height: 88vh;
+  overflow: auto;
+}
+
+.assistant-diagram-lightbox__canvas svg {
+  display: block;
+  width: 100%;
+  min-width: min(72rem, 100%);
+  height: auto;
+}
+
+.assistant-diagram-lightbox__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 1;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface-overlay) 88%, transparent);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-default, ease),
+    color var(--duration-fast, 150ms) var(--ease-default, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-diagram-lightbox__close:hover {
+  background: var(--glass-bg-hover);
+  border-color: color-mix(in srgb, var(--accent-purple) 45%, transparent);
+  color: var(--ink-primary);
 }
 
 /* ---- Composer ---- */

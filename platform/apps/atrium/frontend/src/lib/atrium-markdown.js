@@ -22,6 +22,26 @@ export function sanitizeSvg(svg) {
   });
 }
 
+export function normalizeMermaidSvgLabels(svg) {
+  if (!svg || typeof DOMParser === "undefined" || typeof XMLSerializer === "undefined") {
+    return svg || "";
+  }
+  const parser = new DOMParser();
+  const document = parser.parseFromString(svg, "image/svg+xml");
+  if (document.querySelector("parsererror")) return svg;
+
+  for (const foreignObject of Array.from(document.querySelectorAll("foreignObject"))) {
+    const label = foreignObject.textContent?.replace(/\s+/g, " ").trim();
+    if (!label) {
+      foreignObject.remove();
+      continue;
+    }
+    foreignObject.replaceWith(createSvgTextLabel(document, foreignObject, label));
+  }
+
+  return new XMLSerializer().serializeToString(document.documentElement);
+}
+
 export function renderMarkdown(markdown, options = {}) {
   if (!markdown) return "";
   return sanitizeHtml(marked.parse(markdown, {
@@ -80,6 +100,28 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
+function createSvgTextLabel(document, foreignObject, label) {
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const text = document.createElementNS(svgNamespace, "text");
+  const className = foreignObject.querySelector("[class]")?.getAttribute("class") || "nodeLabel";
+  const x = readSvgNumber(foreignObject, "x");
+  const y = readSvgNumber(foreignObject, "y");
+  const width = readSvgNumber(foreignObject, "width");
+  const height = readSvgNumber(foreignObject, "height");
+  text.setAttribute("class", className);
+  text.setAttribute("x", String(x + width / 2));
+  text.setAttribute("y", String(y + height / 2));
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("dominant-baseline", "middle");
+  text.textContent = label;
+  return text;
+}
+
+function readSvgNumber(element, attribute) {
+  const value = Number.parseFloat(element.getAttribute(attribute) || "0");
+  return Number.isFinite(value) ? value : 0;
 }
 
 export { marked };

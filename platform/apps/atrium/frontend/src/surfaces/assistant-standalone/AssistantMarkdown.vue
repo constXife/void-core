@@ -1,6 +1,11 @@
 <script setup>
+import { X } from "lucide-vue-next";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { renderMarkdown, sanitizeSvg } from "../../lib/atrium-markdown.js";
+import {
+  normalizeMermaidSvgLabels,
+  renderMarkdown,
+  sanitizeSvg
+} from "../../lib/atrium-markdown.js";
 
 const props = defineProps({
   content: {
@@ -16,6 +21,7 @@ const props = defineProps({
 let renderCounter = 0;
 let mermaidRuntime = null;
 const rootRef = ref(null);
+const zoomedDiagramSvg = ref("");
 let themeObserver = null;
 
 const html = computed(() => {
@@ -33,6 +39,7 @@ watch(
 );
 
 onMounted(() => {
+  window.addEventListener("keydown", handleGlobalKeydown);
   if (typeof MutationObserver === "undefined") return;
   themeObserver = new MutationObserver(() => {
     rerenderMermaidDiagrams();
@@ -44,6 +51,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleGlobalKeydown);
   themeObserver?.disconnect();
   themeObserver = null;
 });
@@ -86,7 +94,8 @@ async function renderMermaidNode(mermaid, node) {
     renderCounter += 1;
     mermaid.initialize(createMermaidConfig());
     const result = await mermaid.render(renderId, source);
-    canvas.innerHTML = sanitizeSvg(result.svg || "");
+    canvas.innerHTML = sanitizeSvg(normalizeMermaidSvgLabels(result.svg || ""));
+    installDiagramZoom(node, canvas);
     if (typeof result.bindFunctions === "function") {
       result.bindFunctions(canvas);
     }
@@ -123,6 +132,36 @@ async function rerenderMermaidDiagrams() {
     node.querySelector(".assistant-mermaid__canvas")?.replaceChildren();
   }
   await renderMermaidDiagrams();
+}
+
+function installDiagramZoom(node, canvas) {
+  if (!canvas.innerHTML.trim()) return;
+  if (canvas.dataset.assistantMermaidZoomInstalled === "true") return;
+  const open = () => {
+    zoomedDiagramSvg.value = canvas.innerHTML;
+  };
+  canvas.dataset.assistantMermaidZoomInstalled = "true";
+  node.classList.add("assistant-mermaid--zoomable");
+  canvas.setAttribute("role", "button");
+  canvas.setAttribute("tabindex", "0");
+  canvas.setAttribute("aria-label", "Open diagram preview");
+  canvas.addEventListener("click", open);
+  canvas.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      open();
+    }
+  });
+}
+
+function closeDiagramZoom() {
+  zoomedDiagramSvg.value = "";
+}
+
+function handleGlobalKeydown(event) {
+  if (event.key === "Escape" && zoomedDiagramSvg.value) {
+    closeDiagramZoom();
+  }
 }
 
 function createMermaidConfig() {
@@ -195,4 +234,26 @@ function readCssColor(token, fallback) {
 
 <template>
   <div ref="rootRef" class="assistant-markdown" v-html="html" />
+  <Teleport to="body">
+    <div
+      v-if="zoomedDiagramSvg"
+      class="assistant-diagram-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Diagram preview"
+      @click.self="closeDiagramZoom"
+    >
+      <div class="assistant-diagram-lightbox__panel">
+        <button
+          type="button"
+          class="assistant-diagram-lightbox__close"
+          aria-label="Close diagram preview"
+          @click="closeDiagramZoom"
+        >
+          <X :size="18" />
+        </button>
+        <div class="assistant-diagram-lightbox__canvas" v-html="zoomedDiagramSvg" />
+      </div>
+    </div>
+  </Teleport>
 </template>
