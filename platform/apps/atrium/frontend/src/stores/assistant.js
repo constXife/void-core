@@ -1,6 +1,10 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
-import { readAssistantSseEvents } from "../lib/assistant-sse.js";
+import {
+  cancelAssistantRun,
+  createAssistantRun,
+  readAssistantRunEvents
+} from "../lib/assistant-run-client.js";
 
 let nextMessageId = 1;
 
@@ -19,6 +23,7 @@ export const useAssistantStore = defineStore("void-assistant", () => {
   const status = ref("");
 
   let activeAbort = null;
+  let activeRunId = "";
 
   const activeTarget = computed(() =>
     targets.value.find((target) => target.id === selectedTargetId.value) || null
@@ -83,10 +88,17 @@ export const useAssistantStore = defineStore("void-assistant", () => {
   };
 
   const abort = () => {
+    const runId = activeRunId;
+    if (runId) {
+      cancelAssistantRun(runId).catch((error) => {
+        console.error("void-assistant: cancel run failed", error);
+      });
+    }
     if (activeAbort) {
       activeAbort.abort();
       activeAbort = null;
     }
+    activeRunId = "";
     streaming.value = false;
   };
 
@@ -106,33 +118,35 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     status.value = "";
 
     activeAbort = new AbortController();
+    let assistantMessageId = assistantMessage.id;
 
     try {
-      const response = await fetch("/assistant/chat", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          session_id: currentSessionId.value,
-          target_id: selectedTargetId.value || undefined,
-          message: content
-        }),
+      const payload = await createAssistantRun({
+        sessionId: currentSessionId.value,
+        targetId: selectedTargetId.value || "",
+        message: content,
         signal: activeAbort.signal
       });
-
-      if (!response.ok || !response.body) {
-        const text = await response.text();
-        throw new Error(text || response.statusText || "Assistant request failed");
+      activeRunId = String(payload?.run_id || payload?.run?.id || "");
+      if (!activeRunId) {
+        throw new Error("Assistant run create returned empty id");
       }
-
-      await readChatStream(response.body, assistantMessage.id);
+      const serverAssistantMessageId = String(
+        payload?.assistant_message_id || payload?.run?.assistant_message_id || ""
+      );
+      if (serverAssistantMessageId) {
+        markAssistantMessage(assistantMessage.id, { id: serverAssistantMessageId });
+        assistantMessageId = serverAssistantMessageId;
+      }
+      await readAssistantRunEvents(activeRunId, {
+        signal: activeAbort.signal,
+        onEvent: (event) => applyStreamEvent(event, assistantMessageId)
+      });
     } catch (error) {
       if (error?.name === "AbortError") {
-        markAssistantMessage(assistantMessage.id, { stopped: true });
+        markAssistantMessage(assistantMessageId, { stopped: true });
       } else {
-        markAssistantMessage(assistantMessage.id, {
+        markAssistantMessage(assistantMessageId, {
           error: true,
           content: normalizeErrorMessage(error)
         });
@@ -140,6 +154,7 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     } finally {
       streaming.value = false;
       activeAbort = null;
+      activeRunId = "";
     }
   };
 
@@ -165,26 +180,6 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     return sessionId;
   };
 
-  const readChatStream = async (body, assistantMessageId) => {
-    const reader = body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const parsed = readAssistantSseEvents(buffer);
-      buffer = parsed.buffer;
-      for (const event of parsed.events) {
-        applyStreamEvent(event, assistantMessageId);
-        if (event.event === "done" || event.event === "error") {
-          return;
-        }
-      }
-    }
-  };
-
   const applyStreamEvent = (event, assistantMessageId) => {
     if (event.event === "delta") {
       const text = String(event.json?.text || "");
@@ -196,6 +191,9 @@ export const useAssistantStore = defineStore("void-assistant", () => {
         error: true,
         content: String(event.json?.message || "Assistant provider error")
       });
+    }
+    if (event.event === "cancelled") {
+      markAssistantMessage(assistantMessageId, { stopped: true });
     }
   };
 
