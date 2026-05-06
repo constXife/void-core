@@ -12,6 +12,7 @@ export const useAssistantStore = defineStore("void-assistant", () => {
   const targets = ref([]);
   const defaultTargetId = ref("");
   const selectedTargetId = ref("");
+  const currentSessionId = ref("");
   const messages = ref([]);
   const draft = ref("");
   const streaming = ref(false);
@@ -76,6 +77,7 @@ export const useAssistantStore = defineStore("void-assistant", () => {
 
   const clear = () => {
     abort();
+    currentSessionId.value = "";
     messages.value = [];
     status.value = "";
   };
@@ -92,12 +94,10 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     const content = draft.value.trim();
     if (!content || streaming.value) return;
 
-    const outgoingMessages = messages.value
-      .filter((message) => message.role === "user" || message.role === "assistant")
-      .map((message) => ({
-        role: message.role,
-        content: message.content
-      }));
+    if (!currentSessionId.value) {
+      currentSessionId.value = await createEmbeddedSession(selectedTargetId.value);
+    }
+
     const userMessage = createMessage("user", content);
     const assistantMessage = createMessage("assistant", "");
     messages.value = [...messages.value, userMessage, assistantMessage];
@@ -115,8 +115,9 @@ export const useAssistantStore = defineStore("void-assistant", () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          session_id: currentSessionId.value,
           target_id: selectedTargetId.value || undefined,
-          messages: [...outgoingMessages, { role: "user", content }]
+          message: content
         }),
         signal: activeAbort.signal
       });
@@ -140,6 +141,28 @@ export const useAssistantStore = defineStore("void-assistant", () => {
       streaming.value = false;
       activeAbort = null;
     }
+  };
+
+  const createEmbeddedSession = async (targetId) => {
+    const response = await fetch("/assistant/sessions", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(targetId ? { target_id: targetId } : {})
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || response.statusText || "Assistant session create failed");
+    }
+    const payload = await response.json();
+    const sessionId = String(payload?.id || "").trim();
+    if (!sessionId) {
+      throw new Error("Assistant session create returned empty id");
+    }
+    return sessionId;
   };
 
   const readChatStream = async (body, assistantMessageId) => {
@@ -204,6 +227,7 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     canSend,
     clear,
     close,
+    currentSessionId,
     defaultTargetId,
     draft,
     enabled,

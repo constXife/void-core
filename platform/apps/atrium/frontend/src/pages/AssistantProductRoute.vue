@@ -3,8 +3,6 @@ import { Bot } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
-import PlatformHeaderBrand from "../platform/components/PlatformHeaderBrand.vue";
-import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
 import PlatformUserDropdown from "../platform/components/UserDropdown.vue";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import AssistantStandaloneSurface from "../surfaces/AssistantStandaloneSurface.vue";
@@ -52,39 +50,39 @@ const logout = async () => {
   <main class="assistant-product-root">
     <TheShellBackdrop />
 
-    <PlatformHeaderFrame>
-      <template #left>
-        <PlatformHeaderBrand href="/" :title="labels.product" :subtitle="labels.subtitle">
-          <template #icon>
+    <AssistantStandaloneSurface>
+      <template #sidebar-brand>
+        <a href="/" class="assistant-brand">
+          <span class="assistant-brand__icon" aria-hidden="true">
             <Bot :size="18" />
-          </template>
-        </PlatformHeaderBrand>
+          </span>
+          <span class="assistant-brand__text">
+            <span class="assistant-brand__title">{{ labels.product }}</span>
+            <span class="assistant-brand__subtitle">{{ labels.subtitle }}</span>
+          </span>
+        </a>
       </template>
 
-      <template #right>
-        <div class="assistant-product-header__actions">
-          <PlatformAppsMenu current-product="assistant" :lang="currentLang" />
+      <template #main-actions>
+        <PlatformAppsMenu current-product="assistant" :lang="currentLang" />
 
-          <PlatformUserDropdown
-            v-if="authEnabled && me"
-            :user="me"
-            :current-lang="currentLang"
-            :theme="themeSelection"
-            :language-labels="languageLabels"
-            :t="appStore.t"
-            @set-lang="setLang"
-            @set-theme="setTheme"
-            @logout="logout"
-          />
+        <PlatformUserDropdown
+          v-if="authEnabled && me"
+          :user="me"
+          :current-lang="currentLang"
+          :theme="themeSelection"
+          :language-labels="languageLabels"
+          :t="appStore.t"
+          @set-lang="setLang"
+          @set-theme="setTheme"
+          @logout="logout"
+        />
 
-          <a v-else-if="authEnabled" class="assistant-product-header__login" :href="loginPageUrl">
-            {{ labels.login }}
-          </a>
-        </div>
+        <a v-else-if="authEnabled" class="assistant-product-header__login" :href="loginPageUrl">
+          {{ labels.login }}
+        </a>
       </template>
-    </PlatformHeaderFrame>
-
-    <AssistantStandaloneSurface />
+    </AssistantStandaloneSurface>
   </main>
 </template>
 
@@ -95,23 +93,65 @@ const logout = async () => {
   background: var(--surface-base);
 }
 
-.assistant-product-header__actions {
+.assistant-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.6rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-brand:hover {
+  background: var(--glass-bg-hover);
+}
+
+.assistant-brand__icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent-purple) 16%, transparent);
+  color: var(--accent-purple);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.assistant-brand__text {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.assistant-brand__title {
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+
+.assistant-brand__subtitle {
+  margin-top: 2px;
+  font-size: var(--text-2xs, 10px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
 }
 
 .assistant-product-header__login {
   display: inline-flex;
   align-items: center;
-  min-height: 2.45rem;
+  min-height: 2.25rem;
   padding: 0 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
-    rgba(15, 18, 24, 0.84);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--surface-raised);
+  color: var(--ink-primary);
+  font-size: var(--text-sm, 13px);
   text-decoration: none;
 }
 </style>

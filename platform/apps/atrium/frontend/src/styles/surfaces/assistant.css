@@ -8,8 +8,7 @@
   display: grid;
   grid-template-columns: var(--assistant-sidebar-width, 280px) 1fr;
   gap: 0;
-  min-height: calc(100dvh - 5.4rem);
-  margin-top: 4.6rem;
+  min-height: 100dvh;
   color: var(--ink-primary);
   background: var(--surface-base);
 }
@@ -36,6 +35,14 @@
   background: var(--surface-raised);
   overflow: hidden;
   min-height: 0;
+}
+
+.assistant-sidebar__brand {
+  padding: 0.15rem 0.2rem 0.55rem;
+}
+
+.assistant-sidebar--collapsed .assistant-sidebar__brand {
+  display: none;
 }
 
 .assistant-sidebar__top {
@@ -349,9 +356,19 @@
   position: relative;
 }
 
+.assistant-standalone__floating-actions {
+  position: absolute;
+  top: 0.85rem;
+  right: 1.1rem;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .assistant-conversation {
   overflow-y: auto;
-  padding: 1.6rem 1rem 1rem;
+  padding: 4rem 1rem 1rem;
   scroll-behavior: smooth;
 }
 

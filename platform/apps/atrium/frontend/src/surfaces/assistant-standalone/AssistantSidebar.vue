@@ -37,6 +37,10 @@ const toggleTrash = () => {
 
 <template>
   <aside class="assistant-sidebar" :class="{ 'assistant-sidebar--collapsed': collapsed }">
+    <div v-if="$slots.brand" class="assistant-sidebar__brand">
+      <slot name="brand" />
+    </div>
+
     <div class="assistant-sidebar__top">
       <button
         type="button"

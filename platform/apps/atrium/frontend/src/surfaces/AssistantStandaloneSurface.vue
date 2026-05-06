@@ -293,9 +293,17 @@ function savePreferredTarget(value) {
       @open-trash="onOpenTrash"
       @toggle-collapsed="onSidebarToggle"
       @resize-start="onSidebarResizeStart"
-    />
+    >
+      <template v-if="$slots['sidebar-brand']" #brand>
+        <slot name="sidebar-brand" />
+      </template>
+    </AssistantSidebar>
 
     <main class="assistant-standalone__main">
+      <div v-if="$slots['main-actions']" class="assistant-standalone__floating-actions">
+        <slot name="main-actions" />
+      </div>
+
       <AssistantConversation
         :messages="currentMessages"
         :streaming="streaming"

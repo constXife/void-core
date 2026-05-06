@@ -3,11 +3,8 @@ import { defineStore } from "pinia";
 import { readAssistantSseEvents } from "../lib/assistant-sse.js";
 
 // Standalone Assistant surface использует серверные сессии: история, soft-delete,
-// streaming с persistent state. Контракт описан в
-// docs/product/ASSISTANT_STANDALONE_SURFACE.md.
-//
-// Embedded модалка (AtriumAssistantPanel) продолжает использовать старый
-// stores/assistant.js без сессий — это намеренный временный split.
+// streaming с persistent state. Frontend отправляет только новый user input;
+// backend сам собирает provider context из Postgres.
 
 const SESSIONS_URL = "/assistant/sessions";
 const TRASHED_URL = "/assistant/sessions/trashed";
@@ -170,10 +167,6 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
 
     const targetForRequest = targetId || session.target_id || "";
-    const outgoingMessages = currentMessages.value
-      .filter((message) => message.role === "user" || message.role === "assistant")
-      .map((message) => ({ role: message.role, content: message.content }));
-
     const optimisticUser = createOptimisticMessage("user", content);
     const optimisticAssistant = createOptimisticMessage("assistant", "");
     currentMessages.value = [...currentMessages.value, optimisticUser, optimisticAssistant];
@@ -191,7 +184,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
         body: JSON.stringify({
           session_id: session.id,
           target_id: targetForRequest || undefined,
-          messages: [...outgoingMessages, { role: "user", content }]
+          message: content
         }),
         signal: activeAbort.signal
       });
