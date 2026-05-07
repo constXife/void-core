@@ -611,7 +611,7 @@ function describeStreamingPhase(phase) {
     case "creating":
       return "Создаем run…";
     case "queued":
-      return "Run в очереди…";
+      return "Запрос в очереди…";
     case "running":
       return "Модель начала обработку…";
     case "receiving":
