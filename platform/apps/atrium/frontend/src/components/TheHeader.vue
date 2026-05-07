@@ -1,7 +1,7 @@
 <script setup>
 import { Activity, MessageCircle } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
-import { onMounted, watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import AtriumSpaceSwitcher from "./AtriumSpaceSwitcher.vue";
 import UserDropdown from "./UserDropdown.vue";
 import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
@@ -9,6 +9,7 @@ import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformHeaderBrand from "../platform/components/PlatformHeaderBrand.vue";
 import PlatformDropdownAnchor from "../platform/components/PlatformDropdownAnchor.vue";
 import PlatformUserMenuTrigger from "../platform/components/PlatformUserMenuTrigger.vue";
+import { hasResolvedPlatformAccount } from "../platform/account.js";
 import { useAssistantStore } from "../stores/assistant.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useAuthStore } from "../stores/auth.js";
@@ -21,7 +22,7 @@ const uiStore = useUiStore();
 
 const { userMenuRef } = storeToRefs(appStore);
 const { t } = appStore;
-const { authEnabled, loginPageUrl, me, userInitials } = storeToRefs(authStore);
+const { actualRole, authEnabled, loginPageUrl, me } = storeToRefs(authStore);
 const {
   currentLang,
   languageLabels,
@@ -34,6 +35,10 @@ const {
 const openHome = () => {
   appStore.navigateTo("/");
 };
+
+const hasAccount = computed(() =>
+  hasResolvedPlatformAccount(me.value, { role: actualRole.value })
+);
 
 onMounted(() => {
   assistantStore.loadModels();
@@ -95,14 +100,14 @@ watch(me, () => {
 
         <template v-if="authEnabled">
           <PlatformDropdownAnchor
-            v-if="me"
+            v-if="hasAccount"
             ref="userMenuRef"
             v-model:open="showUserDropdown"
             align="right"
           >
             <template #trigger="{ toggle }">
               <PlatformUserMenuTrigger
-                :initials="userInitials"
+                :user="me"
                 :open="showUserDropdown"
                 @click.stop="toggle"
               />

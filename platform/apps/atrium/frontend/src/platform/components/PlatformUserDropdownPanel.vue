@@ -3,6 +3,8 @@ import { computed } from "vue";
 import { Settings, LogOut, Globe, Sun, Moon, Monitor } from "lucide-vue-next";
 import PlatformSettingsRow from "./PlatformSettingsRow.vue";
 import PlatformSegmentedControl from "./PlatformSegmentedControl.vue";
+import PlatformUserAvatar from "./PlatformUserAvatar.vue";
+import { resolvePlatformUserIdentity } from "../account.js";
 import { PLATFORM_LANGUAGE_IDS } from "../i18n/index.js";
 
 const props = defineProps({
@@ -27,10 +29,7 @@ const props = defineProps({
 
 const emit = defineEmits(["set-lang", "toggle-lang", "set-theme", "logout"]);
 
-const userInitial = computed(() => {
-  if (!props.user?.email) return "?";
-  return props.user.email.charAt(0).toUpperCase();
-});
+const account = computed(() => resolvePlatformUserIdentity(props.user));
 
 const profileHref = computed(() => {
   if (!props.domain) return "/settings";
@@ -66,11 +65,11 @@ const currentLanguageLabel = computed(() => String(props.currentLang || "ru").to
 </script>
 
 <template>
-  <div class="platform-user-dropdown-panel">
+  <div v-if="account" class="platform-user-dropdown-panel">
     <div class="platform-user-dropdown-panel__header">
-      <span class="platform-user-dropdown-panel__avatar">{{ userInitial }}</span>
+      <PlatformUserAvatar :user="user" size="md" />
       <div class="platform-user-dropdown-panel__identity">
-        <span class="platform-user-dropdown-panel__email">{{ user?.email }}</span>
+        <span class="platform-user-dropdown-panel__email">{{ account?.label }}</span>
         <slot name="header-meta" />
       </div>
     </div>
@@ -143,20 +142,6 @@ const currentLanguageLabel = computed(() => String(props.currentLang || "ru").to
   align-items: center;
   gap: 12px;
   padding: 8px 8px 6px;
-}
-
-.platform-user-dropdown-panel__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: var(--text-sm, 13px);
-  font-weight: 600;
-  color: var(--ink-primary, #e6edf3);
-  background: linear-gradient(135deg, rgba(88, 166, 255, 0.3), rgba(163, 113, 247, 0.3));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
 }
 
 .platform-user-dropdown-panel__identity {

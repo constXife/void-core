@@ -1,10 +1,20 @@
 <script setup>
 import { computed } from "vue";
-import { Copy, RotateCcw, Trash2, Bot, AlertCircle, LoaderCircle } from "lucide-vue-next";
+import {
+  Copy,
+  RotateCcw,
+  Trash2,
+  Bot,
+  AlertCircle,
+  LoaderCircle
+} from "lucide-vue-next";
+import PlatformUserAvatar from "../../platform/components/PlatformUserAvatar.vue";
+import { hasResolvedPlatformAccount } from "../../platform/account.js";
 import AssistantMarkdown from "./AssistantMarkdown.vue";
 
 const props = defineProps({
   message: { type: Object, required: true },
+  currentUser: { type: Object, default: null },
   streaming: { type: Boolean, default: false },
   streamingStatus: { type: String, default: "" },
   showRegenerate: { type: Boolean, default: false },
@@ -15,6 +25,7 @@ const emit = defineEmits(["regenerate", "delete"]);
 
 const isUser = computed(() => props.message.role === "user");
 const isAssistant = computed(() => props.message.role === "assistant");
+const showUserAvatar = computed(() => isUser.value && hasResolvedPlatformAccount(props.currentUser));
 const isStreamingTail = computed(
   () => props.streaming && isAssistant.value && !props.message.error
 );
@@ -141,5 +152,13 @@ const onDelete = () => {
         </div>
       </div>
     </div>
+
+    <PlatformUserAvatar
+      v-if="showUserAvatar"
+      :user="currentUser"
+      size="message"
+      class="assistant-message__avatar assistant-message__avatar--user"
+      aria-hidden="true"
+    />
   </article>
 </template>

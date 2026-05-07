@@ -11,6 +11,7 @@ import AdminDashboardRoute from "../pages/admin/AdminDashboardRoute.vue";
 import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
 import AdminOverviewRoute from "../pages/admin/AdminOverviewRoute.vue";
 import AdminSpacesRoute from "../pages/admin/AdminSpacesRoute.vue";
+import { hasResolvedPlatformAccount } from "../platform/account.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 function isAssistantHost() {
@@ -19,6 +20,11 @@ function isAssistantHost() {
 }
 
 const assistantHost = isAssistantHost();
+const assistantAccountMeta = { authRequired: true, accountRequired: true };
+
+export function hasResolvedRouteAccount(appStore) {
+  return hasResolvedPlatformAccount(appStore?.me, { role: appStore?.actualRole });
+}
 
 const routes = [
   {
@@ -48,7 +54,7 @@ const routes = [
   {
     path: "/",
     component: assistantHost ? AssistantProductRoute : AppLayout,
-    meta: assistantHost ? { authRequired: true } : { workspace: true },
+    meta: assistantHost ? assistantAccountMeta : { workspace: true },
     children: assistantHost
       ? []
       : [
@@ -65,7 +71,7 @@ const routes = [
           path: "/c/:id",
           name: "assistant-chat",
           component: AssistantProductRoute,
-          meta: { authRequired: true }
+          meta: assistantAccountMeta
         }
       ]
     : []),
@@ -73,7 +79,7 @@ const routes = [
     path: "/assistant",
     name: "assistant",
     component: AssistantProductRoute,
-    meta: { authRequired: true }
+    meta: assistantAccountMeta
   },
   {
     path: "/space/:spaceSlug",
@@ -155,7 +161,15 @@ export function createAtriumRouter(pinia) {
       return true;
     }
 
-    if (to.meta.authRequired) {
+    if (to.meta.accountRequired) {
+      await appStore.ensureSession();
+      if (!hasResolvedRouteAccount(appStore)) {
+        return {
+          name: "login",
+          query: { next: to.fullPath }
+        };
+      }
+    } else if (to.meta.authRequired) {
       await appStore.ensureSession();
       if (!appStore.me && appStore.authEnabled) {
         return {

@@ -57,6 +57,10 @@ The contract is composition-first:
 - `PlatformUserMenuTrigger.vue`
   Shared avatar-based trigger for user menus.
 
+- `PlatformUserAvatar.vue`
+  Shared account avatar renderer. It consumes the platform account contract and
+  does not render anonymous or guest placeholders.
+
 - `PlatformUserDropdownPanel.vue`
   Generic panel used by the platform-level user dropdown flow.
 

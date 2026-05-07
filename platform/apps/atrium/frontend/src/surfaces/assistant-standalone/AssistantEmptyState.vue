@@ -19,6 +19,14 @@ const emit = defineEmits(["choose"]);
       <p class="assistant-empty__subtitle">Спроси что угодно или начни с подсказки.</p>
     </div>
 
+    <div class="assistant-empty__privacy" role="note">
+      <p>
+        Модель настраивает оператор: это может быть сторонний провайдер со своими
+        правилами обработки и retention.
+      </p>
+      <p>ИИ может ошибаться. Не принимай ответы как проверенный факт без проверки.</p>
+    </div>
+
     <div v-if="suggestions.length" class="assistant-empty__suggestions">
       <button
         v-for="(suggestion, index) in suggestions"

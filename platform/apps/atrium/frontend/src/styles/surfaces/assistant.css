@@ -445,6 +445,24 @@
   font-size: var(--text-sm, 13px);
 }
 
+.assistant-empty__privacy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: min(34rem, 100%);
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-raised) 76%, transparent);
+  color: var(--ink-secondary);
+  font-size: var(--text-xs, 11px);
+  line-height: 1.45;
+}
+
+.assistant-empty__privacy p {
+  margin: 0;
+}
+
 .assistant-empty__suggestions {
   display: flex;
   flex-wrap: wrap;
@@ -482,6 +500,7 @@
 
 .assistant-message--user {
   justify-content: flex-end;
+  gap: 0.65rem;
 }
 
 .assistant-message--user .assistant-message__body {
@@ -511,6 +530,22 @@
   background: color-mix(in srgb, var(--accent-purple) 16%, var(--surface-raised));
   color: var(--accent-purple);
   border: 1px solid color-mix(in srgb, var(--accent-purple) 36%, transparent);
+}
+
+.assistant-message__avatar--user {
+  background: linear-gradient(135deg, rgba(88, 166, 255, 0.34), rgba(163, 113, 247, 0.34));
+  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.14);
+  font-size: var(--text-2xs, 10px);
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.assistant-message__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .assistant-message__cursor {
@@ -1047,6 +1082,7 @@
 }
 
 .assistant-composer__input {
+  box-sizing: border-box;
   width: 100%;
   resize: none;
   border: none;
@@ -1056,8 +1092,8 @@
   font: inherit;
   font-size: var(--text-base, 14px);
   line-height: 1.45;
-  padding: 0.25rem 0.4rem;
-  min-height: 1.5rem;
+  padding: 0.38rem 0.4rem;
+  min-height: 2.1rem;
   max-height: 14rem;
 }
 

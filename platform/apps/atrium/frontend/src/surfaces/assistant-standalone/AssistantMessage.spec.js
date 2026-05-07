@@ -59,4 +59,59 @@ describe("AssistantMessage", () => {
     );
     expect(wrapper.find(".assistant-message__cursor").exists()).toBe(true);
   });
+
+  it("renders the current user avatar on user messages", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        currentUser: { email: "user@example.com" },
+        message: {
+          id: "message-1",
+          role: "user",
+          content: "Вопрос",
+          created_at: "2026-05-06T08:07:00Z"
+        }
+      }
+    });
+
+    const avatar = wrapper.find(".assistant-message__avatar--user");
+    expect(avatar.exists()).toBe(true);
+    expect(avatar.text()).toBe("U");
+  });
+
+  it("does not invent a user avatar without an account context", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "user",
+          content: "Вопрос",
+          created_at: "2026-05-06T08:07:00Z"
+        }
+      }
+    });
+
+    const avatar = wrapper.find(".assistant-message__avatar--user");
+    expect(avatar.exists()).toBe(false);
+  });
+
+  it("uses the current user avatar image when provided", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        currentUser: {
+          email: "user@example.com",
+          avatar_url: "https://example.com/avatar.png"
+        },
+        message: {
+          id: "message-1",
+          role: "user",
+          content: "Вопрос",
+          created_at: "2026-05-06T08:07:00Z"
+        }
+      }
+    });
+
+    const image = wrapper.find(".assistant-message__avatar--user img");
+    expect(image.exists()).toBe(true);
+    expect(image.attributes("src")).toBe("https://example.com/avatar.png");
+  });
 });

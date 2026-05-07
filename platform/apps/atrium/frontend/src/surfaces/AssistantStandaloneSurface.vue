@@ -12,6 +12,10 @@ const props = defineProps({
   identity: {
     type: Object,
     required: true
+  },
+  currentUser: {
+    type: Object,
+    default: null
   }
 });
 
@@ -324,6 +328,7 @@ function savePreferredTarget(value) {
 
       <AssistantConversation
         :messages="currentMessages"
+        :current-user="props.currentUser"
         :streaming="streaming"
         :streaming-status="streamingStatus"
         :loading="loadingCurrent"
@@ -359,7 +364,7 @@ function savePreferredTarget(value) {
         role="status"
         aria-live="polite"
       >
-        <span>Пара сообщений удалена</span>
+        <span>Удаление через 5 секунд</span>
         <button type="button" class="assistant-standalone__undo-button" @click="onUndoMessageDelete">
           Отменить
         </button>

@@ -1,10 +1,19 @@
 <script setup>
 import { ChevronDown } from "lucide-vue-next";
+import PlatformUserAvatar from "./PlatformUserAvatar.vue";
 
 defineProps({
+  user: {
+    type: Object,
+    default: null
+  },
   initials: {
     type: String,
     default: ""
+  },
+  avatarSize: {
+    type: String,
+    default: "sm"
   },
   open: {
     type: Boolean,
@@ -19,11 +28,12 @@ defineProps({
 
 <template>
   <button class="platform-user-menu-trigger" type="button">
-    <span class="platform-user-menu-trigger__avatar">
-      <slot name="avatar">
+    <slot name="avatar">
+      <PlatformUserAvatar v-if="user" :user="user" :size="avatarSize" />
+      <span v-else class="platform-user-menu-trigger__avatar">
         {{ initials }}
-      </slot>
-    </span>
+      </span>
+    </slot>
 
     <slot name="label" />
 

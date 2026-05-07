@@ -3,6 +3,7 @@ import { storeToRefs } from "pinia";
 import { computed } from "vue";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformUserDropdown from "../platform/components/UserDropdown.vue";
+import { hasResolvedPlatformAccount } from "../platform/account.js";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import AssistantStandaloneSurface from "../surfaces/AssistantStandaloneSurface.vue";
 import { assistantIdentityBase } from "../surfaces/assistant-standalone/assistantIdentity.js";
@@ -14,7 +15,7 @@ const appStore = useAtriumAppStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 
-const { authEnabled, loginPageUrl, me } = storeToRefs(authStore);
+const { actualRole, authEnabled, loginPageUrl, me } = storeToRefs(authStore);
 const { currentLang, languageLabels } = storeToRefs(uiStore);
 const { themeSelection } = storeToRefs(appStore);
 
@@ -39,6 +40,10 @@ const assistantIdentity = computed(() => ({
   subtitle: labels.value.subtitle
 }));
 
+const hasAccount = computed(() =>
+  hasResolvedPlatformAccount(me.value, { role: actualRole.value })
+);
+
 const setLang = (lang) => {
   uiStore.languageSelection = lang;
 };
@@ -56,12 +61,12 @@ const logout = async () => {
   <main class="assistant-product-root">
     <TheShellBackdrop />
 
-    <AssistantStandaloneSurface :identity="assistantIdentity">
+    <AssistantStandaloneSurface :identity="assistantIdentity" :current-user="me">
       <template #main-actions>
         <PlatformAppsMenu current-product="assistant" :lang="currentLang" />
 
         <PlatformUserDropdown
-          v-if="authEnabled && me"
+          v-if="authEnabled && hasAccount"
           :user="me"
           :current-lang="currentLang"
           :theme="themeSelection"

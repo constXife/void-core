@@ -1,4 +1,5 @@
 import { computed } from "vue";
+import { resolvePlatformUserInitials } from "../platform/account.js";
 
 export function useAtriumWorkspaceBootstrap({
   actualIsAdmin,
@@ -85,14 +86,7 @@ export function useAtriumWorkspaceBootstrap({
     }
   };
 
-  const userInitials = computed(() => {
-    if (!me.value?.email) return "?";
-    const parts = me.value.email.split("@")[0].split(/[._-]/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return me.value.email.slice(0, 2).toUpperCase();
-  });
+  const userInitials = computed(() => resolvePlatformUserInitials(me.value));
 
   const logout = async () => {
     try {

@@ -5,6 +5,7 @@ import AssistantEmptyState from "./AssistantEmptyState.vue";
 
 const props = defineProps({
   messages: { type: Array, default: () => [] },
+  currentUser: { type: Object, default: null },
   streaming: { type: Boolean, default: false },
   streamingStatus: { type: String, default: "" },
   loading: { type: Boolean, default: false },
@@ -107,6 +108,7 @@ watch(
             <AssistantMessage
               v-else
               :message="entry.message"
+              :current-user="currentUser"
               :streaming="streaming && entry.message.id === lastAssistantId"
               :streaming-status="streamingStatus"
               :show-regenerate="

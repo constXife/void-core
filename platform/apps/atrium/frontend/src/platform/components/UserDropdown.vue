@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import PlatformDropdownAnchor from "./PlatformDropdownAnchor.vue";
 import PlatformUserDropdownPanel from "./PlatformUserDropdownPanel.vue";
 import PlatformUserMenuTrigger from "./PlatformUserMenuTrigger.vue";
+import { resolvePlatformUserIdentity } from "../account.js";
 
 const props = defineProps({
   user: { type: Object, default: null },
@@ -23,22 +24,19 @@ const props = defineProps({
 const emit = defineEmits(["toggle-lang", "set-lang", "set-theme", "logout"]);
 
 const showDropdown = ref(false);
+const account = computed(() => resolvePlatformUserIdentity(props.user));
 
-const userInitial = computed(() => {
-  if (!props.user?.email) return "?";
-  return props.user.email.charAt(0).toUpperCase();
-});
 </script>
 
 <template>
   <PlatformDropdownAnchor
-    v-if="user"
+    v-if="account"
     v-model:open="showDropdown"
     align="right"
   >
     <template #trigger="{ toggle }">
       <PlatformUserMenuTrigger
-        :initials="userInitial"
+        :user="user"
         :open="showDropdown"
         @click.stop="toggle"
       />
