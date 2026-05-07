@@ -7,6 +7,12 @@ const MARKDOWN_OPTIONS = {
 };
 
 const MERMAID_LANGUAGE = "mermaid";
+const ASSISTANT_ADMONITION_VARIANTS = new Set(["info", "success", "warning", "danger"]);
+const ASSISTANT_ADMONITION_ALIASES = new Map([
+  ["ok", "success"],
+  ["warn", "warning"],
+  ["error", "danger"]
+]);
 
 export function sanitizeHtml(html) {
   if (!html) return "";
@@ -51,10 +57,97 @@ export function normalizeMermaidSvgLabels(svg) {
 
 export function renderMarkdown(markdown, options = {}) {
   if (!markdown) return "";
-  return sanitizeHtml(marked.parse(markdown, {
+  return sanitizeHtml(renderAssistantMarkdown(markdown, options));
+}
+
+function renderAssistantMarkdown(markdown, options) {
+  return splitAssistantAdmonitions(markdown).map((block) => {
+    if (block.type === "admonition") {
+      return renderAssistantAdmonition(block, options);
+    }
+    return renderMarkedMarkdown(block.text, options);
+  }).join("");
+}
+
+function renderMarkedMarkdown(markdown, options) {
+  if (!String(markdown || "").trim()) return "";
+  return marked.parse(markdown, {
     ...MARKDOWN_OPTIONS,
     renderer: createMarkdownRenderer(options)
-  }));
+  });
+}
+
+function renderAssistantAdmonition(block, options) {
+  const variant = normalizeAssistantAdmonitionVariant(block.variant);
+  const body = renderMarkedMarkdown(block.text, options);
+  return [
+    `<aside class="assistant-markdown__admonition assistant-markdown__admonition--${variant}">`,
+    '<div class="assistant-markdown__admonition-body">',
+    body,
+    "</div>",
+    "</aside>\n"
+  ].join("");
+}
+
+function splitAssistantAdmonitions(markdown) {
+  const lines = String(markdown || "").split(/\n/);
+  const blocks = [];
+  let buffer = [];
+  let inFence = false;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^```/.test(line.trim())) {
+      inFence = !inFence;
+      buffer.push(line);
+      continue;
+    }
+
+    const opener = !inFence
+      ? /^:::[ \t]*(info|success|warning|danger|ok|warn|error)[ \t]*$/.exec(line)
+      : null;
+    if (!opener) {
+      buffer.push(line);
+      continue;
+    }
+
+    const closeIndex = findAssistantAdmonitionClose(lines, index + 1);
+    if (closeIndex < 0) {
+      buffer.push(line);
+      continue;
+    }
+
+    pushMarkdownBlock(blocks, buffer);
+    buffer = [];
+    blocks.push({
+      type: "admonition",
+      variant: opener[1],
+      text: lines.slice(index + 1, closeIndex).join("\n").trim()
+    });
+    index = closeIndex;
+  }
+
+  pushMarkdownBlock(blocks, buffer);
+  return blocks;
+}
+
+function findAssistantAdmonitionClose(lines, startIndex) {
+  let inFence = false;
+  for (let index = startIndex; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (/^```/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence && /^:::[ \t]*$/.test(line)) return index;
+  }
+  return -1;
+}
+
+function pushMarkdownBlock(blocks, lines) {
+  const text = lines.join("\n");
+  if (!text.trim()) return;
+  blocks.push({ type: "markdown", text });
 }
 
 function createMarkdownRenderer(options) {
@@ -63,6 +156,7 @@ function createMarkdownRenderer(options) {
   const renderTable = renderer.table.bind(renderer);
 
   renderer.html = (token) => escapeHtml(token.text || token.raw || "");
+  renderer.text = (token) => renderAssistantHighlights(escapeHtml(token.text || token.raw || ""));
   renderer.table = (token) => (
     `<div class="assistant-markdown__table-scroll">${renderTable(token)}</div>`
   );
@@ -96,6 +190,19 @@ function normalizeLanguage(value) {
     .trim()
     .toLowerCase()
     .split(/\s+/)[0];
+}
+
+function normalizeAssistantAdmonitionVariant(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const canonical = ASSISTANT_ADMONITION_ALIASES.get(normalized) || normalized;
+  return ASSISTANT_ADMONITION_VARIANTS.has(canonical) ? canonical : "info";
+}
+
+function renderAssistantHighlights(html) {
+  return html.replace(
+    /==(?=\S)([\s\S]*?\S)==/g,
+    '<mark class="assistant-markdown__highlight">$1</mark>'
+  );
 }
 
 function escapeHtml(value) {

@@ -745,6 +745,15 @@
   font-weight: 700;
 }
 
+.assistant-markdown__highlight {
+  padding: 0.02em 0.22em;
+  border-radius: 4px;
+  background: color-mix(in srgb, #facc15 28%, transparent);
+  color: color-mix(in srgb, var(--ink-primary) 96%, #facc15 4%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 .assistant-markdown a {
   color: var(--accent-primary);
   text-decoration: underline;
@@ -828,6 +837,41 @@
   color: var(--ink-secondary);
   background: var(--glass-bg);
   border-radius: 0 6px 6px 0;
+}
+
+.assistant-markdown__admonition {
+  --assistant-admonition-color: var(--accent-primary);
+  margin: 0.85em 0;
+  padding: 0.72rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--assistant-admonition-color) 34%, transparent);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--assistant-admonition-color) 10%, var(--surface-raised));
+  color: color-mix(in srgb, var(--ink-primary) 94%, white 6%);
+}
+
+.assistant-markdown__admonition--info {
+  --assistant-admonition-color: var(--accent-primary, #58a6ff);
+}
+
+.assistant-markdown__admonition--success {
+  --assistant-admonition-color: var(--status-success, #22c55e);
+}
+
+.assistant-markdown__admonition--warning {
+  --assistant-admonition-color: #f59e0b;
+}
+
+.assistant-markdown__admonition--danger {
+  --assistant-admonition-color: var(--status-warning, #ef4444);
+}
+
+.assistant-markdown__admonition-body > :first-child {
+  margin-top: 0;
+}
+
+.assistant-markdown__admonition-body > :last-child {
+  margin-bottom: 0;
 }
 
 .assistant-mermaid {

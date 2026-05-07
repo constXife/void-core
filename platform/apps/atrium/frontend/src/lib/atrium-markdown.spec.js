@@ -48,6 +48,34 @@ describe("atrium markdown sanitization", () => {
     expect(html).toContain("<td>CO₂</td>");
   });
 
+  it("renders assistant semantic highlight marks", () => {
+    const html = renderMarkdown("Это ==важный вывод== для пользователя.");
+    expect(html).toContain("<mark class=\"assistant-markdown__highlight\">важный вывод</mark>");
+  });
+
+  it("renders assistant admonition blocks with semantic classes only", () => {
+    const html = renderMarkdown(":::warning\n**Риск:** проверь backend DELETE.\n:::");
+    expect(html).toContain(
+      "<aside class=\"assistant-markdown__admonition assistant-markdown__admonition--warning\">"
+    );
+    expect(html).toContain("<strong>Риск:</strong>");
+    expect(html).not.toContain("style=");
+  });
+
+  it("maps assistant admonition aliases to canonical variants", () => {
+    const html = renderMarkdown(":::ok\nГотово.\n:::");
+    expect(html).toContain("assistant-markdown__admonition--success");
+  });
+
+  it("does not render assistant color syntax inside code fences", () => {
+    const html = renderMarkdown("```\n:::warning\n==raw==\n:::\n```");
+    expect(html).toContain("<pre><code>");
+    expect(html).toContain(":::warning");
+    expect(html).toContain("==raw==");
+    expect(html).not.toContain("assistant-markdown__admonition");
+    expect(html).not.toContain("assistant-markdown__highlight");
+  });
+
   it("sanitizes rendered svg fragments", () => {
     const svg = sanitizeSvg('<svg><script>alert(1)</script><g onclick="x()"></g></svg>');
     expect(svg).toContain("<svg");
