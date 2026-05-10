@@ -221,3 +221,27 @@
   color: rgba(165, 233, 251, 1);
   text-decoration: underline;
 }
+
+/* Pinned resources — full directory expansion view.
+   When the user clicks "Все ресурсы (N) →" the dashboard renders compact tiles
+   grouped by resource.group (products / services / external / future), with a
+   small uppercase header per group. The compact tile reuses .resource-card
+   layout but drops popovers, service status pills and action buttons. */
+@utility resources-pinned-expansion {
+  @apply flex flex-col gap-4 mt-4;
+}
+
+@utility resources-pinned-group {
+  @apply flex flex-col gap-2;
+}
+
+@utility resources-pinned-group-title {
+  @apply text-[11px] font-semibold uppercase tracking-wider text-white/45;
+}
+
+@utility resource-card-compact {
+  /* Smaller padding and no min-height so the directory expansion stays scannable. */
+  padding: 0.625rem 0.75rem;
+  min-height: 0;
+  gap: 0.5rem;
+}

@@ -33,11 +33,39 @@ const totalResourcesFor = (spaceId, blockId) => {
 const visibleResourcesFor = (spaceId, blockId) => {
   const data = blockDataFor(spaceId, blockId);
   const items = Array.isArray(data) ? data : [];
-  if (isResourceBlockExpanded(blockId)) return items;
   return items.slice(0, PINNED_VISIBLE_LIMIT);
 };
 const hasMoreResourcesFor = (spaceId, blockId) =>
   totalResourcesFor(spaceId, blockId) > PINNED_VISIBLE_LIMIT;
+
+// Group ordering for the full-directory expansion. Matches translation keys
+// resource.group.<id> in atrium-config.js. Items without a recognized group
+// fall back to "services" (the catch-all bucket in the Nix derivation).
+const RESOURCE_GROUP_ORDER = ["products", "services", "external", "future"];
+const groupedResourcesFor = (spaceId, blockId) => {
+  const data = blockDataFor(spaceId, blockId);
+  const items = Array.isArray(data) ? data : [];
+  if (items.length === 0) return [];
+  const buckets = new Map();
+  for (const item of items) {
+    const group = item?.group || "services";
+    if (!buckets.has(group)) buckets.set(group, []);
+    buckets.get(group).push(item);
+  }
+  const ordered = [];
+  for (const id of RESOURCE_GROUP_ORDER) {
+    const groupItems = buckets.get(id);
+    if (groupItems?.length) {
+      ordered.push({ id, label: t(`resource.group.${id}`), items: groupItems });
+      buckets.delete(id);
+    }
+  }
+  // Catch any unknown groups so the expansion never silently drops items.
+  for (const [id, groupItems] of buckets) {
+    ordered.push({ id, label: t(`resource.group.${id}`) || id, items: groupItems });
+  }
+  return ordered;
+};
 
 const appStore = useAtriumAppStore();
 const {
@@ -527,12 +555,57 @@ const inventoryAttentionMeta = (item) =>
                     @click="toggleResourceBlockExpansion(block.id)"
                   >
                     <span v-if="isResourceBlockExpanded(block.id)">
-                      {{ t("resource.pinned.collapse") || "Скрыть полный список ↑" }}
+                      {{ t("resource.pinned.collapse") }} ↑
                     </span>
                     <span v-else>
-                      {{ (t("resource.pinned.expand") || "Все ресурсы") }} ({{ totalResourcesFor(props.space.id, block.id) }}) →
+                      {{ t("resource.pinned.expand") }} ({{ totalResourcesFor(props.space.id, block.id) }}) →
                     </span>
                   </button>
+                </div>
+                <div
+                  v-if="isResourceBlockExpanded(block.id) && groupedResourcesFor(props.space.id, block.id).length"
+                  class="resources-pinned-expansion"
+                >
+                  <div
+                    v-for="group in groupedResourcesFor(props.space.id, block.id)"
+                    :key="group.id"
+                    class="resources-pinned-group"
+                  >
+                    <div class="resources-pinned-group-title">{{ group.label }}</div>
+                    <div class="dashboard-resources">
+                      <div
+                        v-for="item in group.items"
+                        :key="'group-' + group.id + '-' + item.id"
+                        class="resource-card resource-card-tile resource-card-compact"
+                        :data-resource-id="String(item.id)"
+                      >
+                        <span class="resource-icon resource-icon-tile">
+                          <img
+                            v-if="resolveIconUrl(item.icon_url)"
+                            :src="resolveIconUrl(item.icon_url)"
+                            :alt="resourceTitle(item)"
+                          />
+                          <span v-else>{{ resourceInitial(item) }}</span>
+                        </span>
+                        <span class="resource-meta">
+                          <span class="resource-title-row">
+                            <a
+                              v-if="item.url"
+                              :href="item.url"
+                              target="_blank"
+                              rel="noreferrer"
+                              class="resource-title-link"
+                              @click.stop="rememberResourceVisit(props.space, item)"
+                            >
+                              {{ resourceTitle(item) }}
+                            </a>
+                            <span v-else class="resource-title">{{ resourceTitle(item) }}</span>
+                          </span>
+                          <span v-if="resourceDescription(item)" class="resource-desc">{{ resourceDescription(item) }}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">{{ t("resource.noPinned") }}</div>
               </div>
