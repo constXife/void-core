@@ -161,7 +161,7 @@ fn normalize_block(mut block: PreviewTemplateBlock) -> PreviewTemplateBlock {
         block.id = "preview-block".to_string();
     }
     if block.block_type.trim().is_empty() {
-        block.block_type = "resources_pinned".to_string();
+        block.block_type = "core.resources_pinned".to_string();
     }
     if block.title.key.trim().is_empty() {
         block.title.key = format!("atrium.block.{}.title", block.id);

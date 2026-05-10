@@ -91,7 +91,7 @@ fn extract_dashboard_blocks(body: &str) -> Vec<PreviewTemplateBlock> {
     let mut remaining = body;
     while let Some(index) = remaining.find("\"type\"") {
         let block_body = &remaining[index..];
-        let block_type = extract_json_string(block_body, "type").unwrap_or_else(|| "resources_pinned".to_string());
+        let block_type = extract_json_string(block_body, "type").unwrap_or_else(|| "core.resources_pinned".to_string());
         let id = extract_json_string(block_body, "id").unwrap_or_else(|| "preview-block".to_string());
         let title = extract_json_string(block_body, "title").unwrap_or_else(|| "Preview block".to_string());
         let limit = extract_json_number(block_body, "limit").unwrap_or(8);

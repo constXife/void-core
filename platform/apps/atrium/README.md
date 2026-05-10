@@ -27,8 +27,13 @@ Current `v0` is intentionally narrow:
 - the default dashboard is resource-first and built around pinned directory resources;
 - spaces are declarative and reconciled from the client-owned Atrium root;
 - archived spaces stay in declared state but are removed from the active runtime/UI;
+- the **block type registry contract** is part of the foundation (templates already reference blocks via `block.type`); v0 ships the `core.*` block types only — downstream-owned block types (`assistant.*`, `<product>.summary.*`) register through the same contract from downstream layers;
+- the **top bar contract** is foundation-owned (brand, space switcher, app launcher, user dropdown); the **global chat trigger** is a shared component that mounts on top bars when the deployment has a working assistant capability — it is contract-shipped in v0 but the actual assistant backend is downstream;
+- the **bottom platform footer** ships canonical slots (privacy / platform status / help / about); downstream may add operator-only slots but does not relocate footer concerns into the dashboard grid;
 - announcements CRUD, service catalog CRUD, service placements, and `/ws` live transport are not part of the shipped `v0` surface;
-- multi-space/family-facing expansion remains future work rather than a current promise.
+- multi-space/family-facing expansion (additional space types beyond `staff` — for example `home`, `kids`) remains future work; the spaces primitive already supports the `type` field, but personal/family templates and the corresponding downstream block types are not v0 promises.
+
+For the canonical contract between foundation primitives and downstream usage of block types, top bar mounting, and chat trigger context, see `docs/ATRIUM.md` in this repository.
 
 ## Current Implementation Note
 The intended boundary is that `Atrium` remains functionally usable from `void-core` without a sibling downstream repository.

@@ -49,6 +49,11 @@ The `Atrium` source tree may contain:
 - portal shell source code;
 - dashboard and spaces primitives;
 - foundation-facing navigation and directory behavior;
+- shared top bar primitives — brand, space switcher, app launcher dropdown, user avatar/dropdown — used both by Atrium itself and by downstream product hosts that mount the same top bar;
+- the global chat trigger contract — shared component that any host can embed to summon assistant chat in the context of the current view (foundation provides the component and panel UI; downstream wires the context provider and the assistant backend);
+- the block type registry primitive — the contract that lets templates compose dashboards from typed blocks with validated config (see § "Block Type Registry" below);
+- shipped foundation block types in the `core.*` namespace (e.g. `core.resources_pinned`, `core.greeting`);
+- shared bottom platform footer primitives — privacy / platform status / help / about link slots common to all spaces;
 - local development assets and build scripts required to evolve the shell;
 - public docs for shell behavior and integration.
 
@@ -62,9 +67,83 @@ The `Atrium` source tree should not become the place for:
 - client-specific inventory, secrets, or runtime data;
 - vertical business logic that belongs to official products;
 - product bundles that are specific to one segment only.
-- product-specific host surfaces such as downstream calendar, inventory, or finance UIs.
+- product-specific host surfaces such as downstream calendar, inventory, or finance UIs;
+- specific downstream block type implementations — `assistant.*` aggregator blocks (pending, digest_feed, summary), `<product>.summary.*` per-product blocks. Those live downstream and register with the foundation block runtime via the registry contract;
+- specific assistant backend implementation — the chat trigger contract is foundation, but the assistant capability itself is a downstream-provisioned product host.
 
 Those concerns belong in downstream product repositories, client deployment repositories, or future product layers.
+
+## Top Bar Contract
+
+The Atrium top bar has a fixed shape across all spaces and is shared with downstream product hosts that embed the same component:
+
+- **brand** (left) — Atrium / spaces brand block;
+- **space switcher pill** (center) — current space label and a dropdown to switch between spaces the user has access to;
+- **global chat trigger** (right) — opens a slide-over assistant chat panel; reachable via `Cmd+J` / `Ctrl+J` shortcut (see § "Global Chat Trigger" below);
+- **app launcher dropdown** (right) — navigation into product hosts (e.g. `inventory.<domain>`, `calendar.<domain>`); sourced from `directory_items` filtered by `type: product`;
+- **user avatar / dropdown** (right) — settings, logout.
+
+The top bar is foundation-owned. Downstream product hosts embed the same shared top bar component so navigation, identity surfacing, and the chat trigger remain consistent across surfaces. Per-host top bars do not invent their own brand placement, space switcher, or launcher.
+
+### Global Chat Trigger
+
+The chat trigger is a **shared foundation component** mounted in the Atrium top bar and in each downstream product host's top bar that wants to expose assistant chat in the current context.
+
+Foundation responsibilities:
+- the trigger button itself (label and shortcut binding);
+- the slide-over panel with backdrop, message list, and composer;
+- the typed `context` prop contract — `surface`, `host`, `path`, `view_kind`, `entity_refs`, `user_visible_summary`, `auth_subject`, `space_id`;
+- a clearly visible context line in the panel header reflecting the `user_visible_summary` value.
+
+Downstream responsibilities:
+- providing the `context` prop value reflecting the current view;
+- providing the assistant capability backend (the trigger does not bring its own backend — it requires a working assistant host, e.g. `assistant.<domain>`).
+
+If no assistant capability is configured for the deployment, the trigger remains hidden or surfaces a disabled state per operator config. The trigger never silently fails — it either works against a real backend or is visibly absent.
+
+## Block Type Registry
+
+Atrium dashboards compose from typed blocks. Each block in a `dashboard_template` references a **block type** by id; the block type contract is part of the foundation, while the catalog of available block types is a layered concern.
+
+Block type contract:
+- `id` — `<owner>.<name>.v<n>` (e.g. `core.greeting.v1`, `core.resources_pinned.v1`);
+- `config_schema` — typed schema for the `block.config` field, validated when a template instantiates a block of this type;
+- `default_layout` — recommended responsive grid size on first add;
+- `allowed_in_space_types` — which space `type` values may include this block (for example, a finance summary block may be restricted to `home` and `staff`, excluded from `kids`);
+- `audience_groups` — optional ACL filter applied at render time;
+- `data_source_contract` — declared scoped reads / queries the block executes;
+- `refresh_policy` — `on_view`, `interval:<duration>`, `on_change_feed`.
+
+Foundation owns:
+- the registry primitive — registration, validation of `block.config` against `config_schema`, runtime composition;
+- block types in the `core.*` namespace shipped with the foundation (minimum baseline currently includes `core.resources_pinned`, used by the admin space).
+
+Foundation does not own:
+- `assistant.*` aggregator block types — they live in the downstream assistant capability provider;
+- `<product>.summary.*` per-product blocks — owned by each product host that contributes a summary block;
+- specific block type catalogs — downstream layers maintain registries of which block types are available in their distribution.
+
+For a canonical example of downstream block type catalog usage on top of the foundation registry, see void's `docs/platform/ATRIUM_BLOCK_REGISTRY.md` (when packaging void as the downstream product layer over `void-core`).
+
+### Versioning
+
+Block type ids carry an explicit version (`v1`, `v2`, …):
+- breaking shape changes (rename of a config field, change of `data_source_contract`) require a new major (`assistant.pending.v2`);
+- additive changes (new optional config field, new optional data field) stay within the existing major;
+- old versions remain available during migration, marked archived in the registry;
+- templates pin the major version they reference; upgrading a template to a new major is an explicit operator action.
+
+## Platform Footer
+
+A bottom platform-level footer is shared across all spaces. It is not part of the widget grid, not personalized per-user, and not space-specific.
+
+Canonical foundation slots:
+- **Privacy** — link to privacy policy;
+- **Platform status** — health / uptime / version;
+- **Help** — docs entry;
+- **About** — version, license, build info.
+
+Foundation ships the footer primitive and these four canonical link slots. Downstream may add slots (for example, operator-only diagnostics in admin space) but should not remove the foundation slots, and should not relocate footer concerns into the widget grid.
 
 ## Packaging Model
 

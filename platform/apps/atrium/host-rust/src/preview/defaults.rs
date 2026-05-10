@@ -18,7 +18,7 @@ fn default_preview_space() -> PreviewSpace {
 fn default_preview_block() -> PreviewTemplateBlock {
     PreviewTemplateBlock {
         id: "key-resources".to_string(),
-        block_type: "resources_pinned".to_string(),
+        block_type: "core.resources_pinned".to_string(),
         title: localized_text("atrium.block.key-resources.title", "Key resources", "Ключевые ресурсы"),
         limit: 8,
     }
