@@ -48,6 +48,7 @@ in
       runHook preBuild
       cp -R ${nodeModules}/node_modules ./node_modules
       chmod -R u+w node_modules
+      patchShebangs node_modules/.bin
       bun run build
       runHook postBuild
     '';
