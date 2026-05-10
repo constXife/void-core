@@ -27,36 +27,12 @@ export function useAtriumResourceSurfaces({
   const surfaceCardsFor = (space) => {
     if (!space) return [];
     const resources = resourceEntriesForSpace(space);
+    // Admin surface card (backup/update/critical 3-card hero) was removed —
+    // its meaning was unclear from the user perspective and it duplicated the
+    // dedicated admin panel routes. Admin space now renders pinned resources
+    // directly without the hero header.
     if (isAdminSpace(space)) {
-      return [
-        {
-          id: "admin-backup",
-          eyebrow: t("surface.admin.backupTitle"),
-          title: t("surface.state.ready"),
-          body: t("surface.admin.backupBody")
-        },
-        {
-          id: "admin-update",
-          eyebrow: t("surface.admin.updateTitle"),
-          title: t("surface.state.review"),
-          body: t("surface.admin.updateBody")
-        },
-        {
-          id: "admin-critical",
-          eyebrow: t("surface.admin.criticalTitle"),
-          title: resources.length ? t("surface.state.clear") : t("surface.state.attention"),
-          body: t("surface.admin.criticalBody"),
-          actions: [
-            {
-              id: "open-admin",
-              label: t("surface.action.openAdmin"),
-              actionKind: "admin-tab",
-              actionTarget: "overview",
-              disabled: false
-            }
-          ]
-        }
-      ];
+      return [];
     }
     if (isKidsSpace(space)) {
       const safeResources = resources.slice(0, 3).map(resourceTitleFallback);

@@ -1,6 +1,7 @@
 <script setup>
 import { ChevronDown, X } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
+import { ref } from "vue";
 import Tooltip from "../components/Tooltip.vue";
 import { resolveBlockInspectHref } from "../lib/dashboard-inspect.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
@@ -8,6 +9,35 @@ import { useAtriumAppStore } from "../stores/atrium-app.js";
 const props = defineProps([
   "space",
 ]);
+
+// Pinned resources collapse/expand: show first N tiles by default, expose
+// "Все ресурсы (N) →" toggle when the data exceeds the visible limit.
+// Per-block state tracked in a Set keyed by block.id; switching pages does
+// not reset (acceptable for current single-dashboard nav).
+const PINNED_VISIBLE_LIMIT = 4;
+const expandedResourceBlocks = ref(new Set());
+const isResourceBlockExpanded = (blockId) => expandedResourceBlocks.value.has(blockId);
+const toggleResourceBlockExpansion = (blockId) => {
+  const next = new Set(expandedResourceBlocks.value);
+  if (next.has(blockId)) {
+    next.delete(blockId);
+  } else {
+    next.add(blockId);
+  }
+  expandedResourceBlocks.value = next;
+};
+const totalResourcesFor = (spaceId, blockId) => {
+  const data = blockDataFor(spaceId, blockId);
+  return Array.isArray(data) ? data.length : 0;
+};
+const visibleResourcesFor = (spaceId, blockId) => {
+  const data = blockDataFor(spaceId, blockId);
+  const items = Array.isArray(data) ? data : [];
+  if (isResourceBlockExpanded(blockId)) return items;
+  return items.slice(0, PINNED_VISIBLE_LIMIT);
+};
+const hasMoreResourcesFor = (spaceId, blockId) =>
+  totalResourcesFor(spaceId, blockId) > PINNED_VISIBLE_LIMIT;
 
 const appStore = useAtriumAppStore();
 const {
@@ -199,9 +229,18 @@ const inventoryAttentionMeta = (item) =>
             </div>
             <div class="dashboard-block-body">
               <div v-if="blockTypeIs(block, blockTypes.resourcesPinned)" class="dashboard-list">
+                <div class="resources-pinned-header">
+                  <div class="resources-pinned-title">{{ blockTitle(block) || t("block.type.resourcesPinned") }}</div>
+                  <span
+                    v-if="totalResourcesFor(props.space.id, block.id) > 0"
+                    class="chip chip-muted resources-pinned-count"
+                  >
+                    {{ totalResourcesFor(props.space.id, block.id) }}
+                  </span>
+                </div>
                 <div class="dashboard-resources">
                   <div
-                    v-for="item in blockDataFor(props.space.id, block.id)"
+                    v-for="item in visibleResourcesFor(props.space.id, block.id)"
                     :key="item.id"
                     class="resource-card resource-card-tile"
                     :class="{
@@ -477,6 +516,23 @@ const inventoryAttentionMeta = (item) =>
                       </div>
                     </div>
                   </div>
+                </div>
+                <div
+                  v-if="hasMoreResourcesFor(props.space.id, block.id)"
+                  class="resources-pinned-footer"
+                >
+                  <button
+                    type="button"
+                    class="resources-pinned-toggle"
+                    @click="toggleResourceBlockExpansion(block.id)"
+                  >
+                    <span v-if="isResourceBlockExpanded(block.id)">
+                      {{ t("resource.pinned.collapse") || "Скрыть полный список ↑" }}
+                    </span>
+                    <span v-else>
+                      {{ (t("resource.pinned.expand") || "Все ресурсы") }} ({{ totalResourcesFor(props.space.id, block.id) }}) →
+                    </span>
+                  </button>
                 </div>
                 <div v-if="blockDataFor(space.id, block.id).length === 0" class="core-empty">{{ t("resource.noPinned") }}</div>
               </div>

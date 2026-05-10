@@ -185,3 +185,39 @@
     grid-template-columns: repeat(auto-fit, 200px);
   }
 }
+
+/* Pinned resources block — header + collapse/expand toggle.
+   Header shows a small uppercase title and a count chip; toggle below the
+   resource grid lets the user reveal the full directory when there are more
+   items than the visible limit. */
+@utility resources-pinned-header {
+  @apply flex items-center gap-2 mb-3;
+}
+
+@utility resources-pinned-title {
+  @apply text-xs font-semibold uppercase tracking-wider text-white/60;
+}
+
+@utility resources-pinned-count {
+  @apply text-[11px];
+}
+
+@utility resources-pinned-footer {
+  @apply mt-3 pt-3 text-center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@utility resources-pinned-toggle {
+  @apply text-xs cursor-pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: rgba(125, 211, 252, 0.95);
+  transition: color 120ms ease;
+}
+
+.resources-pinned-toggle:hover {
+  color: rgba(165, 233, 251, 1);
+  text-decoration: underline;
+}
