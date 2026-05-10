@@ -10,17 +10,17 @@ describe("platform account contract", () => {
   it("resolves an authenticated user account", () => {
     const account = resolvePlatformUserIdentity({
       authenticated: true,
-      email: "constxife@yandex.ru",
+      email: "user@example.com",
       role: "user",
       user_id: "user-1"
     });
 
     expect(account).toMatchObject({
-      email: "constxife@yandex.ru",
+      email: "user@example.com",
       userId: "user-1",
       role: "user",
-      label: "constxife@yandex.ru",
-      initials: "C"
+      label: "user@example.com",
+      initials: "U"
     });
   });
 

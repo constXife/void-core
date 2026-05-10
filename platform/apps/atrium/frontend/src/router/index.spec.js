@@ -7,7 +7,7 @@ describe("assistant route account contract", () => {
       hasResolvedRouteAccount({
         me: {
           authenticated: true,
-          email: "constxife@yandex.ru",
+          email: "user@example.com",
           role: "user"
         },
         actualRole: "user"
