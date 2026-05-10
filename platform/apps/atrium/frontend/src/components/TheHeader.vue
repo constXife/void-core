@@ -1,7 +1,7 @@
 <script setup>
-import { Activity, MessageCircle } from "lucide-vue-next";
+import { Activity, Sparkles } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
-import { computed, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import AtriumSpaceSwitcher from "./AtriumSpaceSwitcher.vue";
 import UserDropdown from "./UserDropdown.vue";
 import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
@@ -40,8 +40,29 @@ const hasAccount = computed(() =>
   hasResolvedPlatformAccount(me.value, { role: actualRole.value })
 );
 
+const toggleAssistant = () => {
+  if (assistantStore.isOpen) {
+    assistantStore.close();
+  } else {
+    assistantStore.open();
+  }
+};
+
+const handleAssistantShortcut = (event) => {
+  if (!(event.metaKey || event.ctrlKey)) return;
+  if (event.key !== "j" && event.key !== "J") return;
+  if (!assistantStore.visible) return;
+  event.preventDefault();
+  toggleAssistant();
+};
+
 onMounted(() => {
   assistantStore.loadModels();
+  document.addEventListener("keydown", handleAssistantShortcut);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keydown", handleAssistantShortcut);
 });
 
 watch(me, () => {
@@ -92,10 +113,10 @@ watch(me, () => {
           type="button"
           class="atrium-header__assistant"
           aria-label="Void Assistant"
-          title="Void Assistant"
-          @click="assistantStore.open"
+          title="Void Assistant · ⌘J"
+          @click="toggleAssistant"
         >
-          <MessageCircle :size="17" />
+          <Sparkles :size="17" />
         </button>
 
         <template v-if="authEnabled">
@@ -129,7 +150,6 @@ watch(me, () => {
 
 <style scoped>
 .atrium-header__login,
-.atrium-header__assistant,
 .atrium-header__lang-select {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -148,15 +168,28 @@ watch(me, () => {
   height: 2.45rem;
   place-items: center;
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  background:
+    linear-gradient(180deg, rgba(6, 182, 212, 0.18), rgba(6, 182, 212, 0.08)),
+    rgba(15, 18, 24, 0.84);
+  color: rgba(125, 211, 252, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(6, 182, 212, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
 
 .atrium-header__assistant:hover {
-  color: rgba(255, 255, 255, 0.96);
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(6, 182, 212, 0.55);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
+    linear-gradient(180deg, rgba(6, 182, 212, 0.28), rgba(6, 182, 212, 0.12)),
     rgba(20, 28, 38, 0.9);
+  color: rgba(165, 233, 251, 1);
 }
 
 .atrium-header__actions {
