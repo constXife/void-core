@@ -46,12 +46,12 @@ tasks:
   backend-dev:
     desc: Run Rust web host with env from .env
     cmds:
-      - sh -c 'export VOID_CORE_REPO_ROOT="$(cd ../../.. && pwd)"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; exec nix run ../../..#atrium-backend-dev'
+      - sh -c 'export VOID_CORE_REPO_ROOT="$(cd ../../.. && pwd)"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; exec nix run ../../..#atrium-backend-dev'
 
   backend-fixture-dev:
     desc: Run Rust web host against the bundled foundation client root
     cmds:
-      - sh -c 'export VOID_CORE_REPO_ROOT="$(cd ../../.. && pwd)"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_FRONTEND_DEV_URL=http://localhost:5173; export ATRIUM_CLIENT_ROOT_PATH="$(pwd)/client-root/default"; export ATRIUM_WIDGETS_PATH="$(pwd)/widgets/default.yaml"; unset DATABASE_URL; exec nix run ../../..#atrium-backend-dev'
+      - sh -c 'export VOID_CORE_REPO_ROOT="$(cd ../../.. && pwd)"; export VOID_CORE_ATRIUM_APP_DIR="$(pwd)"; export ATRIUM_CLIENT_ROOT_PATH="$(pwd)/client-root/default"; export ATRIUM_WIDGETS_PATH="$(pwd)/widgets/default.yaml"; exec nix run ../../..#atrium-backend-dev'
 
   frontend-build:
     desc: Build frontend assets into frontend dist
@@ -59,13 +59,13 @@ tasks:
       - (cd frontend && npm ci && npm run build)
 
   dev:
-    desc: Run backend + frontend in parallel with an external database
+    desc: Run backend + frontend in parallel
     deps:
       - backend-dev
       - frontend-dev
 
   dev-start:
-    desc: Run backend + frontend in parallel with an external database
+    desc: Run backend + frontend in parallel
     deps:
       - backend-dev
       - frontend-dev

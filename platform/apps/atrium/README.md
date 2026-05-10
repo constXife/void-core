@@ -58,7 +58,7 @@ host delegation remains available only through explicit `ATRIUM_HOST_MODE=shim` 
 - Run the canonical Rust web host with env from `.env`: `task backend-dev`
 - Run the same host against the bundled foundation client root: `task backend-fixture-dev`
 - Run frontend dev server: `task frontend-dev`
-- Run backend + frontend with an external database: `task dev`
+- Run backend + frontend in parallel: `task dev`
 - Run backend + frontend against the bundled foundation client root: `task fixture-dev`
 - Run Atrium tests: `task test`
 - Run frontend unit tests: `task frontend-test`
