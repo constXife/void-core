@@ -10,10 +10,10 @@ const props = defineProps([
   "space",
 ]);
 
-// Pinned resources collapse/expand: show first N tiles by default, expose
-// "Все ресурсы (N) →" toggle when the data exceeds the visible limit.
-// Per-block state tracked in a Set keyed by block.id; switching pages does
-// not reset (acceptable for current single-dashboard nav).
+// Pinned resources collapse/expand: when block.config.filter === "pinned"
+// show first N tiles + toggle that reveals the full grouped list. Without
+// the pinned filter the block is the primary directory surface and renders
+// the grouped list directly (no truncation, no toggle).
 const PINNED_VISIBLE_LIMIT = 4;
 const expandedResourceBlocks = ref(new Set());
 const isResourceBlockExpanded = (blockId) => expandedResourceBlocks.value.has(blockId);
@@ -26,6 +26,8 @@ const toggleResourceBlockExpansion = (blockId) => {
   }
   expandedResourceBlocks.value = next;
 };
+const isPinnedFilterBlock = (block) =>
+  String(block?.config?.filter || "").trim().toLowerCase() === "pinned";
 const totalResourcesFor = (spaceId, blockId) => {
   const data = blockDataFor(spaceId, blockId);
   return Array.isArray(data) ? data.length : 0;
@@ -266,7 +268,7 @@ const inventoryAttentionMeta = (item) =>
                     {{ totalResourcesFor(props.space.id, block.id) }}
                   </span>
                 </div>
-                <div class="dashboard-resources">
+                <div v-if="isPinnedFilterBlock(block)" class="dashboard-resources">
                   <div
                     v-for="item in visibleResourcesFor(props.space.id, block.id)"
                     :key="item.id"
@@ -546,7 +548,7 @@ const inventoryAttentionMeta = (item) =>
                   </div>
                 </div>
                 <div
-                  v-if="hasMoreResourcesFor(props.space.id, block.id)"
+                  v-if="isPinnedFilterBlock(block) && hasMoreResourcesFor(props.space.id, block.id)"
                   class="resources-pinned-footer"
                 >
                   <button
@@ -563,7 +565,7 @@ const inventoryAttentionMeta = (item) =>
                   </button>
                 </div>
                 <div
-                  v-if="isResourceBlockExpanded(block.id) && groupedResourcesFor(props.space.id, block.id).length"
+                  v-if="(!isPinnedFilterBlock(block) || isResourceBlockExpanded(block.id)) && groupedResourcesFor(props.space.id, block.id).length"
                   class="resources-pinned-expansion"
                 >
                   <div
