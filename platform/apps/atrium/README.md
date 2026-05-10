@@ -216,8 +216,25 @@ Modes:
 | Data lifecycle | Permanent | Permanent (until offboarding) | Long-lived | 2 days |
 
 ## Auth (OIDC)
-Enable auth by setting `AUTH_DISABLED=0` and providing the variables below:
 
+Auth in `void-core` has two modes, governed by `ATRIUM_HOST_MODE`.
+
+**Preview mode** (default, `ATRIUM_HOST_MODE=preview`):
+- the bundled `host-rust` server runs without an OIDC client;
+- `GET /api/auth/modes` returns `{"oidc":false,"dev":false,"local":false}`;
+- preview identity is driven by `VOID_ATRIUM_PREVIEW_USER_ID`, `VOID_ATRIUM_PREVIEW_EMAIL`, `VOID_ATRIUM_PREVIEW_ROLE`, `VOID_ATRIUM_PREVIEW_AUTHENTICATED`;
+- intended for local development and offline foundation use.
+
+**Shim mode** (`ATRIUM_HOST_MODE=shim`):
+- the foundation host delegates serving to a downstream host binary (default name `void-atrium-web`, override with `ATRIUM_DOWNSTREAM_HOST_BIN`);
+- the downstream host owns the OIDC client, cookie sessions, and the `/auth/*` routes;
+- the variables documented below are the **foundation-to-downstream env contract**: the downstream host is expected to consume them when present. They are not consumed by the public `host-rust` directly; they are documented here so the contract lives in one place.
+
+Foundation also ships an OIDC IdP module — [`platform/nixos/modules/auth/rauthy.nix`](../../nixos/modules/auth/rauthy.nix) deploys Rauthy as a self-hosted identity provider. A canonical deployment runs Rauthy as the IdP and a downstream Atrium host as the OIDC client.
+
+### Contract variables (consumed by the downstream host in shim mode)
+
+- `AUTH_DISABLED` (`0` to enable auth)
 - `OIDC_ISSUER`
 - `OIDC_CLIENT_ID`
 - `OIDC_CLIENT_SECRET`
@@ -231,12 +248,13 @@ Enable auth by setting `AUTH_DISABLED=0` and providing the variables below:
 - `AUTH_COOKIE_NAME` (optional)
 - `AUTH_COOKIE_SECURE` (`1` for HTTPS)
 
-Routes:
+### Routes (served by the downstream host)
+
 - `GET /auth/login`
 - `GET /auth/callback`
 - `POST /auth/logout`
 
-Example (Google):
+### Example (Google as IdP)
 ```bash
 export AUTH_DISABLED=0
 export OIDC_ISSUER="https://accounts.google.com"
@@ -249,7 +267,7 @@ export AUTH_COOKIE_SECRET="replace-with-long-random-string"
 export AUTH_COOKIE_SECURE=0
 ```
 
-Example (GitHub):
+### Example (GitHub Actions OIDC)
 ```bash
 export AUTH_DISABLED=0
 export OIDC_ISSUER="https://token.actions.githubusercontent.com"
@@ -263,7 +281,7 @@ export AUTH_COOKIE_SECURE=0
 ```
 
 ## Admin gating
-Admin-only routes require an authenticated Atrium admin session from the Rust web host.
+Admin-only routes require an authenticated Atrium admin identity. In preview mode that identity is the one declared via `VOID_ATRIUM_PREVIEW_*`; in shim mode it is the OIDC session resolved by the downstream host.
 
 ## Spaces API
 - `GET /atrium/spaces` - list active spaces for the current shell
