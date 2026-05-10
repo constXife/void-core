@@ -123,7 +123,7 @@ Foundation does not own:
 - `<product>.summary.*` per-product blocks — owned by each product host that contributes a summary block;
 - specific block type catalogs — downstream layers maintain registries of which block types are available in their distribution.
 
-For a canonical example of downstream block type catalog usage on top of the foundation registry, see void's `docs/platform/ATRIUM_BLOCK_REGISTRY.md` (when packaging void as the downstream product layer over `void-core`).
+Downstream layers that package a product on top of `void-core` are expected to maintain their own block type catalog document, declaring which `core.*` block types they ship and which downstream-owned block types (`assistant.*`, `<product>.summary.*`, etc.) they register on top of the foundation registry.
 
 ### Versioning
 
