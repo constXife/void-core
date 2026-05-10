@@ -38,6 +38,7 @@ fn preview_resource_yaml(item: &PreviewDirectoryItem) -> String {
     lines.extend([
         format!("url: {}", yaml_string(&item.url)),
         format!("type: {}", yaml_string(&item.item_type)),
+        format!("group: {}", yaml_string(&item.group)),
         "state: \"active\"".to_string(),
         String::new(),
     ]);

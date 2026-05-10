@@ -14,6 +14,7 @@ fn preview_create_directory_item(state: &mut PreviewState, body: &str) -> String
         space_id,
         url: extract_json_string(body, "url").unwrap_or_default(),
         item_type: extract_json_string(body, "item_type").unwrap_or_else(|| "resource".to_string()),
+        group: extract_json_string(body, "group").unwrap_or_default(),
         pinned: extract_json_bool(body, "pinned").unwrap_or(false),
         order: preview_next_directory_order(state),
     };
@@ -50,6 +51,9 @@ fn preview_patch_directory_item(state: &mut PreviewState, item_id: &str, body: &
     }
     if let Some(item_type) = extract_json_string(body, "item_type") {
         item.item_type = item_type;
+    }
+    if let Some(group) = extract_json_string(body, "group") {
+        item.group = group;
     }
     if let Some(pinned) = extract_json_bool(body, "pinned") {
         item.pinned = pinned;

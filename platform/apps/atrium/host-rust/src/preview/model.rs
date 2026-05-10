@@ -50,6 +50,7 @@ struct PreviewDirectoryItem {
     description: LocalizedText,
     url: String,
     item_type: String,
+    group: String,
     pinned: bool,
     order: i64,
 }

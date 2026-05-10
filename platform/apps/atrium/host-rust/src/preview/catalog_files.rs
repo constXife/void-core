@@ -31,6 +31,7 @@ fn load_preview_directory_items(client_root: &Path) -> Vec<PreviewDirectoryItem>
                 url: parse_scalar(&resource_source, "url").unwrap_or_default(),
                 item_type: parse_scalar(&resource_source, "type")
                     .unwrap_or_else(|| "resource".to_string()),
+                group: parse_scalar(&resource_source, "group").unwrap_or_default(),
                 pinned: entry.pinned,
                 order: entry.order,
             });

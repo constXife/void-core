@@ -13,7 +13,7 @@ fn preview_directory_items_json(state: &PreviewState, space_id: Option<&str>) ->
 
 fn preview_directory_item_json(item: &PreviewDirectoryItem) -> String {
     format!(
-        "{{\"id\":{},\"resource_id\":{},\"space_id\":{},\"title\":{},\"description\":{},\"url\":{},\"item_type\":{},\"pinned\":{},\"order\":{}}}",
+        "{{\"id\":{},\"resource_id\":{},\"space_id\":{},\"title\":{},\"description\":{},\"url\":{},\"item_type\":{},\"group\":{},\"pinned\":{},\"order\":{}}}",
         json_string(&item.id),
         json_string(&item.resource_id),
         json_string(&item.space_id),
@@ -21,6 +21,7 @@ fn preview_directory_item_json(item: &PreviewDirectoryItem) -> String {
         localized_text_json(&item.description),
         json_string(&item.url),
         json_string(&item.item_type),
+        json_string(&item.group),
         if item.pinned { "true" } else { "false" },
         item.order
     )
