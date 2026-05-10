@@ -27,6 +27,7 @@
     outputHash =
       {
         "aarch64-darwin" = "sha256-uLylSrm+E8c5fqiV/HGeDLNXRj9iMoMUEBqKr9Oshus=";
+        "x86_64-linux" = "sha256-2q9AxLQrlQUZfvZwxt5LR8gKJzgKAoFd1UddOff8GRU=";
       }
       .${
         pkgs.stdenv.hostPlatform.system
