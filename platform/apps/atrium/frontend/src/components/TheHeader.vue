@@ -109,11 +109,12 @@ watch(me, () => {
         <PlatformAppsMenu current-product="atrium" :lang="currentLang" />
 
         <button
-          v-if="assistantStore.visible"
           type="button"
           class="atrium-header__assistant"
-          aria-label="Void Assistant"
-          title="Void Assistant · ⌘J"
+          :class="{ 'atrium-header__assistant--disabled': !assistantStore.visible }"
+          :aria-label="assistantStore.visible ? 'Void Assistant' : 'Void Assistant (not configured)'"
+          :title="assistantStore.visible ? 'Void Assistant · ⌘J' : 'Void Assistant — provider не настроен'"
+          :disabled="!assistantStore.visible"
           @click="toggleAssistant"
         >
           <Sparkles :size="17" />
@@ -190,6 +191,22 @@ watch(me, () => {
     linear-gradient(180deg, rgba(6, 182, 212, 0.28), rgba(6, 182, 212, 0.12)),
     rgba(20, 28, 38, 0.9);
   color: rgba(165, 233, 251, 1);
+}
+
+/* Disabled state — when assistant capability is not configured for the
+   deployment. Button stays in the header so the entry point is discoverable,
+   but visually faded and the tooltip explains the missing provider. */
+.atrium-header__assistant.atrium-header__assistant--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.atrium-header__assistant.atrium-header__assistant--disabled:hover {
+  border-color: rgba(6, 182, 212, 0.28);
+  background:
+    linear-gradient(180deg, rgba(6, 182, 212, 0.18), rgba(6, 182, 212, 0.08)),
+    rgba(15, 18, 24, 0.84);
+  color: rgba(125, 211, 252, 0.95);
 }
 
 .atrium-header__actions {
