@@ -1,8 +1,8 @@
 @utility resource-card {
   @apply relative flex min-h-[140px] flex-col gap-4 rounded-2xl px-4 py-4 transition;
   width: 180px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.105);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(var(--fx-blur-md));
   -webkit-backdrop-filter: blur(var(--fx-blur-md));
 
@@ -16,11 +16,11 @@
     @apply pointer-events-none absolute inset-0 rounded-2xl;
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.18),
-      rgba(255, 255, 255, 0.03) 40%,
-      rgba(255, 255, 255, 0.12)
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0.13)
     );
-    opacity: 0.6;
+    opacity: 0.68;
   }
 
   &:not(.disabled):hover {
@@ -28,7 +28,7 @@
     border-color: rgba(255, 255, 255, 0.22);
     box-shadow: 0 calc(10px * var(--fx-shadow)) calc(18px * var(--fx-shadow))
       rgba(0, 0, 0, 0.18);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.13);
   }
 
   &:not(.disabled):hover::before {
@@ -173,6 +173,6 @@
 }
 
 @utility resource-desc {
-  @apply line-clamp-2 text-[12px] text-white/55;
+  @apply line-clamp-2 text-[12px] text-white/65;
   min-height: 2.6em;
 }
