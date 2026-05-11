@@ -52,6 +52,7 @@ export function useAtriumResources({
   const {
     copyText,
     invokeServiceAction,
+    openResourceLink,
     rememberResourceVisit,
     runSurfaceAction
   } = useAtriumResourceActions({
@@ -79,6 +80,7 @@ export function useAtriumResources({
     invokeServiceAction,
     normalizeActionKeys,
     normalizeLinks,
+    openResourceLink,
     rememberResourceVisit,
     resourceInitial,
     resourcePopoverAnchor: popover.resourcePopoverAnchor,

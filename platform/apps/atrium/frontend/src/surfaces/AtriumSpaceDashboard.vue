@@ -116,6 +116,7 @@ const {
   isPublicReadonlySpace,
   normalizeActionKeys,
   normalizeLinks,
+  openResourceLink,
   openAddBlockPicker,
   rememberResourceVisit,
   resourceInitial,
@@ -275,9 +276,15 @@ const inventoryAttentionMeta = (item) =>
                     class="resource-card resource-card-tile"
                     :class="{
                       'resource-card-expandable': canOpenResourceDetails(item) && !isPublicReadonlySpace(props.space),
+                      'resource-card-linkable': item.url,
                       'resource-card-active': resourcePopoverOpen && resourcePopoverItem?.id === item.id
                     }"
                     :data-resource-id="String(item.id)"
+                    :role="item.url ? 'link' : null"
+                    :tabindex="item.url ? 0 : null"
+                    @click="openResourceLink(props.space, item, $event)"
+                    @keydown.enter.prevent="openResourceLink(props.space, item, $event)"
+                    @keydown.space.prevent="openResourceLink(props.space, item, $event)"
                   >
                     <span class="resource-icon resource-icon-tile">
                       <img v-if="resolveIconUrl(item.icon_url)" :src="resolveIconUrl(item.icon_url)" :alt="resourceTitle(item)" />
@@ -579,7 +586,13 @@ const inventoryAttentionMeta = (item) =>
                         v-for="item in group.items"
                         :key="'group-' + group.id + '-' + item.id"
                         class="resource-card resource-card-tile resource-card-compact"
+                        :class="{ 'resource-card-linkable': item.url }"
                         :data-resource-id="String(item.id)"
+                        :role="item.url ? 'link' : null"
+                        :tabindex="item.url ? 0 : null"
+                        @click="openResourceLink(props.space, item, $event)"
+                        @keydown.enter.prevent="openResourceLink(props.space, item, $event)"
+                        @keydown.space.prevent="openResourceLink(props.space, item, $event)"
                       >
                         <span class="resource-icon resource-icon-tile">
                           <img

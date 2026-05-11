@@ -72,6 +72,15 @@ export function useAtriumResourceActions({
     settingsStore.setJSON(recentResourcesKey, recentResourcesBySpace.value);
   };
 
+  const openResourceLink = (space, item, event) => {
+    const url = String(item?.url || "").trim();
+    if (!url) return;
+    const target = event?.target;
+    if (target?.closest?.("a,button,input,select,textarea,[role='button']")) return;
+    rememberResourceVisit(space, item);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const runSurfaceAction = async (value) => {
     const action = value?.actionKind ? value : surfaceCardActions(value)[0];
     if (!action?.actionKind || action.disabled) return;
@@ -95,6 +104,7 @@ export function useAtriumResourceActions({
   return {
     copyText,
     invokeServiceAction,
+    openResourceLink,
     rememberResourceVisit,
     runSurfaceAction
   };
