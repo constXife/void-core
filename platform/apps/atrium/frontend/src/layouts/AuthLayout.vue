@@ -8,7 +8,7 @@ const uiStore = useUiStore();
 
 <template>
   <main class="spaces-root" :class="{ 'no-ui-blur': uiStore.backgroundBlurDisabled }">
-    <TheShellBackdrop />
+    <TheShellBackdrop tone="auth" />
     <RouterView />
   </main>
 </template>

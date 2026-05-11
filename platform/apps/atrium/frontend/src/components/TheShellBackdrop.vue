@@ -10,6 +10,14 @@ const {
   bgB,
   showA
 } = storeToRefs(uiStore);
+
+const props = defineProps({
+  tone: {
+    type: String,
+    required: true,
+    validator: (value) => ["workspace", "auth", "assistant"].includes(value)
+  }
+});
 </script>
 
 <template>
@@ -29,5 +37,9 @@ const {
       imageRendering: backgroundPixelated ? 'pixelated' : 'auto'
     }"
   ></div>
-  <div class="bg-overlay" :class="{ 'bg-overlay-no-blur': backgroundBlurDisabled }"></div>
+  <div
+    class="bg-overlay"
+    :class="{ 'bg-overlay-no-blur': backgroundBlurDisabled }"
+    :data-tone="props.tone"
+  ></div>
 </template>

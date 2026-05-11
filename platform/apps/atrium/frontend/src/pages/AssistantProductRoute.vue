@@ -59,7 +59,7 @@ const logout = async () => {
 
 <template>
   <main class="assistant-product-root">
-    <TheShellBackdrop />
+    <TheShellBackdrop tone="assistant" />
 
     <AssistantStandaloneSurface :identity="assistantIdentity" :current-user="me">
       <template #main-actions>

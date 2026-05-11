@@ -26,26 +26,44 @@
 
 @utility bg-overlay {
   @apply absolute inset-0;
+  --shell-overlay-blue-alpha: 0.12;
+  --shell-overlay-purple-alpha: 0.1;
+  --shell-overlay-green-alpha: 0.05;
+  --shell-overlay-scrim-alpha: 0.16;
   background:
     radial-gradient(
       ellipse 60% 40% at 10% 90%,
-      rgba(88, 166, 255, 0.25) 0%,
+      rgba(88, 166, 255, var(--shell-overlay-blue-alpha)) 0%,
       transparent 50%
     ),
     radial-gradient(
       ellipse 50% 35% at 90% 10%,
-      rgba(163, 113, 247, 0.2) 0%,
+      rgba(163, 113, 247, var(--shell-overlay-purple-alpha)) 0%,
       transparent 50%
     ),
     radial-gradient(
       ellipse 40% 30% at 50% 50%,
-      rgba(63, 185, 80, 0.08) 0%,
+      rgba(63, 185, 80, var(--shell-overlay-green-alpha)) 0%,
       transparent 60%
     ),
-    rgba(0, 0, 0, 0.4);
+    rgba(0, 0, 0, var(--shell-overlay-scrim-alpha));
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   pointer-events: none;
+
+  &[data-tone='assistant'] {
+    --shell-overlay-blue-alpha: 0.08;
+    --shell-overlay-purple-alpha: 0.07;
+    --shell-overlay-green-alpha: 0.03;
+    --shell-overlay-scrim-alpha: 0.1;
+  }
+
+  &[data-tone='auth'] {
+    --shell-overlay-blue-alpha: 0.2;
+    --shell-overlay-purple-alpha: 0.16;
+    --shell-overlay-green-alpha: 0.07;
+    --shell-overlay-scrim-alpha: 0.28;
+  }
 
   body[data-performance='low'] & {
     background: #0a0e14;

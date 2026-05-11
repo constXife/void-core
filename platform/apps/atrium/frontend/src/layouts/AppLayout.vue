@@ -19,7 +19,7 @@ const { navigateToPrivacy, t } = appStore;
 
 <template>
   <main class="spaces-root" :class="{ 'no-ui-blur': uiStore.backgroundBlurDisabled }">
-    <TheShellBackdrop />
+    <TheShellBackdrop tone="workspace" />
     <TheHeader v-if="!isKioskMode" />
     <SpacePicker />
 
