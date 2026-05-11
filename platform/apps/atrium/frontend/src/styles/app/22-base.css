@@ -21,12 +21,7 @@
 
 body {
     @apply min-h-screen font-sans;
-    background: 
-      radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in srgb, var(--accent-primary) 22%, transparent) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 80% 100%, color-mix(in srgb, var(--accent-purple) 18%, transparent) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 30% at 50% 50%, color-mix(in srgb, var(--status-online) 10%, transparent) 0%, transparent 60%),
-      var(--surface-base);
-    background-attachment: fixed;
+    background: var(--surface-base);
     overflow: hidden;
     --fx-motion: 1;
     --fx-blur-sm: 8px;
