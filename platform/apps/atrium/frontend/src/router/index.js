@@ -4,6 +4,7 @@ import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
+import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
 import AdminContentRoute from "../pages/admin/AdminContentRoute.vue";
@@ -51,30 +52,77 @@ const routes = [
       }
     ]
   },
-  {
-    path: "/",
-    component: assistantHost ? AssistantProductRoute : AppLayout,
-    meta: assistantHost ? assistantAccountMeta : { workspace: true },
-    children: assistantHost
-      ? []
-      : [
-          {
-            path: "",
-            name: "home",
-            component: AtriumHomePage
-          }
-        ]
-  },
   ...(assistantHost
     ? [
+        {
+          path: "/",
+          name: "assistant-home",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
         {
           path: "/c/:id",
           name: "assistant-chat",
           component: AssistantProductRoute,
           meta: assistantAccountMeta
+        },
+        {
+          path: "/capabilities",
+          name: "assistant-capabilities",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
+        {
+          path: "/capabilities/:skillId",
+          name: "assistant-capability-detail",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
+        {
+          path: "/routines",
+          name: "assistant-routines",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
+        {
+          path: "/routines/:instanceId",
+          name: "assistant-routine-inspect",
+          component: AssistantProductRoute,
+          meta: { ...assistantAccountMeta, drawerMode: "inspect" }
+        },
+        {
+          path: "/routines/:instanceId/edit",
+          name: "assistant-routine-edit",
+          component: AssistantProductRoute,
+          meta: { ...assistantAccountMeta, drawerMode: "edit" }
+        },
+        {
+          path: "/routines/:instanceId/runs",
+          name: "assistant-routine-runs",
+          component: AssistantRunsRoute,
+          meta: assistantAccountMeta
+        },
+        {
+          path: "/routines/:instanceId/runs/:runId",
+          name: "assistant-routine-run-detail",
+          component: AssistantRunsRoute,
+          meta: assistantAccountMeta
         }
       ]
-    : []),
+    : [
+        {
+          path: "/",
+          component: AppLayout,
+          meta: { workspace: true },
+          children: [
+            {
+              path: "",
+              name: "home",
+              component: AtriumHomePage
+            }
+          ]
+        }
+      ]),
   {
     path: "/assistant",
     name: "assistant",

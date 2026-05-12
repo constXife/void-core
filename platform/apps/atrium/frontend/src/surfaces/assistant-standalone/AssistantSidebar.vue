@@ -11,7 +11,8 @@ const props = defineProps({
   activeId: { type: String, default: "" },
   loading: { type: Boolean, default: false },
   collapsed: { type: Boolean, default: false },
-  identity: { type: Object, required: true }
+  identity: { type: Object, required: true },
+  activeTab: { type: String, default: "chat" }
 });
 
 const emit = defineEmits([
@@ -52,6 +53,7 @@ const toggleTrash = () => {
 
     <div class="assistant-sidebar__top">
       <button
+        v-if="activeTab === 'chat'"
         type="button"
         class="assistant-sidebar__new"
         :title="collapsed ? 'Новый чат' : ''"
@@ -72,57 +74,74 @@ const toggleTrash = () => {
       </button>
     </div>
 
-    <div class="assistant-sidebar__list">
-      <p v-if="loading && groups.length === 0" class="assistant-sidebar__hint">
-        Загружаем чаты…
-      </p>
-      <p v-else-if="isEmpty" class="assistant-sidebar__hint">
-        Здесь будут ваши чаты.
-      </p>
+    <!-- Chat mode: history list + trash -->
+    <template v-if="activeTab === 'chat'">
+      <div class="assistant-sidebar__list">
+        <p v-if="loading && groups.length === 0" class="assistant-sidebar__hint">
+          Загружаем чаты…
+        </p>
+        <p v-else-if="isEmpty" class="assistant-sidebar__hint">
+          Здесь будут ваши чаты.
+        </p>
 
-      <div
-        v-for="group in groups"
-        :key="group.id"
-        class="assistant-sidebar__group"
-      >
-        <h3 class="assistant-sidebar__group-title">{{ group.label }}</h3>
-        <TransitionGroup name="assistant-sidebar-row" tag="div" class="assistant-sidebar__group-items" appear>
+        <div
+          v-for="group in groups"
+          :key="group.id"
+          class="assistant-sidebar__group"
+        >
+          <h3 class="assistant-sidebar__group-title">{{ group.label }}</h3>
+          <TransitionGroup name="assistant-sidebar-row" tag="div" class="assistant-sidebar__group-items" appear>
+            <AssistantSidebarItem
+              v-for="session in group.items"
+              :key="session.id"
+              :session="session"
+              :active="session.id === activeId"
+              @select="(id) => emit('select', id)"
+              @rename="(session) => emit('rename', session)"
+              @delete="(session) => emit('delete', session)"
+            />
+          </TransitionGroup>
+        </div>
+      </div>
+
+      <div class="assistant-sidebar__trash">
+        <button
+          type="button"
+          class="assistant-sidebar__trash-toggle"
+          @click="toggleTrash"
+        >
+          <Trash2 :size="14" />
+          <span>Корзина</span>
+          <span class="assistant-sidebar__trash-count" v-if="trashed.length">{{ trashed.length }}</span>
+        </button>
+        <div v-if="trashOpen" class="assistant-sidebar__trash-list">
+          <p v-if="!trashedLoaded" class="assistant-sidebar__hint">Загружаем…</p>
+          <p v-else-if="trashed.length === 0" class="assistant-sidebar__hint">
+            Корзина пуста.
+          </p>
           <AssistantSidebarItem
-            v-for="session in group.items"
+            v-for="session in trashed"
             :key="session.id"
             :session="session"
-            :active="session.id === activeId"
-            @select="(id) => emit('select', id)"
-            @rename="(session) => emit('rename', session)"
-            @delete="(session) => emit('delete', session)"
+            trashed
+            @restore="(session) => emit('restore', session)"
           />
-        </TransitionGroup>
+        </div>
       </div>
+    </template>
+
+    <!-- Capabilities mode: filter slot (placeholder in Wave 1, filled in Wave 2) -->
+    <div v-else-if="activeTab === 'capabilities'" class="assistant-sidebar__list">
+      <slot name="capabilities">
+        <p class="assistant-sidebar__hint">Фильтры появятся в Wave 2.</p>
+      </slot>
     </div>
 
-    <div class="assistant-sidebar__trash">
-      <button
-        type="button"
-        class="assistant-sidebar__trash-toggle"
-        @click="toggleTrash"
-      >
-        <Trash2 :size="14" />
-        <span>Корзина</span>
-        <span class="assistant-sidebar__trash-count" v-if="trashed.length">{{ trashed.length }}</span>
-      </button>
-      <div v-if="trashOpen" class="assistant-sidebar__trash-list">
-        <p v-if="!trashedLoaded" class="assistant-sidebar__hint">Загружаем…</p>
-        <p v-else-if="trashed.length === 0" class="assistant-sidebar__hint">
-          Корзина пуста.
-        </p>
-        <AssistantSidebarItem
-          v-for="session in trashed"
-          :key="session.id"
-          :session="session"
-          trashed
-          @restore="(session) => emit('restore', session)"
-        />
-      </div>
+    <!-- Routines mode: filter slot (placeholder in Wave 1, filled in Wave 3) -->
+    <div v-else-if="activeTab === 'routines'" class="assistant-sidebar__list">
+      <slot name="routines">
+        <p class="assistant-sidebar__hint">Фильтры появятся в Wave 3.</p>
+      </slot>
     </div>
 
     <button
