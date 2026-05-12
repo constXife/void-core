@@ -5,6 +5,9 @@
    ============================================ */
 
 .assistant-standalone {
+  /* Единая высота для нижней границы brand-обёртки в sidebar и для topbar.
+     Меняется в одном месте, чтобы alignment между двумя колонками не плыл. */
+  --assistant-topbar-h: 3rem;
   display: grid;
   grid-template-columns: var(--assistant-sidebar-width, 280px) 1fr;
   gap: 0;
@@ -41,7 +44,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  padding: 0.85rem 0.6rem 0.6rem;
+  /* top-padding убран: brand занимает первую полосу высотой var(--assistant-topbar-h)
+     и сам отвечает за свою верхнюю отбивку. */
+  padding: 0 0.6rem 0.6rem;
   border-right: 1px solid var(--border-default);
   background: var(--surface-raised);
   overflow: hidden;
@@ -49,12 +54,19 @@
 }
 
 .assistant-sidebar__brand {
-  padding: 0.15rem 0.2rem 0.55rem;
+  /* Высота и нижняя граница совпадают с .assistant-topbar — нижние линии
+     sidebar/main лежат на одной y-координате. Negative horizontal margin
+     уводит border-bottom за padding sidebar, чтобы линия доходила до его краёв. */
+  height: var(--assistant-topbar-h);
+  margin: 0 -0.6rem;
+  padding: 0 0.8rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-default);
 }
 
 .assistant-sidebar--collapsed .assistant-sidebar__brand {
-  padding: 0.15rem 0 0.4rem;
-  display: flex;
+  padding: 0;
   justify-content: center;
 }
 
@@ -62,6 +74,8 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  /* Отбивка от brand-полосы — теперь brand больше не несёт vertical padding. */
+  margin-top: 0.6rem;
 }
 
 .assistant-sidebar__top .assistant-sidebar__new {
@@ -378,7 +392,8 @@
   align-items: stretch;
   gap: 0.5rem;
   padding: 0 1.1rem;
-  min-height: 3rem;
+  /* Единый токен с .assistant-sidebar__brand — нижние границы совпадают по y. */
+  min-height: var(--assistant-topbar-h, 3rem);
   border-bottom: 1px solid var(--border-default);
   background: var(--surface-base);
 }
