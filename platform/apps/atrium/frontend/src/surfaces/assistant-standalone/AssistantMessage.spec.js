@@ -60,6 +60,35 @@ describe("AssistantMessage", () => {
     expect(wrapper.find(".assistant-message__cursor").exists()).toBe(true);
   });
 
+  it("renders skill blocks instead of markdown when a skill run is attached", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "# Markdown projection",
+          created_at: "2026-05-06T08:07:00Z",
+          skill_run: {
+            id: "skill-run-1",
+            blocks: [
+              {
+                type: "article_card",
+                title: "Block title",
+                url: "https://example.com/story",
+                summary: "Block summary",
+                metrics: []
+              }
+            ]
+          }
+        }
+      }
+    });
+
+    expect(wrapper.find(".assistant-article-card").exists()).toBe(true);
+    expect(wrapper.text()).toContain("Block title");
+    expect(wrapper.text()).not.toContain("Markdown projection");
+  });
+
   it("renders the current user avatar on user messages", () => {
     const wrapper = mount(AssistantMessage, {
       props: {

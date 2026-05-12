@@ -11,6 +11,7 @@ import {
 import PlatformUserAvatar from "../../platform/components/PlatformUserAvatar.vue";
 import { hasResolvedPlatformAccount } from "../../platform/account.js";
 import AssistantMarkdown from "./AssistantMarkdown.vue";
+import BlockRenderer from "./blocks/BlockRenderer.vue";
 
 const props = defineProps({
   message: { type: Object, required: true },
@@ -32,6 +33,8 @@ const isStreamingTail = computed(
 const showStreamingStatus = computed(
   () => isStreamingTail.value && !props.message.content && props.streamingStatus
 );
+const skillBlocks = computed(() => props.message.skill_run?.blocks || []);
+const hasSkillBlocks = computed(() => skillBlocks.value.length > 0);
 const showCursor = computed(() => isStreamingTail.value);
 const timestamp = computed(() => formatTimestamp(props.message.created_at));
 const fullTimestamp = computed(() => props.message.created_at || "");
@@ -91,10 +94,11 @@ const onDelete = () => {
     <div class="assistant-message__stack">
       <div class="assistant-message__body">
         <AssistantMarkdown
-          v-if="message.content || !isStreamingTail"
+          v-if="!hasSkillBlocks && (message.content || !isStreamingTail)"
           :content="message.content"
           :render-diagrams="isAssistant && !message.error"
         />
+        <BlockRenderer v-if="hasSkillBlocks" :blocks="skillBlocks" />
         <p
           v-if="showStreamingStatus"
           class="assistant-message__streaming-line"

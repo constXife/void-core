@@ -249,6 +249,7 @@ function createMessage(role, content) {
     id: nextMessageId++,
     role,
     content,
+    skill_run: null,
     error: false,
     stopped: false
   };

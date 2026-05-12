@@ -484,6 +484,7 @@ function createOptimisticMessage(role, content) {
     id: `optimistic-${optimisticCounter++}`,
     role,
     content,
+    skill_run: null,
     error: false,
     stopped: false,
     optimistic: true
@@ -535,10 +536,19 @@ function normalizeMessageList(value) {
     id: String(entry?.id || ""),
     role: String(entry?.role || ""),
     content: String(entry?.content || ""),
+    skill_run: normalizeSkillRun(entry?.skill_run),
     stopped: Boolean(entry?.stopped),
     error: Boolean(entry?.error),
     created_at: String(entry?.created_at || "")
   }));
+}
+
+function normalizeSkillRun(value) {
+  if (!value || typeof value !== "object") return null;
+  const id = String(value.id || "");
+  const blocks = Array.isArray(value.blocks) ? value.blocks : [];
+  if (!id || blocks.length === 0) return null;
+  return { id, blocks };
 }
 
 function normalizeRun(payload) {

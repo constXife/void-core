@@ -82,7 +82,10 @@ const scrollToBottom = () => {
 };
 
 watch(
-  () => props.messages.map((message) => `${message.id}:${message.content.length}`).join("|"),
+  () =>
+    props.messages
+      .map((message) => `${message.id}:${message.content.length}:${message.skill_run?.id || ""}`)
+      .join("|"),
   () => nextTick(scrollToBottom),
   { flush: "post" }
 );
