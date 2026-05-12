@@ -244,5 +244,16 @@ export function createAtriumRouter(pinia) {
     return true;
   });
 
+  // Document title — assistant routes используют один и тот же AssistantProductRoute,
+  // поэтому компонент не пересоздаётся при переключении вкладок и сам title не выставит.
+  // Делаем это здесь, в afterEach, чтобы вкладка браузера honestly отражала продукт.
+  router.afterEach((to) => {
+    if (typeof document === "undefined") return;
+    const name = String(to.name || "");
+    document.title = name === "assistant" || name.startsWith("assistant-")
+      ? "Void Assistant"
+      : "Atrium";
+  });
+
   return router;
 }
