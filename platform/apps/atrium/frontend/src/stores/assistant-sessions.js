@@ -391,6 +391,13 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
         error: true,
         content: String(event.json?.message || "Assistant provider error")
       });
+      return;
+    }
+    if (event.event === "done") {
+      streamingPhase.value = "completed";
+      const skillRun = normalizeSkillRun(event.json?.skill_run);
+      if (skillRun) markMessage(assistantMessageId, { skill_run: skillRun });
+      return;
     }
     if (event.event === "cancelled") {
       streamingPhase.value = "cancelled";

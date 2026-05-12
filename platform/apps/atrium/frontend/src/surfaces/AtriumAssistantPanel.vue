@@ -5,6 +5,7 @@ import { computed, nextTick, ref, watch } from "vue";
 import { useAssistantStore } from "../stores/assistant.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantMarkdown from "./assistant-standalone/AssistantMarkdown.vue";
+import BlockRenderer from "./assistant-standalone/blocks/BlockRenderer.vue";
 
 const assistantStore = useAssistantStore();
 const appStore = useAtriumAppStore();
@@ -138,8 +139,12 @@ watch(
           'atrium-assistant__message--error': message.error
         }"
       >
+        <BlockRenderer
+          v-if="message.skill_run?.blocks?.length"
+          :blocks="message.skill_run.blocks"
+        />
         <AssistantMarkdown
-          v-if="message.content"
+          v-else-if="message.content"
           :content="message.content"
           :render-diagrams="message.role === 'assistant' && !message.error"
         />

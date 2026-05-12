@@ -151,6 +151,47 @@ describe("assistant sessions store", () => {
     finishStream();
     await pending;
   });
+
+  it("attaches skill blocks from the completion event before session reload", async () => {
+    let finishStream;
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({
+        ...sessionPayload(),
+        messages: [],
+        active_run: null
+      })
+    );
+    createAssistantRun.mockResolvedValue({
+      run_id: "run-1",
+      user_message_id: "message-user-server",
+      assistant_message_id: "message-assistant-server"
+    });
+    readAssistantRunEvents.mockImplementation(async (_runId, { onEvent }) => {
+      onEvent({
+        event: "done",
+        json: {
+          status: "completed",
+          skill_run: skillRunPayload()
+        }
+      });
+      await new Promise((resolve) => {
+        finishStream = resolve;
+      });
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+    store.draft = "/skill github-trending";
+
+    const pending = store.send({ targetId: "default" });
+    await flushPromises();
+
+    const assistantMessage = store.currentMessages.find((message) => message.role === "assistant");
+    expect(assistantMessage.skill_run).toEqual(skillRunPayload());
+
+    finishStream();
+    await pending;
+  });
 });
 
 function sessionPayload() {
@@ -184,6 +225,19 @@ function userMessage(content) {
     stopped: false,
     error: false,
     created_at: "2026-05-06T07:00:00Z"
+  };
+}
+
+function skillRunPayload() {
+  return {
+    id: "skill-run-1",
+    blocks: [
+      {
+        type: "section_header",
+        text: "GitHub trending",
+        subtitle: "GitHub"
+      }
+    ]
   };
 }
 

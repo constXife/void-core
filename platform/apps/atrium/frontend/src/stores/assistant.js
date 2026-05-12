@@ -191,6 +191,12 @@ export const useAssistantStore = defineStore("void-assistant", () => {
         error: true,
         content: String(event.json?.message || "Assistant provider error")
       });
+      return;
+    }
+    if (event.event === "done") {
+      const skillRun = normalizeSkillRun(event.json?.skill_run);
+      if (skillRun) markAssistantMessage(assistantMessageId, { skill_run: skillRun });
+      return;
     }
     if (event.event === "cancelled") {
       markAssistantMessage(assistantMessageId, { stopped: true });
@@ -264,4 +270,12 @@ function normalizeErrorMessage(error) {
   } catch {
     return message;
   }
+}
+
+function normalizeSkillRun(value) {
+  if (!value || typeof value !== "object") return null;
+  const id = String(value.id || "");
+  const blocks = Array.isArray(value.blocks) ? value.blocks : [];
+  if (!id || blocks.length === 0) return null;
+  return { id, blocks };
 }
