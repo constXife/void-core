@@ -41,7 +41,20 @@ const toggleTrash = () => {
 <template>
   <aside class="assistant-sidebar" :class="{ 'assistant-sidebar--collapsed': collapsed }">
     <div class="assistant-sidebar__brand">
-      <slot name="brand" :identity="identity" :collapsed="collapsed">
+      <!-- В collapsed brand-полоса занята кнопкой untoggle: иконка-логотип в узкой
+           колонке избыточна, а у пользователя должен быть очевидный способ вернуть
+           sidebar обратно. В expanded brand-полоса показывает identity. -->
+      <button
+        v-if="collapsed"
+        type="button"
+        class="assistant-sidebar__toggle assistant-sidebar__toggle--brand"
+        title="Развернуть сайдбар"
+        aria-label="Expand sidebar"
+        @click="emit('toggle-collapsed')"
+      >
+        <PanelLeftOpen :size="16" />
+      </button>
+      <slot v-else name="brand" :identity="identity" :collapsed="collapsed">
         <PlatformIdentityBrand
           :identity="identity"
           :collapsed="collapsed"
@@ -51,7 +64,7 @@ const toggleTrash = () => {
       </slot>
     </div>
 
-    <div class="assistant-sidebar__top">
+    <div v-if="activeTab === 'chat' || !collapsed" class="assistant-sidebar__top">
       <button
         v-if="activeTab === 'chat'"
         type="button"
@@ -63,14 +76,14 @@ const toggleTrash = () => {
         <span class="assistant-sidebar__new-label">Новый чат</span>
       </button>
       <button
+        v-if="!collapsed"
         type="button"
         class="assistant-sidebar__toggle"
-        :title="collapsed ? 'Развернуть сайдбар' : 'Свернуть сайдбар'"
-        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        title="Свернуть сайдбар"
+        aria-label="Collapse sidebar"
         @click="emit('toggle-collapsed')"
       >
-        <PanelLeftOpen v-if="collapsed" :size="14" />
-        <PanelLeftClose v-else :size="14" />
+        <PanelLeftClose :size="14" />
       </button>
     </div>
 

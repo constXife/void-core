@@ -57,7 +57,7 @@
   /* Высота и нижняя граница совпадают с .assistant-topbar — нижние линии
      sidebar/main лежат на одной y-координате. Negative horizontal margin
      уводит border-bottom за padding sidebar, чтобы линия доходила до его краёв. */
-  height: var(--assistant-topbar-h);
+  height: var(--assistant-topbar-h, 3rem);
   margin: 0 -0.6rem;
   padding: 0 0.8rem;
   display: flex;
@@ -101,6 +101,22 @@
 
 .assistant-sidebar__toggle:hover {
   background: var(--glass-bg-hover);
+  color: var(--ink-primary);
+}
+
+/* Toggle, который занимает brand-полосу в collapsed: visual вес минимальный,
+   только иконка с hover. Без border/bg — чтобы линия brand/topbar не плодилась
+   ещё одной рамкой кнопки внутри. */
+.assistant-sidebar__toggle--brand {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-secondary);
+}
+
+.assistant-sidebar__toggle--brand:hover {
+  background: var(--glass-bg, rgba(255, 255, 255, 0.06));
   color: var(--ink-primary);
 }
 
@@ -454,6 +470,36 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+}
+
+/* ---- Flat trigger override for shared platform components в assistant контексте.
+   Apps menu и user menu вне assistant'а сохраняют свой каплевидный вид;
+   здесь — плоские прозрачные кнопки, чтобы не дублировать "капсулы" рядом с tab'ами. */
+.assistant-topbar__actions .platform-apps-menu__trigger,
+.assistant-topbar__actions .platform-user-menu-trigger {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.assistant-topbar__actions .platform-apps-menu__trigger:hover,
+.assistant-topbar__actions .platform-user-menu-trigger:hover {
+  background: var(--glass-bg, rgba(255, 255, 255, 0.06));
+  border-color: transparent;
+  transform: none;
+}
+
+/* User trigger: убираем boost'ы у вложенного avatar (border, gradient'ы),
+   оставляя его плоским кружком с инициалами. */
+.assistant-topbar__actions .platform-user-menu-trigger {
+  padding: 0.15rem 0.3rem 0.15rem 0.55rem;
+}
+
+.assistant-topbar__actions .platform-user-menu-trigger__avatar {
+  border: 0;
+  background: var(--surface-elev-3, rgba(255, 255, 255, 0.08));
 }
 
 /* ---- Tab panels ---- */
