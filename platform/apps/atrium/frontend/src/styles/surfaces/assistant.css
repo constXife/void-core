@@ -107,7 +107,8 @@
 /* Toggle, который занимает brand-полосу в collapsed: visual вес минимальный,
    только иконка с hover. Без border/bg — чтобы линия brand/topbar не плодилась
    ещё одной рамкой кнопки внутри. */
-.assistant-sidebar__toggle--brand {
+.assistant-sidebar__toggle--brand,
+.assistant-sidebar__toggle--brand-end {
   width: 2rem;
   height: 2rem;
   border: 0;
@@ -115,9 +116,16 @@
   color: var(--ink-secondary);
 }
 
-.assistant-sidebar__toggle--brand:hover {
+.assistant-sidebar__toggle--brand:hover,
+.assistant-sidebar__toggle--brand-end:hover {
   background: var(--glass-bg, rgba(255, 255, 255, 0.06));
   color: var(--ink-primary);
+}
+
+/* В expanded toggle живёт справа от identity, тех же высот и flat — пара к --brand. */
+.assistant-sidebar__toggle--brand-end {
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .assistant-sidebar__resize-handle {

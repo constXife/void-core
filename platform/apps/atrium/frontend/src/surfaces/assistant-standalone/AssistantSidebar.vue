@@ -43,7 +43,8 @@ const toggleTrash = () => {
     <div class="assistant-sidebar__brand">
       <!-- В collapsed brand-полоса занята кнопкой untoggle: иконка-логотип в узкой
            колонке избыточна, а у пользователя должен быть очевидный способ вернуть
-           sidebar обратно. В expanded brand-полоса показывает identity. -->
+           sidebar обратно. В expanded brand-полоса показывает identity слева и
+           collapse-toggle справа — одна линия с topbar'ом, без отдельного top-блока. -->
       <button
         v-if="collapsed"
         type="button"
@@ -54,19 +55,29 @@ const toggleTrash = () => {
       >
         <PanelLeftOpen :size="16" />
       </button>
-      <slot v-else name="brand" :identity="identity" :collapsed="collapsed">
-        <PlatformIdentityBrand
-          :identity="identity"
-          :collapsed="collapsed"
-          :mark-size="26"
-          :mark-rounded="6"
-        />
-      </slot>
+      <template v-else>
+        <slot name="brand" :identity="identity" :collapsed="collapsed">
+          <PlatformIdentityBrand
+            :identity="identity"
+            :collapsed="collapsed"
+            :mark-size="26"
+            :mark-rounded="6"
+          />
+        </slot>
+        <button
+          type="button"
+          class="assistant-sidebar__toggle assistant-sidebar__toggle--brand-end"
+          title="Свернуть сайдбар"
+          aria-label="Collapse sidebar"
+          @click="emit('toggle-collapsed')"
+        >
+          <PanelLeftClose :size="14" />
+        </button>
+      </template>
     </div>
 
-    <div v-if="activeTab === 'chat' || !collapsed" class="assistant-sidebar__top">
+    <div v-if="activeTab === 'chat'" class="assistant-sidebar__top">
       <button
-        v-if="activeTab === 'chat'"
         type="button"
         class="assistant-sidebar__new"
         :title="collapsed ? 'Новый чат' : ''"
@@ -74,16 +85,6 @@ const toggleTrash = () => {
       >
         <Plus :size="14" />
         <span class="assistant-sidebar__new-label">Новый чат</span>
-      </button>
-      <button
-        v-if="!collapsed"
-        type="button"
-        class="assistant-sidebar__toggle"
-        title="Свернуть сайдбар"
-        aria-label="Collapse sidebar"
-        @click="emit('toggle-collapsed')"
-      >
-        <PanelLeftClose :size="14" />
       </button>
     </div>
 

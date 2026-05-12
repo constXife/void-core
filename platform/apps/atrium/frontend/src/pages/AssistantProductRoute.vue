@@ -23,21 +23,20 @@ const labels = computed(() => {
   if (currentLang.value === "ru") {
     return {
       login: "Войти",
-      product: "Void Assistant",
-      subtitle: "Чат"
+      product: "Void Assistant"
     };
   }
   return {
     login: "Sign in",
-    product: "Void Assistant",
-    subtitle: "Chat"
+    product: "Void Assistant"
   };
 });
 
+// Subtitle не передаём: дублирует активную tab (CHAT/CAPABILITIES/ROUTINES),
+// а brand-полоса теперь несёт ещё collapse-toggle — лишний текст её перегружал.
 const assistantIdentity = computed(() => ({
   ...assistantIdentityBase,
-  label: labels.value.product,
-  subtitle: labels.value.subtitle
+  label: labels.value.product
 }));
 
 const hasAccount = computed(() =>
