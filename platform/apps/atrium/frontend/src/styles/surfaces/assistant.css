@@ -474,9 +474,12 @@
 
 /* ---- Flat trigger override for shared platform components в assistant контексте.
    Apps menu и user menu вне assistant'а сохраняют свой каплевидный вид;
-   здесь — плоские прозрачные кнопки, чтобы не дублировать "капсулы" рядом с tab'ами. */
-.assistant-topbar__actions .platform-apps-menu__trigger,
-.assistant-topbar__actions .platform-user-menu-trigger {
+   здесь — плоские прозрачные кнопки, чтобы не дублировать "капсулы" рядом с tab'ами.
+   Двойной class в selector'е поднимает specificity до 0,0,3,0 — выше чем у scoped
+   стилей платформенных компонентов (0,0,2,0, class + data-v-* attribute), которые
+   грузятся позже глобального CSS. */
+.assistant-topbar__actions .platform-apps-menu__trigger.platform-apps-menu__trigger,
+.assistant-topbar__actions .platform-user-menu-trigger.platform-user-menu-trigger {
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -484,8 +487,8 @@
   -webkit-backdrop-filter: none;
 }
 
-.assistant-topbar__actions .platform-apps-menu__trigger:hover,
-.assistant-topbar__actions .platform-user-menu-trigger:hover {
+.assistant-topbar__actions .platform-apps-menu__trigger.platform-apps-menu__trigger:hover,
+.assistant-topbar__actions .platform-user-menu-trigger.platform-user-menu-trigger:hover {
   background: var(--glass-bg, rgba(255, 255, 255, 0.06));
   border-color: transparent;
   transform: none;
@@ -493,11 +496,11 @@
 
 /* User trigger: убираем boost'ы у вложенного avatar (border, gradient'ы),
    оставляя его плоским кружком с инициалами. */
-.assistant-topbar__actions .platform-user-menu-trigger {
+.assistant-topbar__actions .platform-user-menu-trigger.platform-user-menu-trigger {
   padding: 0.15rem 0.3rem 0.15rem 0.55rem;
 }
 
-.assistant-topbar__actions .platform-user-menu-trigger__avatar {
+.assistant-topbar__actions .platform-user-menu-trigger__avatar.platform-user-menu-trigger__avatar {
   border: 0;
   background: var(--surface-elev-3, rgba(255, 255, 255, 0.08));
 }
