@@ -505,9 +505,8 @@ function savePreferredTarget(value) {
 
       <!-- Chat tab — conversation + composer, существующий поток. -->
       <section
-        v-show="activeTab === 'chat'"
+        v-if="activeTab === 'chat'"
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--chat"
-        :aria-hidden="activeTab !== 'chat'"
       >
         <AssistantConversation
           :messages="currentMessages"

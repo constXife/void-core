@@ -46,8 +46,13 @@ const trustOptions = computed(() => {
   }));
 });
 
-// Per D4: trust_class filter рендерится только когда в каталоге >1 distinct trust_class.
+const showStageFilter = computed(() => stageOptions.value.length > 1);
+const showDomainFilter = computed(() => domainOptions.value.length > 1);
+const showOutputFilter = computed(() => outputOptions.value.length > 1);
 const showTrustFilter = computed(() => props.availableTrustClasses.size > 1);
+const showAnyFilter = computed(
+  () => showStageFilter.value || showDomainFilter.value || showOutputFilter.value || showTrustFilter.value
+);
 
 const setFilter = (key, value) => {
   const current = props.filters[key];
@@ -61,7 +66,11 @@ const isAllActive = (key) => props.filters[key] === null;
 
 <template>
   <div class="assistant-sidebar-filters">
-    <section class="assistant-sidebar-filters__group">
+    <p v-if="!showAnyFilter" class="assistant-sidebar-filters__empty">
+      {{ skills.length }} skills в каталоге. Фильтры появятся, когда каталог станет разнообразнее.
+    </p>
+
+    <section v-if="showStageFilter" class="assistant-sidebar-filters__group">
       <h3 class="assistant-sidebar-filters__title">Stage</h3>
       <button
         type="button"
@@ -85,7 +94,7 @@ const isAllActive = (key) => props.filters[key] === null;
       </button>
     </section>
 
-    <section class="assistant-sidebar-filters__group">
+    <section v-if="showDomainFilter" class="assistant-sidebar-filters__group">
       <h3 class="assistant-sidebar-filters__title">Domain</h3>
       <button
         v-for="opt in domainOptions"
@@ -100,7 +109,7 @@ const isAllActive = (key) => props.filters[key] === null;
       </button>
     </section>
 
-    <section class="assistant-sidebar-filters__group">
+    <section v-if="showOutputFilter" class="assistant-sidebar-filters__group">
       <h3 class="assistant-sidebar-filters__title">Output</h3>
       <button
         v-for="opt in outputOptions"

@@ -33,9 +33,8 @@ onMounted(() => {
     <div class="assistant-capabilities__inner">
       <p class="assistant-capabilities__intro">
         Что Void Assistant умеет делать — это код, поставляемый с релизом void.
-        Skills нельзя редактировать или удалить из UI: они проходят eval и
-        hash-pinned per run. Из каждого skill'а можно <strong>включить routine</strong>
-        с твоими настройками — она появится во вкладке Routines.
+        Skills нельзя редактировать или удалить из UI: карточка показывает, что
+        произойдёт при запуске и как попросить ассистента об этом в чате.
       </p>
 
       <p v-if="loading && !loaded" class="assistant-capabilities__hint">Загружаем каталог…</p>
