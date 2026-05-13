@@ -50,7 +50,15 @@ function describeMessageDay(value) {
   return { key, label };
 }
 
-const emit = defineEmits(["regenerate", "delete-message", "choose-suggestion"]);
+const emit = defineEmits([
+  "regenerate",
+  "delete-message",
+  "choose-suggestion",
+  "approve-skills",
+  "reject-skill",
+  "cancel-skill",
+  "change-layout"
+]);
 
 const scrollerRef = ref(null);
 
@@ -84,7 +92,12 @@ const scrollToBottom = () => {
 watch(
   () =>
     props.messages
-      .map((message) => `${message.id}:${message.content.length}:${message.skill_run?.id || ""}`)
+      .map((message) => {
+        const skillRunIds = Array.isArray(message.skill_runs)
+          ? message.skill_runs.map((skillRun) => skillRun.id).join(",")
+          : "";
+        return `${message.id}:${message.content.length}:${message.skill_run?.id || ""}:${skillRunIds}`;
+      })
       .join("|"),
   () => nextTick(scrollToBottom),
   { flush: "post" }
@@ -124,6 +137,10 @@ watch(
               "
               @regenerate="emit('regenerate')"
               @delete="(id) => emit('delete-message', id)"
+              @approve-skills="(ids) => emit('approve-skills', ids)"
+              @reject-skill="(id) => emit('reject-skill', id)"
+              @cancel-skill="(id) => emit('cancel-skill', id)"
+              @change-layout="(payload) => emit('change-layout', payload)"
             />
           </template>
         </TransitionGroup>

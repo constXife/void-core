@@ -54,7 +54,7 @@ const onAskInChat = () => emit("ask-in-chat", props.skill.id);
     <header class="assistant-skill-card__head">
       <div class="assistant-skill-card__icon" :data-domain="skill.domain">{{ domainIconLetter }}</div>
       <div class="assistant-skill-card__id">
-        <div class="assistant-skill-card__title">{{ skill.id }}</div>
+        <div class="assistant-skill-card__title">{{ skill.display_name || skill.id }}</div>
         <div class="assistant-skill-card__version">skill · v{{ skill.version }} · stage {{ skill.stage }}</div>
       </div>
       <span
@@ -99,7 +99,7 @@ const onAskInChat = () => emit("ask-in-chat", props.skill.id);
 
     <footer class="assistant-skill-card__footer">
       <button type="button" class="assistant-skill-card__chat" @click="onAskInChat">
-        Ask in chat →
+        Запустить
       </button>
     </footer>
   </article>

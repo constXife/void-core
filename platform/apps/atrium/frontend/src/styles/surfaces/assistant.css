@@ -742,6 +742,88 @@
   animation: assistant-running-spin calc(900ms * var(--fx-motion, 1)) linear infinite;
 }
 
+.assistant-message__proposal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(32rem, 100%);
+  padding: 0.9rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.assistant-message__proposal-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.assistant-message__proposal-title {
+  font-size: var(--text-sm, 13px);
+  font-weight: 650;
+  color: var(--ink-primary);
+}
+
+.assistant-message__proposal-meta {
+  font-size: var(--text-2xs, 10px);
+  color: var(--ink-secondary);
+  overflow-wrap: anywhere;
+}
+
+.assistant-message__proposal-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-message__proposal-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.75rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--surface-base);
+  color: var(--ink-secondary);
+  font-size: var(--text-xs, 12px);
+}
+
+.assistant-message__proposal-list span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.assistant-message__proposal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.assistant-message__proposal-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--surface-base);
+  color: var(--ink-primary);
+  font-size: var(--text-xs, 12px);
+  cursor: pointer;
+}
+
+.assistant-message__proposal-button:hover {
+  border-color: color-mix(in srgb, var(--accent-purple) 38%, var(--border-default));
+  background: var(--glass-bg-hover);
+}
+
 @keyframes assistant-cursor-blink {
   to {
     opacity: 0;
@@ -865,6 +947,15 @@
     background var(--duration-fast, 150ms) var(--ease-default, ease),
     color var(--duration-fast, 150ms) var(--ease-default, ease),
     border-color var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-message__action--text {
+  width: auto;
+  min-width: 4rem;
+  padding: 0 0.45rem;
+  color: var(--ink-secondary);
+  font-size: var(--text-2xs, 10px);
+  font-weight: 650;
 }
 
 .assistant-message__action:hover {

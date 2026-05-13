@@ -192,6 +192,91 @@ describe("assistant sessions store", () => {
     finishStream();
     await pending;
   });
+
+  it("approves a skill batch through the backend batch endpoint", async () => {
+    let sessionReads = 0;
+    globalThis.fetch = vi.fn(async (url, init = {}) => {
+      if (String(url) === "/assistant/sessions/session-1") {
+        sessionReads += 1;
+        return jsonResponse({
+          ...sessionPayload(),
+          messages: [assistantMessage("")],
+          active_run: null
+        });
+      }
+      expect(String(url)).toBe("/assistant/skill-run-batches/approve");
+      expect(init.method).toBe("POST");
+      expect(JSON.parse(init.body)).toEqual({
+        skill_run_ids: ["skill-run-1", "skill-run-2"]
+      });
+      return jsonResponse({
+        run: {
+          id: "run-1",
+          session_id: "session-1",
+          assistant_message_id: "message-assistant-1",
+          status: "queued"
+        }
+      });
+    });
+    readAssistantRunEvents.mockImplementation(async (_runId, { onEvent }) => {
+      onEvent({
+        event: "done",
+        json: {
+          status: "completed",
+          skill_runs: [
+            skillRunPayload("skill-run-1", "digest_hackernews"),
+            skillRunPayload("skill-run-2", "digest_github")
+          ]
+        }
+      });
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+    await store.approveSkillRuns(["skill-run-1", "skill-run-2"]);
+
+    expect(readAssistantRunEvents).toHaveBeenCalledWith(
+      "run-1",
+      expect.objectContaining({
+        onEvent: expect.any(Function)
+      })
+    );
+    expect(sessionReads).toBe(3);
+  });
+
+  it("updates a skill result layout without re-running the skill", async () => {
+    globalThis.fetch = vi.fn(async (url, init = {}) => {
+      if (String(url) === "/assistant/sessions/session-1") {
+        return jsonResponse({
+          ...sessionPayload(),
+          messages: [
+            {
+              ...assistantMessage("projection"),
+              message_kind: "skill_result",
+              layout_config: { variant: "cards" },
+              skill_runs: [skillRunPayload("skill-run-1", "digest_hackernews")]
+            }
+          ],
+          active_run: null
+        });
+      }
+      expect(String(url)).toBe("/assistant/messages/message-assistant-1/layout");
+      expect(init.method).toBe("POST");
+      expect(JSON.parse(init.body)).toEqual({ variant: "compact" });
+      return jsonResponse({
+        ...assistantMessage("projection"),
+        message_kind: "skill_result",
+        layout_config: { variant: "compact" },
+        skill_runs: [skillRunPayload("skill-run-1", "digest_hackernews")]
+      });
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+    await store.changeMessageLayout("message-assistant-1", "compact");
+
+    expect(store.currentMessages[0].layout_config).toEqual({ variant: "compact" });
+  });
 });
 
 function sessionPayload() {
@@ -228,9 +313,12 @@ function userMessage(content) {
   };
 }
 
-function skillRunPayload() {
+function skillRunPayload(id = "skill-run-1", skillId = "") {
   return {
-    id: "skill-run-1",
+    id,
+    skill_id: skillId,
+    status: "",
+    error: "",
     blocks: [
       {
         type: "section_header",

@@ -120,10 +120,12 @@ const onEnableTemplate = ({ skillId, templateId }) => {
 const onGoToRoutine = (instanceId) => {
   router.push({ name: "assistant-routine-inspect", params: { instanceId } });
 };
-const onAskInChat = (skillId) => {
-  // Per D7: prefill draft, переключиться на Chat tab.
-  draft.value = `по skill ${skillId}: `;
+const onAskInChat = async (skillId) => {
   router.push({ name: "assistant-home" });
+  await sessionsStore.proposeSkillRun({ skillId, targetId: composerTargetId.value });
+  if (currentSessionId.value && route.params.id !== currentSessionId.value) {
+    router.replace({ name: "assistant-chat", params: { id: currentSessionId.value } });
+  }
 };
 
 // Routines handlers.
@@ -250,6 +252,22 @@ const onRegenerate = () => {
 
 const onDeleteMessage = (messageId) => {
   sessionsStore.deleteMessagePair(messageId);
+};
+
+const onApproveSkills = (skillRunIds) => {
+  sessionsStore.approveSkillRuns(skillRunIds);
+};
+
+const onRejectSkill = (skillRunId) => {
+  sessionsStore.rejectSkillRun(skillRunId);
+};
+
+const onCancelSkill = (skillRunId) => {
+  sessionsStore.cancelSkillRun(skillRunId);
+};
+
+const onChangeLayout = ({ messageId, variant }) => {
+  sessionsStore.changeMessageLayout(messageId, variant);
 };
 
 const onUndoMessageDelete = () => {
@@ -507,6 +525,10 @@ function savePreferredTarget(value) {
           @regenerate="onRegenerate"
           @delete-message="onDeleteMessage"
           @choose-suggestion="onChooseSuggestion"
+          @approve-skills="onApproveSkills"
+          @reject-skill="onRejectSkill"
+          @cancel-skill="onCancelSkill"
+          @change-layout="onChangeLayout"
         />
 
         <AssistantComposer

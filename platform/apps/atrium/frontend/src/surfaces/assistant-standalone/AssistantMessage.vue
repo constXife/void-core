@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from "vue";
 import {
+  Check,
   Copy,
+  X,
   RotateCcw,
   Trash2,
   Bot,
@@ -22,7 +24,14 @@ const props = defineProps({
   showDelete: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(["regenerate", "delete"]);
+const emit = defineEmits([
+  "regenerate",
+  "delete",
+  "approve-skills",
+  "reject-skill",
+  "cancel-skill",
+  "change-layout"
+]);
 
 const isUser = computed(() => props.message.role === "user");
 const isAssistant = computed(() => props.message.role === "assistant");
@@ -33,8 +42,36 @@ const isStreamingTail = computed(
 const showStreamingStatus = computed(
   () => isStreamingTail.value && !props.message.content && props.streamingStatus
 );
-const skillBlocks = computed(() => props.message.skill_run?.blocks || []);
+const skillBlocks = computed(() => {
+  if (Array.isArray(props.message.skill_runs) && props.message.skill_runs.length) {
+    return props.message.skill_runs.flatMap((skillRun) => skillRun.blocks || []);
+  }
+  return props.message.skill_run?.blocks || [];
+});
 const hasSkillBlocks = computed(() => skillBlocks.value.length > 0);
+const isSkillProposal = computed(() => props.message.message_kind === "skill_proposal");
+const isSkillResult = computed(() => props.message.message_kind === "skill_result");
+const layoutVariant = computed(() => props.message.layout_config?.variant || "cards");
+const nextLayoutVariant = computed(() => (layoutVariant.value === "compact" ? "cards" : "compact"));
+const layoutButtonLabel = computed(() => (nextLayoutVariant.value === "compact" ? "Compact" : "Cards"));
+const proposalSkillRuns = computed(() => {
+  if (Array.isArray(props.message.skill_runs) && props.message.skill_runs.length) {
+    return props.message.skill_runs;
+  }
+  return props.message.skill_run ? [props.message.skill_run] : [];
+});
+const proposalSkillIds = computed(() =>
+  proposalSkillRuns.value.map((skillRun) => skillRun.skill_id || skillRun.id).filter(Boolean)
+);
+const proposalStatus = computed(() => {
+  const statuses = proposalSkillRuns.value.map((skillRun) => skillRun.status).filter(Boolean);
+  return statuses.length ? statuses.join(" · ") : "awaiting_approval";
+});
+const canActOnProposal = computed(
+  () =>
+    proposalSkillRuns.value.length > 0 &&
+    proposalSkillRuns.value.every((skillRun) => skillRun.status === "awaiting_approval")
+);
 const showCursor = computed(() => isStreamingTail.value);
 const timestamp = computed(() => formatTimestamp(props.message.created_at));
 const fullTimestamp = computed(() => props.message.created_at || "");
@@ -42,7 +79,7 @@ const showActions = computed(
   () =>
     isAssistant.value &&
     !isStreamingTail.value &&
-    (props.message.content || props.showRegenerate || props.showDelete)
+    (props.message.content || hasSkillBlocks.value || props.showRegenerate || props.showDelete)
 );
 const showFooter = computed(() => (timestamp.value && !isStreamingTail.value) || showActions.value);
 
@@ -74,6 +111,27 @@ const onRegenerate = () => {
 const onDelete = () => {
   emit("delete", props.message.id);
 };
+
+const onApproveSkill = () => {
+  const ids = proposalSkillRuns.value.map((skillRun) => skillRun.id).filter(Boolean);
+  if (ids.length) emit("approve-skills", ids);
+};
+
+const onRejectSkill = () => {
+  for (const skillRun of proposalSkillRuns.value) {
+    if (skillRun.id) emit("reject-skill", skillRun.id);
+  }
+};
+
+const onCancelSkill = () => {
+  for (const skillRun of proposalSkillRuns.value) {
+    if (skillRun.id) emit("cancel-skill", skillRun.id);
+  }
+};
+
+const onChangeLayout = () => {
+  emit("change-layout", { messageId: props.message.id, variant: nextLayoutVariant.value });
+};
 </script>
 
 <template>
@@ -94,10 +152,36 @@ const onDelete = () => {
     <div class="assistant-message__stack">
       <div class="assistant-message__body">
         <AssistantMarkdown
-          v-if="!hasSkillBlocks && (message.content || !isStreamingTail)"
+          v-if="!isSkillProposal && !hasSkillBlocks && (message.content || !isStreamingTail)"
           :content="message.content"
           :render-diagrams="isAssistant && !message.error"
         />
+        <div v-if="isSkillProposal" class="assistant-message__proposal">
+          <div class="assistant-message__proposal-main">
+            <span class="assistant-message__proposal-title">{{ message.content }}</span>
+            <span class="assistant-message__proposal-meta">{{ proposalSkillIds.join(" · ") }} · {{ proposalStatus }}</span>
+          </div>
+          <ul v-if="proposalSkillRuns.length > 1" class="assistant-message__proposal-list">
+            <li v-for="skillRun in proposalSkillRuns" :key="skillRun.id">
+              <span>{{ skillRun.skill_id }}</span>
+              <span>{{ skillRun.status }}</span>
+            </li>
+          </ul>
+          <div v-if="canActOnProposal" class="assistant-message__proposal-actions">
+            <button type="button" class="assistant-message__proposal-button" @click="onApproveSkill">
+              <Check :size="14" />
+              <span>Запустить</span>
+            </button>
+            <button type="button" class="assistant-message__proposal-button" @click="onRejectSkill">
+              <X :size="14" />
+              <span>Отклонить</span>
+            </button>
+            <button type="button" class="assistant-message__proposal-button" @click="onCancelSkill">
+              <X :size="14" />
+              <span>Отмена</span>
+            </button>
+          </div>
+        </div>
         <BlockRenderer v-if="hasSkillBlocks" :blocks="skillBlocks" />
         <p
           v-if="showStreamingStatus"
@@ -126,6 +210,15 @@ const onDelete = () => {
           :title="fullTimestamp"
         >{{ timestamp }}</time>
         <div v-if="showActions" class="assistant-message__actions">
+          <button
+            v-if="isSkillResult && hasSkillBlocks"
+            type="button"
+            class="assistant-message__action assistant-message__action--text"
+            @click="onChangeLayout"
+            :aria-label="'Change skill layout'"
+          >
+            {{ layoutButtonLabel }}
+          </button>
           <button
             v-if="message.content"
             type="button"

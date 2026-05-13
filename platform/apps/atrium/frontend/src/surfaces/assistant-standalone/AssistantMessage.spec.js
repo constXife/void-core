@@ -89,6 +89,102 @@ describe("AssistantMessage", () => {
     expect(wrapper.text()).not.toContain("Markdown projection");
   });
 
+  it("emits all pending skill ids from a batch proposal", async () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Предлагаю запустить batch",
+          message_kind: "skill_proposal",
+          created_at: "2026-05-06T08:07:00Z",
+          skill_runs: [
+            { id: "skill-run-1", skill_id: "digest_hackernews", status: "awaiting_approval" },
+            { id: "skill-run-2", skill_id: "digest_github", status: "awaiting_approval" }
+          ]
+        }
+      }
+    });
+
+    await wrapper.get(".assistant-message__proposal-button").trigger("click");
+
+    expect(wrapper.find(".assistant-message__proposal-list").text()).toContain("digest_github");
+    expect(wrapper.emitted("approve-skills")).toEqual([[["skill-run-1", "skill-run-2"]]]);
+  });
+
+  it("renders blocks from multiple completed skill runs", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "# Markdown projection",
+          message_kind: "skill_result",
+          created_at: "2026-05-06T08:07:00Z",
+          skill_runs: [
+            {
+              id: "skill-run-1",
+              blocks: [
+                {
+                  type: "section_header",
+                  text: "Hacker News",
+                  subtitle: "HN"
+                }
+              ]
+            },
+            {
+              id: "skill-run-2",
+              blocks: [
+                {
+                  type: "section_header",
+                  text: "GitHub",
+                  subtitle: "Trending"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    expect(wrapper.text()).toContain("Hacker News");
+    expect(wrapper.text()).toContain("GitHub");
+    expect(wrapper.text()).not.toContain("Markdown projection");
+  });
+
+  it("emits the next layout variant for skill results", async () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "# Markdown projection",
+          message_kind: "skill_result",
+          layout_config: { variant: "cards" },
+          created_at: "2026-05-06T08:07:00Z",
+          skill_runs: [
+            {
+              id: "skill-run-1",
+              blocks: [
+                {
+                  type: "section_header",
+                  text: "Hacker News",
+                  subtitle: "HN"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    await wrapper.get(".assistant-message__action--text").trigger("click");
+
+    expect(wrapper.emitted("change-layout")).toEqual([
+      [{ messageId: "message-1", variant: "compact" }]
+    ]);
+  });
+
   it("renders the current user avatar on user messages", () => {
     const wrapper = mount(AssistantMessage, {
       props: {

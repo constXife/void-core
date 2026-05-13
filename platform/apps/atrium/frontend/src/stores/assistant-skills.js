@@ -1,136 +1,7 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 
-// TODO Wave 6: replace with GET /assistant/skills
-// Per ASSISTANT_SURFACE_STRUCTURE.md D10 — fixture inline, без отдельной директории.
-const MOCK_SKILLS = [
-  {
-    id: "shopping-planning",
-    version: 1,
-    stage: 1,
-    trust_class: "trusted_graph",
-    domain: "inventory",
-    output_kind: "suggestion",
-    description:
-      "Анализирует pantry, историю покупок и предпочтения в Inventory, чтобы предложить список покупок. Reads only — никаких external sources. Output — suggestion, требует review перед canonical write.",
-    reads: ["inventory.snapshot.read", "purchase_history.recent.read"],
-    writes: ["shopping_planning_run.suggested.v1"],
-    forbidden: ["web_fetch", "actuator", "external_mcp"],
-    eval_hash: "9a3b…f2",
-    eval_passed: true,
-    templates: [
-      {
-        id: "weekly-shopping-run",
-        name: "Weekly shopping run",
-        trigger_kind: "schedule",
-        trigger_label: "sunday 10:00 · suggestion_only",
-        enabled_instance_id: "inst_shopping_weekly"
-      },
-      {
-        id: "pre-trip-shopping",
-        name: "Pre-trip shopping list",
-        trigger_kind: "event",
-        trigger_label: "calendar.travel_planned · suggestion_only",
-        enabled_instance_id: null
-      }
-    ]
-  },
-  {
-    id: "web-digest",
-    version: 1,
-    stage: 2,
-    trust_class: "untrusted_web",
-    domain: "web",
-    output_kind: "digest",
-    description:
-      "Читает curated web source (HackerNews, RSS, etc), вытаскивает топовые статьи и summary комментариев. Output — proposed digest article в Kadath Layer 2, ничего canonical не пишет. EvidenceRef со excerpt_hash хранится для re-fetch.",
-    reads: ["web_fetch", "web_search (curated allowlist)"],
-    writes: ["digest_article.draft.v1"],
-    forbidden: ["canonical_write", "actuator", "open_web"],
-    eval_hash: "41c0…8d",
-    eval_passed: true,
-    templates: [
-      {
-        id: "hackernews-morning-digest",
-        name: "Morning HackerNews digest",
-        trigger_kind: "schedule",
-        trigger_label: "daily 09:00 · 2 pages · summarize comments",
-        enabled_instance_id: "inst_hn_morning"
-      },
-      {
-        id: "rss-weekly-roundup",
-        name: "Weekly RSS roundup",
-        trigger_kind: "schedule",
-        trigger_label: "saturday 11:00 · custom feeds",
-        enabled_instance_id: null
-      }
-    ]
-  },
-  {
-    id: "meal-plan-from-pantry",
-    version: 1,
-    stage: 1,
-    trust_class: "trusted_graph",
-    domain: "inventory",
-    output_kind: "suggestion",
-    description:
-      "По pantry и предпочтениям предлагает 5–7 блюд на неделю. Output — proposed meal_plan article. Не пишет в shopping list напрямую — только suggestion для review.",
-    reads: ["inventory.snapshot.read", "preferences.diet.read"],
-    writes: ["meal_plan.suggested.v1"],
-    forbidden: ["web_fetch", "actuator"],
-    eval_hash: "7e21…03",
-    eval_passed: true,
-    templates: [
-      {
-        id: "weekly-meal-plan",
-        name: "Weekly meal plan",
-        trigger_kind: "schedule",
-        trigger_label: "sunday 09:00 · suggestion_only",
-        enabled_instance_id: null
-      }
-    ]
-  },
-  {
-    id: "finance-monthly-summary",
-    version: 1,
-    stage: 1,
-    trust_class: "trusted_graph",
-    domain: "finance",
-    output_kind: "digest",
-    description:
-      "Аггрегирует транзакции за месяц, считает категории, сравнивает с прошлым периодом, флагит outliers. Read-only над finance graph view.",
-    reads: ["finance.transactions.month.read", "finance.categories.read"],
-    writes: ["finance_summary.report.v1"],
-    forbidden: ["web_fetch", "actuator"],
-    eval_hash: "0d12…aa",
-    eval_passed: true,
-    templates: [
-      {
-        id: "end-of-month-summary",
-        name: "End-of-month summary",
-        trigger_kind: "schedule",
-        trigger_label: "last day of month 18:00",
-        enabled_instance_id: "inst_finance_eom"
-      }
-    ]
-  },
-  {
-    id: "web-research-summary",
-    version: 1,
-    stage: 2,
-    trust_class: "untrusted_web",
-    domain: "web",
-    output_kind: "suggestion",
-    description:
-      "Ad-hoc skill: «изучи тему X в N источниках, дай summary с цитатами и EvidenceRef». Запускается из chat, обычно без сохранения как routine (но можно).",
-    reads: ["web_search", "web_fetch"],
-    writes: ["research_summary.draft.v1"],
-    forbidden: ["canonical_write", "actuator"],
-    eval_hash: "b58e…f1",
-    eval_passed: true,
-    templates: []
-  }
-];
+const SKILLS_URL = "/assistant/skills";
 
 export const useAssistantSkillsStore = defineStore("void-assistant-skills", () => {
   const skills = ref([]);
@@ -173,9 +44,15 @@ export const useAssistantSkillsStore = defineStore("void-assistant-skills", () =
     loading.value = true;
     status.value = "";
     try {
-      // TODO Wave 6: GET /assistant/skills
-      await new Promise((resolve) => setTimeout(resolve, 80));
-      skills.value = MOCK_SKILLS.map(normalizeSkill);
+      const response = await fetch(SKILLS_URL, { credentials: "same-origin" });
+      if (!response.ok) {
+        throw new Error(`Assistant skills request failed: HTTP ${response.status}`);
+      }
+      const payload = await response.json();
+      if (!Array.isArray(payload.skills)) {
+        throw new Error("Assistant skills response must include skills array");
+      }
+      skills.value = payload.skills.map(normalizeSkill);
       loaded.value = true;
     } catch (error) {
       console.error("void-assistant-skills: load failed", error);
@@ -213,6 +90,7 @@ export const useAssistantSkillsStore = defineStore("void-assistant-skills", () =
 function normalizeSkill(raw) {
   return {
     id: String(raw.id),
+    display_name: String(raw.display_name || raw.id),
     version: Number(raw.version ?? 1),
     stage: Number(raw.stage ?? 1),
     trust_class: String(raw.trust_class || "trusted_graph"),

@@ -12,6 +12,8 @@ import {
 
 const SESSIONS_URL = "/assistant/sessions";
 const TRASHED_URL = "/assistant/sessions/trashed";
+const SKILL_PROPOSALS_URL = "/assistant/skill-proposals";
+const SKILL_BATCH_APPROVE_URL = "/assistant/skill-run-batches/approve";
 const MESSAGE_DELETE_UNDO_MS = 5000;
 
 export const useAssistantSessionsStore = defineStore("void-assistant-sessions", () => {
@@ -246,6 +248,91 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
   };
 
+  const proposeSkillRun = async ({ skillId, targetId, params = {} } = {}) => {
+    const normalizedSkillId = String(skillId || "").trim();
+    if (!normalizedSkillId || streaming.value) return null;
+    if (!(await commitPendingMessageDeletion())) return null;
+
+    let session = currentSession.value;
+    if (!session) {
+      session = await createSession({ targetId });
+      currentSessionId.value = session.id;
+      currentSession.value = session;
+      currentMessages.value = [];
+      currentLoaded.value = true;
+    }
+
+    const payload = await fetchJson(SKILL_PROPOSALS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: session.id,
+        skill_id: normalizedSkillId,
+        params
+      })
+    });
+    await reloadCurrent({ resumeActiveRun: false });
+    return payload;
+  };
+
+  const approveSkillRun = async (skillRunId) => {
+    const payload = await mutateSkillRun(skillRunId, "approve", null, { reload: false });
+    const run = normalizeRun(payload?.run);
+    await reloadCurrent({ resumeActiveRun: false });
+    if (shouldResumeRun(run)) {
+      await resumeRun(run);
+    }
+  };
+
+  const approveSkillRuns = async (skillRunIds = []) => {
+    const ids = Array.isArray(skillRunIds) ? skillRunIds.map(String).filter(Boolean) : [];
+    if (ids.length === 1) {
+      await approveSkillRun(ids[0]);
+      return;
+    }
+    if (!ids.length) return;
+    const payload = await fetchJson(SKILL_BATCH_APPROVE_URL, {
+      method: "POST",
+      body: JSON.stringify({ skill_run_ids: ids })
+    });
+    const run = normalizeRun(payload?.run);
+    await reloadCurrent({ resumeActiveRun: false });
+    if (shouldResumeRun(run)) {
+      await resumeRun(run);
+    }
+  };
+
+  const rejectSkillRun = async (skillRunId) => {
+    await mutateSkillRun(skillRunId, "reject", {});
+  };
+
+  const cancelSkillRun = async (skillRunId) => {
+    await mutateSkillRun(skillRunId, "cancel");
+  };
+
+  const changeMessageLayout = async (messageId, variant) => {
+    const normalizedId = String(messageId || "").trim();
+    const normalizedVariant = String(variant || "").trim();
+    if (!normalizedId || !normalizedVariant) return null;
+    const payload = await fetchJson(`/assistant/messages/${normalizedId}/layout`, {
+      method: "POST",
+      body: JSON.stringify({ variant: normalizedVariant })
+    });
+    const [message] = normalizeMessageList([payload]);
+    if (message) markMessage(message.id, message);
+    return message || null;
+  };
+
+  const mutateSkillRun = async (skillRunId, action, body = null, { reload = true } = {}) => {
+    const normalizedId = String(skillRunId || "").trim();
+    if (!normalizedId) return null;
+    const payload = await fetchJson(`/assistant/skill-runs/${normalizedId}/${action}`, {
+      method: "POST",
+      ...(body ? { body: JSON.stringify(body) } : {})
+    });
+    if (reload) await reloadCurrent({ resumeActiveRun: false });
+    return payload;
+  };
+
   const resumeRun = async (run) => {
     if (!shouldResumeRun(run)) return;
     streaming.value = true;
@@ -397,6 +484,13 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       streamingPhase.value = "completed";
       const skillRun = normalizeSkillRun(event.json?.skill_run);
       if (skillRun) markMessage(assistantMessageId, { skill_run: skillRun });
+      const skillRuns = normalizeSkillRunList(event.json?.skill_runs);
+      if (skillRuns.length) {
+        markMessage(assistantMessageId, {
+          skill_run: skillRuns[0],
+          skill_runs: skillRuns
+        });
+      }
       return;
     }
     if (event.event === "cancelled") {
@@ -448,7 +542,11 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
 
   return {
     abort,
+    approveSkillRun,
+    approveSkillRuns,
     canSend,
+    cancelSkillRun,
+    changeMessageLayout,
     changeSessionTarget,
     createSession,
     currentLoaded,
@@ -465,6 +563,8 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     loadingTrashed,
     regenerateLast,
     deleteMessagePair,
+    proposeSkillRun,
+    rejectSkillRun,
     reloadCurrent,
     renameSession,
     restoreSession,
@@ -491,7 +591,11 @@ function createOptimisticMessage(role, content) {
     id: `optimistic-${optimisticCounter++}`,
     role,
     content,
+    message_kind: "text",
+    skill_run_ids: [],
+    layout_config: {},
     skill_run: null,
+    skill_runs: [],
     error: false,
     stopped: false,
     optimistic: true
@@ -543,7 +647,12 @@ function normalizeMessageList(value) {
     id: String(entry?.id || ""),
     role: String(entry?.role || ""),
     content: String(entry?.content || ""),
+    message_kind: String(entry?.message_kind || "text"),
+    skill_run_ids: Array.isArray(entry?.skill_run_ids) ? entry.skill_run_ids.map(String) : [],
+    layout_config:
+      entry?.layout_config && typeof entry.layout_config === "object" ? entry.layout_config : {},
     skill_run: normalizeSkillRun(entry?.skill_run),
+    skill_runs: normalizeSkillRunList(entry?.skill_runs),
     stopped: Boolean(entry?.stopped),
     error: Boolean(entry?.error),
     created_at: String(entry?.created_at || "")
@@ -554,8 +663,19 @@ function normalizeSkillRun(value) {
   if (!value || typeof value !== "object") return null;
   const id = String(value.id || "");
   const blocks = Array.isArray(value.blocks) ? value.blocks : [];
-  if (!id || blocks.length === 0) return null;
-  return { id, blocks };
+  if (!id) return null;
+  return {
+    id,
+    skill_id: String(value.skill_id || ""),
+    status: String(value.status || ""),
+    error: value.error ? String(value.error) : "",
+    blocks
+  };
+}
+
+function normalizeSkillRunList(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeSkillRun).filter(Boolean);
 }
 
 function normalizeRun(payload) {
