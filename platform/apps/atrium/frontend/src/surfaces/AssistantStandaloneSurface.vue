@@ -24,6 +24,10 @@ const props = defineProps({
   currentUser: {
     type: Object,
     default: null
+  },
+  t: {
+    type: Function,
+    required: true
   }
 });
 
@@ -494,6 +498,7 @@ function savePreferredTarget(value) {
     <main class="assistant-standalone__main">
       <AssistantTopbar
         :active-tab="activeTab"
+        :t="t"
         :capabilities-count="capabilitiesCount"
         :routines-count="routinesCount"
         @tab-change="onTabChange"
