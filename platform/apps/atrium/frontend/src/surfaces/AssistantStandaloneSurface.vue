@@ -262,10 +262,6 @@ const onRejectSkill = (skillRunId) => {
   sessionsStore.rejectSkillRun(skillRunId);
 };
 
-const onCancelSkill = (skillRunId) => {
-  sessionsStore.cancelSkillRun(skillRunId);
-};
-
 const onChangeLayout = ({ messageId, variant }) => {
   sessionsStore.changeMessageLayout(messageId, variant);
 };
@@ -527,7 +523,6 @@ function savePreferredTarget(value) {
           @choose-suggestion="onChooseSuggestion"
           @approve-skills="onApproveSkills"
           @reject-skill="onRejectSkill"
-          @cancel-skill="onCancelSkill"
           @change-layout="onChangeLayout"
         />
 

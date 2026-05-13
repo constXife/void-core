@@ -112,6 +112,36 @@ describe("AssistantMessage", () => {
     expect(wrapper.emitted("approve-skills")).toEqual([[["skill-run-1", "skill-run-2"]]]);
   });
 
+  it("uses launch and no-launch actions for skill proposals", async () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Предлагаю запустить Hacker News digest",
+          message_kind: "skill_proposal",
+          created_at: "2026-05-06T08:07:00Z",
+          skill_run: {
+            id: "skill-run-1",
+            skill_id: "digest_hackernews",
+            status: "awaiting_approval"
+          }
+        }
+      }
+    });
+
+    const buttons = wrapper.findAll(".assistant-message__proposal-button");
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0].text()).toContain("Запускать");
+    expect(buttons[1].text()).toContain("Не запускать");
+    expect(wrapper.text()).not.toContain("Отклонить");
+    expect(wrapper.text()).not.toContain("Отмена");
+
+    await buttons[1].trigger("click");
+
+    expect(wrapper.emitted("reject-skill")).toEqual([["skill-run-1"]]);
+  });
+
   it("renders blocks from multiple completed skill runs", () => {
     const wrapper = mount(AssistantMessage, {
       props: {

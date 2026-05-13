@@ -29,7 +29,6 @@ const emit = defineEmits([
   "delete",
   "approve-skills",
   "reject-skill",
-  "cancel-skill",
   "change-layout"
 ]);
 
@@ -123,12 +122,6 @@ const onRejectSkill = () => {
   }
 };
 
-const onCancelSkill = () => {
-  for (const skillRun of proposalSkillRuns.value) {
-    if (skillRun.id) emit("cancel-skill", skillRun.id);
-  }
-};
-
 const onChangeLayout = () => {
   emit("change-layout", { messageId: props.message.id, variant: nextLayoutVariant.value });
 };
@@ -170,15 +163,11 @@ const onChangeLayout = () => {
           <div v-if="canActOnProposal" class="assistant-message__proposal-actions">
             <button type="button" class="assistant-message__proposal-button" @click="onApproveSkill">
               <Check :size="14" />
-              <span>Запустить</span>
+              <span>Запускать</span>
             </button>
             <button type="button" class="assistant-message__proposal-button" @click="onRejectSkill">
               <X :size="14" />
-              <span>Отклонить</span>
-            </button>
-            <button type="button" class="assistant-message__proposal-button" @click="onCancelSkill">
-              <X :size="14" />
-              <span>Отмена</span>
+              <span>Не запускать</span>
             </button>
           </div>
         </div>

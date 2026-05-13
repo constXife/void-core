@@ -88,15 +88,17 @@ export const useAssistantSkillsStore = defineStore("void-assistant-skills", () =
 });
 
 function normalizeSkill(raw) {
+  const localized = selectLocalizedSkillText(raw);
   return {
     id: String(raw.id),
-    display_name: String(raw.display_name || raw.id),
+    display_name: localized.displayName,
     version: Number(raw.version ?? 1),
     stage: Number(raw.stage ?? 1),
     trust_class: String(raw.trust_class || "trusted_graph"),
     domain: String(raw.domain || "general"),
     output_kind: String(raw.output_kind || "suggestion"),
-    description: String(raw.description || ""),
+    description: localized.description,
+    locales: normalizeSkillLocales(raw.locales),
     reads: Array.isArray(raw.reads) ? [...raw.reads] : [],
     writes: Array.isArray(raw.writes) ? [...raw.writes] : [],
     forbidden: Array.isArray(raw.forbidden) ? [...raw.forbidden] : [],
@@ -104,6 +106,39 @@ function normalizeSkill(raw) {
     eval_passed: Boolean(raw.eval_passed),
     templates: Array.isArray(raw.templates) ? raw.templates.map(normalizeTemplate) : []
   };
+}
+
+function selectLocalizedSkillText(raw) {
+  const locales = normalizeSkillLocales(raw.locales);
+  const locale = preferredSkillLocale();
+  const text = locales[locale] || locales.en || {};
+  return {
+    displayName: String(text.display_name || raw.display_name || raw.id),
+    description: String(text.description || raw.description || "")
+  };
+}
+
+function normalizeSkillLocales(rawLocales) {
+  if (!rawLocales || typeof rawLocales !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(rawLocales).map(([locale, text]) => [
+      String(locale),
+      {
+        display_name: String(text?.display_name || ""),
+        description: String(text?.description || "")
+      }
+    ])
+  );
+}
+
+function preferredSkillLocale() {
+  const nav = globalThis.navigator;
+  const languages = Array.isArray(nav?.languages) && nav.languages.length
+    ? nav.languages
+    : [nav?.language || "en"];
+  return languages.some((language) => String(language).toLowerCase().startsWith("ru"))
+    ? "ru"
+    : "en";
 }
 
 function normalizeTemplate(raw) {

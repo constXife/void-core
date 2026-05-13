@@ -56,7 +56,6 @@ const emit = defineEmits([
   "choose-suggestion",
   "approve-skills",
   "reject-skill",
-  "cancel-skill",
   "change-layout"
 ]);
 
@@ -139,7 +138,6 @@ watch(
               @delete="(id) => emit('delete-message', id)"
               @approve-skills="(ids) => emit('approve-skills', ids)"
               @reject-skill="(id) => emit('reject-skill', id)"
-              @cancel-skill="(id) => emit('cancel-skill', id)"
               @change-layout="(payload) => emit('change-layout', payload)"
             />
           </template>
