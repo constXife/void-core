@@ -127,6 +127,9 @@ const onAskInChat = () => emit("ask-in-chat", props.skill.id);
       </template>
       <div v-else class="assistant-skill-card__templates-empty">
         Скажите в чате: «{{ invocationPhrase }}».
+        <span class="assistant-skill-card__launch-explain">
+          Кнопка ниже откроет готовую карточку подтверждения этого навыка.
+        </span>
       </div>
     </div>
 
@@ -138,13 +141,16 @@ const onAskInChat = () => emit("ask-in-chat", props.skill.id);
     </details>
 
     <footer class="assistant-skill-card__footer">
+      <span class="assistant-skill-card__footer-note">
+        Запуск начнётся только после подтверждения в чате.
+      </span>
       <button
         type="button"
         class="assistant-skill-card__chat"
-        title="Откроет чат и подготовит карточку запуска. Сам skill стартует после подтверждения."
+        title="Откроет чат и подготовит карточку подтверждения. Сам навык стартует после подтверждения."
         @click="onAskInChat"
       >
-        Открыть в чате
+        Открыть запуск в чате
       </button>
     </footer>
   </article>

@@ -8,6 +8,9 @@
   /* Единая высота для нижней границы brand-обёртки в sidebar и для topbar.
      Меняется в одном месте, чтобы alignment между двумя колонками не плыл. */
   --assistant-topbar-h: 3rem;
+  --assistant-capabilities-body: var(--color-gray-200);
+  --assistant-capabilities-secondary: var(--color-gray-300);
+  --assistant-capabilities-tertiary: #8f98a3;
   display: grid;
   grid-template-columns: var(--assistant-sidebar-width, 280px) 1fr;
   gap: 0;
@@ -17,6 +20,13 @@
   background: var(--surface-base);
   overflow: hidden;
   transition: grid-template-columns 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.assistant-standalone[data-theme="light"],
+[data-theme="light"] .assistant-standalone {
+  --assistant-capabilities-body: var(--color-gray-700);
+  --assistant-capabilities-secondary: var(--color-gray-600);
+  --assistant-capabilities-tertiary: var(--color-gray-600);
 }
 
 .assistant-standalone--sidebar-collapsed {
@@ -1828,7 +1838,7 @@
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.65;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.66));
+  color: var(--assistant-capabilities-secondary);
 }
 
 .assistant-capabilities__hint {
@@ -1929,7 +1939,7 @@
 .assistant-skill-card__version {
   font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
   font-size: 0.65rem;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.42));
+  color: var(--assistant-capabilities-tertiary);
 }
 
 .assistant-skill-card__trust {
@@ -1963,7 +1973,7 @@
 .assistant-skill-card__eval {
   margin-left: auto;
   font-size: 0.65rem;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.58));
+  color: var(--assistant-capabilities-tertiary);
 }
 
 .assistant-skill-card__body {
@@ -1971,7 +1981,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.8125rem;
   line-height: 1.6;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.7));
+  color: var(--assistant-capabilities-body);
 }
 
 .assistant-skill-card__meta {
@@ -1991,13 +2001,13 @@
 }
 
 .assistant-skill-card__meta-label {
-  color: var(--ink-muted, rgba(230, 237, 243, 0.5));
+  color: var(--assistant-capabilities-secondary);
   font-size: 0.6875rem;
   min-width: 5.5rem;
 }
 
 .assistant-skill-card__meta-value {
-  color: var(--ink-muted, rgba(230, 237, 243, 0.7));
+  color: var(--assistant-capabilities-body);
   font-size: 0.6875rem;
 }
 
@@ -2010,15 +2020,21 @@
 .assistant-skill-card__templates-title {
   font-size: 0.625rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.42));
+  letter-spacing: 0;
+  color: var(--assistant-capabilities-secondary);
   margin-bottom: 0.5rem;
 }
 
 .assistant-skill-card__templates-empty {
   padding: 0.4rem 0;
   font-size: 0.75rem;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.68));
+  color: var(--assistant-capabilities-body);
+}
+
+.assistant-skill-card__launch-explain {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--assistant-capabilities-secondary);
 }
 
 .assistant-skill-card__details {
@@ -2030,7 +2046,7 @@
 .assistant-skill-card__details-summary {
   cursor: pointer;
   font-size: 0.75rem;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.62));
+  color: var(--assistant-capabilities-secondary);
 }
 
 .assistant-skill-card__details-list {
@@ -2038,7 +2054,7 @@
   padding-left: 1rem;
   font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
   font-size: 0.6875rem;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.5));
+  color: var(--assistant-capabilities-tertiary);
   line-height: 1.6;
 }
 
@@ -2046,8 +2062,17 @@
   padding: 0.55rem 1rem;
   border-top: 1px solid var(--border-default);
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
   justify-content: flex-end;
   background: rgba(0, 0, 0, 0.08);
+}
+
+.assistant-skill-card__footer-note {
+  margin-right: auto;
+  color: var(--assistant-capabilities-secondary);
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .assistant-skill-card__chat {
@@ -2141,7 +2166,7 @@
   padding: 0 0.6rem;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--ink-muted, rgba(230, 237, 243, 0.62));
+  color: var(--assistant-capabilities-secondary);
 }
 
 .assistant-sidebar-filters__group {

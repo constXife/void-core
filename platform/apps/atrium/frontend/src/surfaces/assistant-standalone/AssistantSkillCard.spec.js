@@ -39,8 +39,12 @@ describe("AssistantSkillCard", () => {
 
     expect(wrapper.find(".assistant-skill-card__templates").text())
       .toContain("Скажите в чате: «дай дайджест Hacker News».");
+    expect(wrapper.find(".assistant-skill-card__templates").text())
+      .toContain("готовую карточку подтверждения");
+    expect(wrapper.find(".assistant-skill-card__footer").text())
+      .toContain("Запуск начнётся только после подтверждения");
     expect(wrapper.find(".assistant-skill-card__chat").attributes("title"))
-      .toContain("подготовит карточку запуска");
+      .toContain("подготовит карточку подтверждения");
   });
 
   it("keeps raw schema and trust details behind the technical disclosure", () => {
