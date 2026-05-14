@@ -143,13 +143,24 @@ watch(
           v-if="message.skill_run?.blocks?.length"
           :blocks="message.skill_run.blocks"
         />
+        <p
+          v-if="message.narration_content && !message.skill_run?.blocks?.length"
+          class="atrium-assistant__narration"
+        >
+          {{ message.narration_content }}
+        </p>
         <AssistantMarkdown
-          v-else-if="message.content"
+          v-if="message.content && !message.skill_run?.blocks?.length"
           :content="message.content"
           :render-diagrams="message.role === 'assistant' && !message.error"
         />
-        <p v-else-if="message.stopped">{{ labels.stopped }}</p>
-        <span v-else class="atrium-assistant__cursor" />
+        <p v-else-if="message.stopped && !message.skill_run?.blocks?.length">
+          {{ labels.stopped }}
+        </p>
+        <span
+          v-else-if="!message.narration_content && !message.skill_run?.blocks?.length"
+          class="atrium-assistant__cursor"
+        />
       </article>
     </div>
 

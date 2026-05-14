@@ -183,7 +183,11 @@ export const useAssistantStore = defineStore("void-assistant", () => {
   const applyStreamEvent = (event, assistantMessageId) => {
     if (event.event === "delta") {
       const text = String(event.json?.text || "");
-      if (text) appendAssistantText(assistantMessageId, text);
+      if (text && event.json?.kind === "narration") {
+        appendAssistantNarration(assistantMessageId, text);
+      } else if (text) {
+        appendAssistantText(assistantMessageId, text);
+      }
       return;
     }
     if (event.event === "error") {
@@ -206,6 +210,14 @@ export const useAssistantStore = defineStore("void-assistant", () => {
   const appendAssistantText = (id, text) => {
     messages.value = messages.value.map((message) =>
       message.id === id ? { ...message, content: `${message.content}${text}` } : message
+    );
+  };
+
+  const appendAssistantNarration = (id, text) => {
+    messages.value = messages.value.map((message) =>
+      message.id === id
+        ? { ...message, narration_content: `${message.narration_content || ""}${text}` }
+        : message
     );
   };
 
@@ -256,6 +268,7 @@ function createMessage(role, content) {
     role,
     content,
     skill_run: null,
+    narration_content: "",
     error: false,
     stopped: false
   };

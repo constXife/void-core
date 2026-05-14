@@ -470,7 +470,11 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     if (event.event === "delta") {
       streamingPhase.value = "receiving";
       const text = String(event.json?.text || "");
-      if (text) appendAssistantText(assistantMessageId, text);
+      if (text && event.json?.kind === "narration") {
+        appendAssistantNarration(assistantMessageId, text);
+      } else if (text) {
+        appendAssistantText(assistantMessageId, text);
+      }
       return;
     }
     if (event.event === "error") {
@@ -503,6 +507,14 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const appendAssistantText = (id, text) => {
     currentMessages.value = currentMessages.value.map((message) =>
       message.id === id ? { ...message, content: `${message.content}${text}` } : message
+    );
+  };
+
+  const appendAssistantNarration = (id, text) => {
+    currentMessages.value = currentMessages.value.map((message) =>
+      message.id === id
+        ? { ...message, narration_content: `${message.narration_content || ""}${text}` }
+        : message
     );
   };
 
@@ -597,6 +609,7 @@ function createOptimisticMessage(role, content) {
     layout_config: {},
     skill_run: null,
     skill_runs: [],
+    narration_content: "",
     error: false,
     stopped: false,
     optimistic: true
@@ -654,6 +667,7 @@ function normalizeMessageList(value) {
       entry?.layout_config && typeof entry.layout_config === "object" ? entry.layout_config : {},
     skill_run: normalizeSkillRun(entry?.skill_run),
     skill_runs: normalizeSkillRunList(entry?.skill_runs),
+    narration_content: String(entry?.narration_content || ""),
     stopped: Boolean(entry?.stopped),
     error: Boolean(entry?.error),
     created_at: String(entry?.created_at || "")

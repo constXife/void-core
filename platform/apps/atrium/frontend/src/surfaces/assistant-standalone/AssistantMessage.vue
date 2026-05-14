@@ -43,6 +43,7 @@ const isStreamingTail = computed(
 const showStreamingStatus = computed(
   () => isStreamingTail.value && !props.message.content && props.streamingStatus
 );
+const narrationContent = computed(() => String(props.message.narration_content || ""));
 const skillBlocks = computed(() => {
   if (Array.isArray(props.message.skill_runs) && props.message.skill_runs.length) {
     return props.message.skill_runs.flatMap((skillRun) => skillRun.blocks || []);
@@ -50,6 +51,9 @@ const skillBlocks = computed(() => {
   return props.message.skill_run?.blocks || [];
 });
 const hasSkillBlocks = computed(() => skillBlocks.value.length > 0);
+const showNarration = computed(
+  () => isAssistant.value && narrationContent.value && !hasSkillBlocks.value
+);
 const isSkillProposal = computed(() => props.message.message_kind === "skill_proposal");
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
 const layoutVariant = computed(() => props.message.layout_config?.variant || "cards");
@@ -176,6 +180,9 @@ const onChangeLayout = () => {
 
     <div class="assistant-message__stack">
       <div class="assistant-message__body">
+        <p v-if="showNarration" class="assistant-message__narration">
+          {{ narrationContent }}
+        </p>
         <AssistantMarkdown
           v-if="!isSkillProposal && !hasSkillBlocks && (message.content || !isStreamingTail)"
           :content="message.content"

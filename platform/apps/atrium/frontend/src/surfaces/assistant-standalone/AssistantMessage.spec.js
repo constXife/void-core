@@ -89,6 +89,27 @@ describe("AssistantMessage", () => {
     expect(wrapper.find(".assistant-message__cursor").exists()).toBe(true);
   });
 
+  it("renders narration as plain muted text outside markdown", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "",
+          narration_content: "Подбираю подходящий навык.",
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        streaming: true,
+        t
+      }
+    });
+
+    expect(wrapper.find(".assistant-message__narration").text()).toBe(
+      "Подбираю подходящий навык."
+    );
+    expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
+  });
+
   it("renders skill blocks instead of markdown when a skill run is attached", () => {
     const wrapper = mount(AssistantMessage, {
       props: {

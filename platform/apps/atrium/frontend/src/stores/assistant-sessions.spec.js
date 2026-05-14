@@ -193,6 +193,47 @@ describe("assistant sessions store", () => {
     await pending;
   });
 
+  it("keeps narration deltas separate from assistant content", async () => {
+    let finishStream;
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({
+        ...sessionPayload(),
+        messages: [],
+        active_run: null
+      })
+    );
+    createAssistantRun.mockResolvedValue({
+      run_id: "run-1",
+      user_message_id: "message-user-server",
+      assistant_message_id: "message-assistant-server"
+    });
+    readAssistantRunEvents.mockImplementation(async (_runId, { onEvent }) => {
+      onEvent({
+        event: "delta",
+        json: { kind: "narration", text: "Подбираю подходящий навык." }
+      });
+      onEvent({ event: "delta", json: { text: "Итоговый ответ" } });
+      await new Promise((resolve) => {
+        finishStream = resolve;
+      });
+      onEvent({ event: "done", json: { status: "completed" } });
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+    store.draft = "дайджест";
+
+    const pending = store.send({ targetId: "default" });
+    await flushPromises();
+
+    const assistantMessage = store.currentMessages.find((message) => message.role === "assistant");
+    expect(assistantMessage.content).toBe("Итоговый ответ");
+    expect(assistantMessage.narration_content).toBe("Подбираю подходящий навык.");
+
+    finishStream();
+    await pending;
+  });
+
   it("approves a skill batch through the backend batch endpoint", async () => {
     let sessionReads = 0;
     globalThis.fetch = vi.fn(async (url, init = {}) => {

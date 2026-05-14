@@ -157,6 +157,13 @@
   margin: 0;
 }
 
+.atrium-assistant__narration {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 .atrium-assistant__message--user {
   align-self: flex-end;
   border-color: rgba(88, 166, 255, 0.34);
