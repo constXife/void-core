@@ -11,15 +11,17 @@ const props = defineProps({
   selectedTargetId: { type: String, default: "" },
   preferredTargetId: { type: String, default: "" },
   pickerDisabled: { type: Boolean, default: false },
-  disabled: { type: Boolean, default: false }
+  disabled: { type: Boolean, default: false },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["update:modelValue", "send", "stop", "select-target"]);
 
 const textareaRef = ref(null);
+const t = (key, vars = {}) => props.t(key, vars);
 
 const placeholder = computed(() =>
-  props.disabled ? "Assistant выключен" : "Сообщение… (Enter — отправить, Shift+Enter — перенос)"
+  props.disabled ? props.t("assistant.composer.disabled") : props.t("assistant.composer.placeholder")
 );
 
 const onInput = (event) => {
@@ -77,7 +79,7 @@ watch(
         class="assistant-composer__send"
         :class="{ 'assistant-composer__send--stop': streaming }"
         :disabled="disabled || (!streaming && !canSend)"
-        :aria-label="streaming ? 'Stop generating' : 'Send message'"
+        :aria-label="streaming ? t('assistant.composer.stop') : t('assistant.composer.send')"
         @click="onSendClick"
       >
         <Transition name="assistant-composer__send-icon" mode="out-in">
@@ -92,6 +94,7 @@ watch(
         :selected-id="selectedTargetId"
         :preferred-id="preferredTargetId"
         :disabled="pickerDisabled"
+        :t="t"
         @select="(id) => emit('select-target', id)"
       />
     </div>

@@ -3,13 +3,15 @@ import { computed } from "vue";
 
 const props = defineProps({
   routine: { type: Object, required: true },
-  toggleBusy: { type: Boolean, default: false }
+  toggleBusy: { type: Boolean, default: false },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["toggle", "open-drawer", "open-runs", "open-menu"]);
 
 const isEnabled = computed(() => props.routine.status === "enabled");
 const isPaused = computed(() => props.routine.status === "paused");
+const t = (key, vars = {}) => props.t(key, vars);
 
 const autonomyVariant = computed(() => {
   switch (props.routine.autonomy_level) {
@@ -32,15 +34,15 @@ const triggerIcon = computed(() => {
 
 const lastRunLabel = computed(() => {
   const iso = props.routine.last_run_at;
-  if (!iso) return "ещё не запускалось";
+  if (!iso) return t("assistant.routine.never");
   const at = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - at.getTime();
   const diffHours = Math.floor(diffMs / 3_600_000);
-  if (diffHours < 1) return "только что";
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 1) return t("assistant.routine.justNow");
+  if (diffHours < 24) return t("assistant.routine.hoursAgo", { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 30) return `${diffDays}d ago`;
+  if (diffDays < 30) return t("assistant.routine.daysAgo", { count: diffDays });
   return at.toISOString().slice(0, 10);
 });
 
@@ -79,7 +81,7 @@ const onMenu = () => emit("open-menu", props.routine.id);
       class="assistant-routine-card__toggle"
       :class="{ 'assistant-routine-card__toggle--on': isEnabled }"
       :aria-pressed="isEnabled"
-      :aria-label="isEnabled ? 'Pause routine' : 'Enable routine'"
+      :aria-label="isEnabled ? t('assistant.routine.pause') : t('assistant.routine.enable')"
       :disabled="toggleBusy"
       @click="onToggle"
     >
@@ -105,22 +107,22 @@ const onMenu = () => emit("open-menu", props.routine.id);
       <div class="assistant-routine-card__meta">
         <span class="assistant-routine-card__meta-item">
           {{ triggerIcon }} {{ routine.trigger.kind }} · {{ routine.trigger.label }}
-          <span v-if="isPaused" class="assistant-routine-card__paused-tag">· paused</span>
+          <span v-if="isPaused" class="assistant-routine-card__paused-tag">· {{ t("assistant.routine.paused") }}</span>
         </span>
-        <span class="assistant-routine-card__meta-item">▶ last run: {{ lastRunLabel }}</span>
-        <span v-if="nextRunLabel" class="assistant-routine-card__meta-item">→ next: {{ nextRunLabel }}</span>
+        <span class="assistant-routine-card__meta-item">▶ {{ t("assistant.routine.lastRun", { value: lastRunLabel }) }}</span>
+        <span v-if="nextRunLabel" class="assistant-routine-card__meta-item">→ {{ t("assistant.routine.next", { value: nextRunLabel }) }}</span>
         <span v-if="acceptRateLabel" class="assistant-routine-card__meta-item">{{ acceptRateLabel }}</span>
         <span v-if="budgetLabel" class="assistant-routine-card__meta-item">💰 {{ budgetLabel }}</span>
       </div>
     </div>
 
     <div class="assistant-routine-card__actions">
-      <button type="button" class="assistant-routine-card__action" @click="onRuns">Runs</button>
-      <button type="button" class="assistant-routine-card__action" @click="onEdit">Edit</button>
+      <button type="button" class="assistant-routine-card__action" @click="onRuns">{{ t("assistant.routine.runs") }}</button>
+      <button type="button" class="assistant-routine-card__action" @click="onEdit">{{ t("assistant.routine.edit") }}</button>
       <button
         type="button"
         class="assistant-routine-card__action"
-        aria-label="More"
+        :aria-label="t('assistant.routine.more')"
         @click="onMenu"
       >⋯</button>
     </div>

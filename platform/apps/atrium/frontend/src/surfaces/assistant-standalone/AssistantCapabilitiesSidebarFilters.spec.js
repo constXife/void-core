@@ -2,6 +2,24 @@ import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 import AssistantCapabilitiesSidebarFilters from "./AssistantCapabilitiesSidebarFilters.vue";
 
+const messages = {
+  "assistant.capabilities.filterSummary": "{count} skills в каталоге",
+  "assistant.filters.all": "Все",
+  "assistant.filters.stage": "Stage",
+  "assistant.filters.stageValue": "Stage {value}",
+  "assistant.filters.domain": "Domain",
+  "assistant.filters.output": "Output",
+  "assistant.filters.trustClass": "Trust class"
+};
+
+const t = (key, vars = {}) => {
+  let value = messages[key] || key;
+  for (const [name, replacement] of Object.entries(vars)) {
+    value = value.replace(`{${name}}`, String(replacement));
+  }
+  return value;
+};
+
 const baseSkills = [
   {
     id: "digest_hackernews",
@@ -25,7 +43,8 @@ describe("AssistantCapabilitiesSidebarFilters", () => {
       props: {
         skills: baseSkills,
         filters: { stage: null, domain: null, output_kind: null, trust_class: null },
-        availableTrustClasses: new Set(["untrusted_web"])
+        availableTrustClasses: new Set(["untrusted_web"]),
+        t
       }
     });
 
@@ -50,7 +69,8 @@ describe("AssistantCapabilitiesSidebarFilters", () => {
           }
         ],
         filters: { stage: null, domain: null, output_kind: null, trust_class: null },
-        availableTrustClasses: new Set(["untrusted_web", "trusted_graph"])
+        availableTrustClasses: new Set(["untrusted_web", "trusted_graph"]),
+        t
       }
     });
 

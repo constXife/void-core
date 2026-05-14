@@ -2,12 +2,14 @@
 import { computed } from "vue";
 
 const props = defineProps({
-  template: { type: Object, required: true }
+  template: { type: Object, required: true },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["enable", "go-to-routine"]);
 
 const isEnabled = computed(() => Boolean(props.template.enabled_instance_id));
+const t = (key, vars = {}) => props.t(key, vars);
 
 const onPrimary = () => {
   if (isEnabled.value) {
@@ -30,7 +32,7 @@ const onPrimary = () => {
       class="assistant-template-row__status"
       :class="{ 'assistant-template-row__status--on': isEnabled }"
     >
-      {{ isEnabled ? "routine enabled" : "не включено" }}
+      {{ isEnabled ? t("assistant.template.enabled") : t("assistant.template.notEnabled") }}
     </span>
     <button
       type="button"
@@ -38,7 +40,7 @@ const onPrimary = () => {
       :class="{ 'assistant-template-row__action--ghost': isEnabled }"
       @click="onPrimary"
     >
-      {{ isEnabled ? "View routine →" : "Enable…" }}
+      {{ isEnabled ? t("assistant.template.view") : t("assistant.template.enable") }}
     </button>
   </div>
 </template>

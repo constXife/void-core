@@ -5,7 +5,8 @@ defineProps({
   suggestions: {
     type: Array,
     default: () => []
-  }
+  },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["choose"]);
@@ -16,15 +17,14 @@ const emit = defineEmits(["choose"]);
     <div class="assistant-empty__hero">
       <Sparkles :size="28" class="assistant-empty__icon" />
       <h1 class="assistant-empty__title">Void Assistant</h1>
-      <p class="assistant-empty__subtitle">Спроси что угодно или начни с подсказки.</p>
+      <p class="assistant-empty__subtitle">{{ t("assistant.empty.subtitle") }}</p>
     </div>
 
     <div class="assistant-empty__privacy" role="note">
       <p>
-        Модель настраивает оператор: это может быть сторонний провайдер со своими
-        правилами обработки и retention.
+        {{ t("assistant.empty.providerNotice") }}
       </p>
-      <p>ИИ может ошибаться. Не принимай ответы как проверенный факт без проверки.</p>
+      <p>{{ t("assistant.empty.reliabilityNotice") }}</p>
     </div>
 
     <div v-if="suggestions.length" class="assistant-empty__suggestions">

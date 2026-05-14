@@ -5,7 +5,8 @@ import LinkListBlock from "./LinkListBlock.vue";
 import UnknownBlock from "./UnknownBlock.vue";
 
 defineProps({
-  blocks: { type: Array, required: true }
+  blocks: { type: Array, required: true },
+  t: { type: Function, required: true }
 });
 
 function blockKey(block, index) {
@@ -33,6 +34,7 @@ function componentFor(block) {
       v-for="(block, index) in blocks"
       :key="blockKey(block, index)"
       :block="block"
+      :t="t"
     />
   </div>
 </template>

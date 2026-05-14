@@ -60,7 +60,12 @@ const logout = async () => {
   <main class="assistant-product-root">
     <TheShellBackdrop tone="assistant" />
 
-    <AssistantStandaloneSurface :identity="assistantIdentity" :current-user="me" :t="appStore.t">
+    <AssistantStandaloneSurface
+      :identity="assistantIdentity"
+      :current-user="me"
+      :lang="currentLang"
+      :t="appStore.t"
+    >
       <template #main-actions>
         <PlatformAppsMenu current-product="assistant" :lang="currentLang" />
 

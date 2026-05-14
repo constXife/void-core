@@ -3,16 +3,18 @@ import { computed } from "vue";
 
 const props = defineProps({
   instances: { type: Array, required: true },
-  filters: { type: Object, required: true }
+  filters: { type: Object, required: true },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["filter-change"]);
+const t = (key, vars = {}) => props.t(key, vars);
 
 const countBy = (predicate) => props.instances.filter(predicate).length;
 
 const statusOptions = computed(() => [
-  { value: "enabled", label: "Enabled", count: countBy((r) => r.status === "enabled") },
-  { value: "paused", label: "Paused", count: countBy((r) => r.status === "paused") }
+  { value: "enabled", label: t("assistant.filters.enabled"), count: countBy((r) => r.status === "enabled") },
+  { value: "paused", label: t("assistant.filters.paused"), count: countBy((r) => r.status === "paused") }
 ]);
 
 const triggerOptions = computed(() => {
@@ -46,14 +48,14 @@ const isAllActive = (key) => props.filters[key] === null;
 <template>
   <div class="assistant-sidebar-filters">
     <section class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Status</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.status") }}</h3>
       <button
         type="button"
         class="assistant-sidebar-filters__item"
         :class="{ 'assistant-sidebar-filters__item--active': isAllActive('status') }"
         @click="setFilter('status', null)"
       >
-        <span>Все</span>
+        <span>{{ t("assistant.filters.all") }}</span>
         <span class="assistant-sidebar-filters__count">{{ instances.length }}</span>
       </button>
       <button
@@ -70,7 +72,7 @@ const isAllActive = (key) => props.filters[key] === null;
     </section>
 
     <section class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Trigger</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.trigger") }}</h3>
       <button
         v-for="opt in triggerOptions"
         :key="`trigger-${opt.value}`"
@@ -85,7 +87,7 @@ const isAllActive = (key) => props.filters[key] === null;
     </section>
 
     <section class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Autonomy</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.autonomy") }}</h3>
       <button
         v-for="opt in autonomyOptions"
         :key="`autonomy-${opt.value}`"

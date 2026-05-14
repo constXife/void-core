@@ -7,10 +7,20 @@ const session = {
   title: "Carbon cycle"
 };
 
+const messages = {
+  "assistant.sidebar.untitled": "Без названия",
+  "assistant.sidebar.openMenu": "Открыть меню чата",
+  "assistant.sidebar.rename": "Переименовать",
+  "assistant.sidebar.delete": "Удалить",
+  "assistant.sidebar.restore": "Восстановить"
+};
+
+const t = (key) => messages[key] || key;
+
 describe("AssistantSidebarItem", () => {
   it("keeps the menu open while pointer leaves the row", async () => {
     const wrapper = mount(AssistantSidebarItem, {
-      props: { session }
+      props: { session, t }
     });
 
     await wrapper.get(".assistant-sidebar-item__menu-trigger").trigger("click");
@@ -22,7 +32,7 @@ describe("AssistantSidebarItem", () => {
 
   it("closes the menu on outside pointer down", async () => {
     const wrapper = mount(AssistantSidebarItem, {
-      props: { session },
+      props: { session, t },
       attachTo: document.body
     });
 

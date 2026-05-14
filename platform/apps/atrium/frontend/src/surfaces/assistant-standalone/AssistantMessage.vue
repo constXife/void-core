@@ -21,7 +21,8 @@ const props = defineProps({
   streaming: { type: Boolean, default: false },
   streamingStatus: { type: String, default: "" },
   showRegenerate: { type: Boolean, default: false },
-  showDelete: { type: Boolean, default: false }
+  showDelete: { type: Boolean, default: false },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits([
@@ -33,6 +34,7 @@ const emit = defineEmits([
 ]);
 
 const isUser = computed(() => props.message.role === "user");
+const t = (key, vars = {}) => props.t(key, vars);
 const isAssistant = computed(() => props.message.role === "assistant");
 const showUserAvatar = computed(() => isUser.value && hasResolvedPlatformAccount(props.currentUser));
 const isStreamingTail = computed(
@@ -52,7 +54,9 @@ const isSkillProposal = computed(() => props.message.message_kind === "skill_pro
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
 const layoutVariant = computed(() => props.message.layout_config?.variant || "cards");
 const nextLayoutVariant = computed(() => (layoutVariant.value === "compact" ? "cards" : "compact"));
-const layoutButtonLabel = computed(() => (nextLayoutVariant.value === "compact" ? "Compact" : "Cards"));
+const layoutButtonLabel = computed(() =>
+  t(nextLayoutVariant.value === "compact" ? "assistant.layout.compact" : "assistant.layout.cards")
+);
 const proposalSkillRuns = computed(() => {
   if (Array.isArray(props.message.skill_runs) && props.message.skill_runs.length) {
     return props.message.skill_runs;
@@ -62,9 +66,17 @@ const proposalSkillRuns = computed(() => {
 const proposalSkillIds = computed(() =>
   proposalSkillRuns.value.map((skillRun) => skillRun.skill_id || skillRun.id).filter(Boolean)
 );
+const proposalSkillNames = computed(() => proposalSkillIds.value.map(skillDisplayName));
+const proposalTitle = computed(() => {
+  if (proposalSkillNames.value.length === 0) return props.message.content;
+  if (proposalSkillNames.value.length === 1) {
+    return t("assistant.message.proposalOne", { name: proposalSkillNames.value[0] });
+  }
+  return t("assistant.message.proposalBatch", { names: proposalSkillNames.value.join(", ") });
+});
 const proposalStatus = computed(() => {
   const statuses = proposalSkillRuns.value.map((skillRun) => skillRun.status).filter(Boolean);
-  return statuses.length ? statuses.join(" · ") : "awaiting_approval";
+  return statuses.length ? statuses.map(proposalStatusLabel).join(" · ") : t("assistant.message.awaitingApproval");
 });
 const canActOnProposal = computed(
   () =>
@@ -92,6 +104,26 @@ function formatTimestamp(value) {
   const hh = String(date.getHours()).padStart(2, "0");
   const mm = String(date.getMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+function skillDisplayName(skillId) {
+  switch (skillId) {
+    case "digest_hackernews":
+      return "Hacker News digest";
+    case "digest_github":
+      return "GitHub trending digest";
+    default:
+      return skillId;
+  }
+}
+
+function proposalStatusLabel(status) {
+  switch (status) {
+    case "awaiting_approval":
+      return t("assistant.message.awaitingApproval");
+    default:
+      return status;
+  }
 }
 
 const copyContent = async () => {
@@ -151,7 +183,7 @@ const onChangeLayout = () => {
         />
         <div v-if="isSkillProposal" class="assistant-message__proposal">
           <div class="assistant-message__proposal-main">
-            <span class="assistant-message__proposal-title">{{ message.content }}</span>
+            <span class="assistant-message__proposal-title">{{ proposalTitle }}</span>
             <span class="assistant-message__proposal-meta">{{ proposalSkillIds.join(" · ") }} · {{ proposalStatus }}</span>
           </div>
           <ul v-if="proposalSkillRuns.length > 1" class="assistant-message__proposal-list">
@@ -163,15 +195,15 @@ const onChangeLayout = () => {
           <div v-if="canActOnProposal" class="assistant-message__proposal-actions">
             <button type="button" class="assistant-message__proposal-button" @click="onApproveSkill">
               <Check :size="14" />
-              <span>Запускать</span>
+              <span>{{ t("assistant.message.approve") }}</span>
             </button>
             <button type="button" class="assistant-message__proposal-button" @click="onRejectSkill">
               <X :size="14" />
-              <span>Не запускать</span>
+              <span>{{ t("assistant.message.reject") }}</span>
             </button>
           </div>
         </div>
-        <BlockRenderer v-if="hasSkillBlocks" :blocks="skillBlocks" />
+        <BlockRenderer v-if="hasSkillBlocks" :blocks="skillBlocks" :t="t" />
         <p
           v-if="showStreamingStatus"
           class="assistant-message__streaming-line"
@@ -187,7 +219,7 @@ const onChangeLayout = () => {
           <span>{{ message.content || "Assistant error" }}</span>
         </p>
         <p v-else-if="message.stopped" class="assistant-message__stopped-line">
-          Generation stopped.
+          {{ t("assistant.message.stopped") }}
         </p>
       </div>
 
@@ -204,7 +236,7 @@ const onChangeLayout = () => {
             type="button"
             class="assistant-message__action assistant-message__action--text"
             @click="onChangeLayout"
-            :aria-label="'Change skill layout'"
+            :aria-label="t('assistant.message.changeLayout')"
           >
             {{ layoutButtonLabel }}
           </button>
@@ -213,7 +245,7 @@ const onChangeLayout = () => {
             type="button"
             class="assistant-message__action"
             @click="copyContent"
-            :aria-label="'Copy message'"
+            :aria-label="t('assistant.message.copy')"
           >
             <Copy :size="14" />
           </button>
@@ -222,7 +254,7 @@ const onChangeLayout = () => {
             type="button"
             class="assistant-message__action"
             @click="onRegenerate"
-            :aria-label="'Regenerate response'"
+            :aria-label="t('assistant.message.regenerate')"
           >
             <RotateCcw :size="14" />
           </button>
@@ -231,7 +263,7 @@ const onChangeLayout = () => {
             type="button"
             class="assistant-message__action assistant-message__action--danger"
             @click="onDelete"
-            :aria-label="'Delete message pair'"
+            :aria-label="t('assistant.message.deletePair')"
           >
             <Trash2 :size="14" />
           </button>

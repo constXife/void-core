@@ -4,6 +4,11 @@ import { storeToRefs } from "pinia";
 import { useAssistantSkillsStore } from "../../stores/assistant-skills.js";
 import AssistantSkillCard from "./AssistantSkillCard.vue";
 
+const props = defineProps({
+  lang: { type: String, default: "en" },
+  t: { type: Function, required: true }
+});
+
 const emit = defineEmits(["enable-template", "go-to-routine", "ask-in-chat"]);
 
 const store = useAssistantSkillsStore();
@@ -24,7 +29,7 @@ const onGoToRoutine = (instanceId) => emit("go-to-routine", instanceId);
 const onAskInChat = (skillId) => emit("ask-in-chat", skillId);
 
 onMounted(() => {
-  store.loadSkills();
+  store.loadSkills({ locale: props.lang });
 });
 </script>
 
@@ -32,24 +37,22 @@ onMounted(() => {
   <div class="assistant-capabilities">
     <div class="assistant-capabilities__inner">
       <p class="assistant-capabilities__intro">
-        Что Void Assistant умеет делать — это код, поставляемый с релизом void.
-        Skills нельзя редактировать или удалить из UI: карточка показывает, что
-        произойдёт при запуске и как попросить ассистента об этом в чате.
+        {{ t("assistant.capabilities.intro") }}
       </p>
 
-      <p v-if="loading && !loaded" class="assistant-capabilities__hint">Загружаем каталог…</p>
+      <p v-if="loading && !loaded" class="assistant-capabilities__hint">{{ t("assistant.capabilities.loading") }}</p>
 
       <p v-else-if="status" class="assistant-capabilities__error" role="alert">{{ status }}</p>
 
       <template v-else-if="loaded">
         <p v-if="!skills.length" class="assistant-capabilities__hint">
-          Каталог пуст — skills ещё не shipped.
+          {{ t("assistant.capabilities.empty") }}
         </p>
 
         <div v-else-if="isEmptyAfterFilter" class="assistant-capabilities__hint">
-          <p>Ничего не нашлось под текущие фильтры.</p>
+          <p>{{ t("assistant.capabilities.noResults") }}</p>
           <button type="button" class="assistant-capabilities__reset" @click="onResetFilters">
-            Сбросить фильтры
+            {{ t("assistant.capabilities.resetFilters") }}
           </button>
         </div>
 
@@ -58,6 +61,7 @@ onMounted(() => {
             v-for="skill in filteredSkills"
             :key="skill.id"
             :skill="skill"
+            :t="t"
             @enable-template="onEnableTemplate"
             @go-to-routine="onGoToRoutine"
             @ask-in-chat="onAskInChat"

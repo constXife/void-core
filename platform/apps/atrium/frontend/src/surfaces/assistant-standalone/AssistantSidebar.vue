@@ -12,7 +12,8 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   collapsed: { type: Boolean, default: false },
   identity: { type: Object, required: true },
-  activeTab: { type: String, default: "chat" }
+  activeTab: { type: String, default: "chat" },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits([
@@ -27,6 +28,7 @@ const emit = defineEmits([
 ]);
 
 const trashOpen = ref(false);
+const t = (key, vars = {}) => props.t(key, vars);
 
 const isEmpty = computed(() => !props.loading && props.groups.length === 0);
 
@@ -49,8 +51,8 @@ const toggleTrash = () => {
         v-if="collapsed"
         type="button"
         class="assistant-sidebar__toggle assistant-sidebar__toggle--brand"
-        title="Развернуть сайдбар"
-        aria-label="Expand sidebar"
+        :title="t('assistant.sidebar.expand')"
+        :aria-label="t('assistant.sidebar.expand')"
         @click="emit('toggle-collapsed')"
       >
         <PanelLeftOpen :size="16" />
@@ -67,8 +69,8 @@ const toggleTrash = () => {
         <button
           type="button"
           class="assistant-sidebar__toggle assistant-sidebar__toggle--brand-end"
-          title="Свернуть сайдбар"
-          aria-label="Collapse sidebar"
+          :title="t('assistant.sidebar.collapse')"
+          :aria-label="t('assistant.sidebar.collapse')"
           @click="emit('toggle-collapsed')"
         >
           <PanelLeftClose :size="14" />
@@ -80,11 +82,11 @@ const toggleTrash = () => {
       <button
         type="button"
         class="assistant-sidebar__new"
-        :title="collapsed ? 'Новый чат' : ''"
+        :title="collapsed ? t('assistant.sidebar.newChat') : ''"
         @click="emit('new-chat')"
       >
         <Plus :size="14" />
-        <span class="assistant-sidebar__new-label">Новый чат</span>
+        <span class="assistant-sidebar__new-label">{{ t("assistant.sidebar.newChat") }}</span>
       </button>
     </div>
 
@@ -92,10 +94,10 @@ const toggleTrash = () => {
     <template v-if="activeTab === 'chat'">
       <div class="assistant-sidebar__list">
         <p v-if="loading && groups.length === 0" class="assistant-sidebar__hint">
-          Загружаем чаты…
+          {{ t("assistant.sidebar.loadingChats") }}
         </p>
         <p v-else-if="isEmpty" class="assistant-sidebar__hint">
-          Здесь будут ваши чаты.
+          {{ t("assistant.sidebar.emptyChats") }}
         </p>
 
         <div
@@ -110,6 +112,7 @@ const toggleTrash = () => {
               :key="session.id"
               :session="session"
               :active="session.id === activeId"
+              :t="t"
               @select="(id) => emit('select', id)"
               @rename="(session) => emit('rename', session)"
               @delete="(session) => emit('delete', session)"
@@ -125,19 +128,20 @@ const toggleTrash = () => {
           @click="toggleTrash"
         >
           <Trash2 :size="14" />
-          <span>Корзина</span>
+          <span>{{ t("assistant.sidebar.trash") }}</span>
           <span class="assistant-sidebar__trash-count" v-if="trashed.length">{{ trashed.length }}</span>
         </button>
         <div v-if="trashOpen" class="assistant-sidebar__trash-list">
-          <p v-if="!trashedLoaded" class="assistant-sidebar__hint">Загружаем…</p>
+          <p v-if="!trashedLoaded" class="assistant-sidebar__hint">{{ t("assistant.sidebar.loading") }}</p>
           <p v-else-if="trashed.length === 0" class="assistant-sidebar__hint">
-            Корзина пуста.
+            {{ t("assistant.sidebar.trashEmpty") }}
           </p>
           <AssistantSidebarItem
             v-for="session in trashed"
             :key="session.id"
             :session="session"
             trashed
+            :t="t"
             @restore="(session) => emit('restore', session)"
           />
         </div>
@@ -147,14 +151,14 @@ const toggleTrash = () => {
     <!-- Capabilities mode: filter slot (placeholder in Wave 1, filled in Wave 2) -->
     <div v-else-if="activeTab === 'capabilities'" class="assistant-sidebar__list">
       <slot name="capabilities">
-        <p class="assistant-sidebar__hint">Фильтры появятся в Wave 2.</p>
+        <p class="assistant-sidebar__hint">{{ t("assistant.sidebar.capabilitiesFiltersSoon") }}</p>
       </slot>
     </div>
 
     <!-- Routines mode: filter slot (placeholder in Wave 1, filled in Wave 3) -->
     <div v-else-if="activeTab === 'routines'" class="assistant-sidebar__list">
       <slot name="routines">
-        <p class="assistant-sidebar__hint">Фильтры появятся в Wave 3.</p>
+        <p class="assistant-sidebar__hint">{{ t("assistant.sidebar.routinesFiltersSoon") }}</p>
       </slot>
     </div>
 
@@ -162,7 +166,7 @@ const toggleTrash = () => {
       v-if="!collapsed"
       type="button"
       class="assistant-sidebar__resize-handle"
-      :aria-label="'Resize sidebar'"
+      :aria-label="t('assistant.sidebar.resize')"
       @mousedown.prevent="(event) => emit('resize-start', event)"
     />
   </aside>

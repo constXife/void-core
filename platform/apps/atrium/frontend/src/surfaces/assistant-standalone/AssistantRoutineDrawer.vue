@@ -6,13 +6,15 @@ const props = defineProps({
   open: { type: Boolean, default: false },
   mode: { type: String, default: "inspect" }, // 'inspect' | 'edit' | 'create'
   instance: { type: Object, default: null },
-  saving: { type: Boolean, default: false }
+  saving: { type: Boolean, default: false },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["close", "save", "switch-to-edit"]);
 
 const isEdit = computed(() => props.mode === "edit" || props.mode === "create");
 const isCreate = computed(() => props.mode === "create");
+const t = (key, vars = {}) => props.t(key, vars);
 
 // Локальная form-state — копия instance.* которую можно редактировать без mutate'а store.
 // Per ASSISTANT_SURFACE_STRUCTURE.md D1: drawer открывается над routines list, не теряя контекста.
@@ -98,16 +100,16 @@ function buildForm(inst) {
       <header class="assistant-routine-drawer__head">
         <div class="assistant-routine-drawer__head-text">
           <div class="assistant-routine-drawer__kicker">
-            {{ isCreate ? "Новая routine" : isEdit ? "Edit routine" : "Routine · inspect" }}
+            {{ isCreate ? t("assistant.routine.drawer.create") : isEdit ? t("assistant.routine.drawer.edit") : t("assistant.routine.drawer.inspect") }}
           </div>
           <h2 class="assistant-routine-drawer__title">
-            {{ form.display_name || "Без названия" }}
+            {{ form.display_name || t("assistant.routine.drawer.untitled") }}
           </h2>
         </div>
         <button
           type="button"
           class="assistant-routine-drawer__close"
-          aria-label="Close"
+          :aria-label="t('assistant.routine.drawer.close')"
           :disabled="saving"
           @click="onClose"
         >
@@ -118,35 +120,33 @@ function buildForm(inst) {
       <div class="assistant-routine-drawer__body">
         <!-- Display name -->
         <section class="assistant-routine-drawer__field">
-          <label class="assistant-routine-drawer__label">Display name</label>
+          <label class="assistant-routine-drawer__label">{{ t("assistant.routine.drawer.displayName") }}</label>
           <input
             v-if="isEdit"
             v-model="form.display_name"
             type="text"
             class="assistant-routine-drawer__input"
             :disabled="saving"
-            placeholder="например: Weekly shopping run"
+            :placeholder="t('assistant.routine.drawer.displayNamePlaceholder')"
           />
           <div v-else class="assistant-routine-drawer__value">{{ form.display_name }}</div>
         </section>
 
         <!-- Skill (read-only — нельзя менять skill_id на existing routine per SURFACE_STRUCTURE.md) -->
         <section class="assistant-routine-drawer__field">
-          <label class="assistant-routine-drawer__label">Skill</label>
+          <label class="assistant-routine-drawer__label">{{ t("assistant.routine.drawer.skill") }}</label>
           <div class="assistant-routine-drawer__value">
             <span class="assistant-routine-drawer__mono">{{ form.skill_id }}</span>
             <span class="assistant-routine-drawer__hint"> v{{ form.skill_version_pin }} (pinned)</span>
           </div>
           <p v-if="isEdit" class="assistant-routine-drawer__field-note">
-            Skill нельзя поменять на existing routine — это создаст новую (потому что
-            <span class="assistant-routine-drawer__mono">skill_version_pin</span> должен оставаться
-            coherent с run history).
+            {{ t("assistant.routine.drawer.skillNote") }}
           </p>
         </section>
 
         <!-- Trigger -->
         <section class="assistant-routine-drawer__field">
-          <label class="assistant-routine-drawer__label">Trigger</label>
+          <label class="assistant-routine-drawer__label">{{ t("assistant.routine.drawer.trigger") }}</label>
           <div v-if="isEdit" class="assistant-routine-drawer__row">
             <select
               v-model="form.trigger_kind"
@@ -160,7 +160,7 @@ function buildForm(inst) {
               type="text"
               class="assistant-routine-drawer__input"
               :disabled="saving"
-              placeholder="например: sunday 10:00"
+              :placeholder="t('assistant.routine.drawer.triggerPlaceholder')"
             />
           </div>
           <div v-else class="assistant-routine-drawer__value">
@@ -187,7 +187,7 @@ function buildForm(inst) {
 
         <!-- Autonomy level -->
         <section class="assistant-routine-drawer__field">
-          <label class="assistant-routine-drawer__label">Autonomy level</label>
+          <label class="assistant-routine-drawer__label">{{ t("assistant.routine.drawer.autonomy") }}</label>
           <select
             v-if="isEdit"
             v-model="form.autonomy_level"
@@ -198,7 +198,7 @@ function buildForm(inst) {
           </select>
           <div v-else class="assistant-routine-drawer__value">{{ form.autonomy_level }}</div>
           <p class="assistant-routine-drawer__field-note">
-            Bound сверху template'ом (operator-declared). Instance может только понизить уровень.
+            {{ t("assistant.routine.drawer.autonomyNote") }}
           </p>
         </section>
       </div>
@@ -210,25 +210,25 @@ function buildForm(inst) {
             class="assistant-routine-drawer__btn assistant-routine-drawer__btn--ghost"
             :disabled="saving"
             @click="onClose"
-          >Cancel</button>
+          >{{ t("assistant.routine.drawer.cancel") }}</button>
           <button
             type="button"
             class="assistant-routine-drawer__btn assistant-routine-drawer__btn--primary"
             :disabled="saving"
             @click="onSave"
-          >{{ saving ? "Сохраняем…" : isCreate ? "Создать routine" : "Сохранить" }}</button>
+          >{{ saving ? t("assistant.routine.drawer.saving") : isCreate ? t("assistant.routine.drawer.createAction") : t("assistant.routine.drawer.save") }}</button>
         </template>
         <template v-else>
           <button
             type="button"
             class="assistant-routine-drawer__btn assistant-routine-drawer__btn--ghost"
             @click="onClose"
-          >Close</button>
+          >{{ t("assistant.routine.drawer.close") }}</button>
           <button
             type="button"
             class="assistant-routine-drawer__btn assistant-routine-drawer__btn--primary"
             @click="onSwitchToEdit"
-          >Edit</button>
+          >{{ t("assistant.routine.edit") }}</button>
         </template>
       </footer>
     </aside>

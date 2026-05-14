@@ -2,6 +2,20 @@ import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 import BlockRenderer from "./BlockRenderer.vue";
 
+const messages = {
+  "assistant.metric.score": "баллов",
+  "assistant.metric.descendants": "комментариев",
+  "assistant.block.unknown": "Неподдерживаемый блок: {type}"
+};
+
+const t = (key, vars = {}) => {
+  let value = messages[key] || key;
+  for (const [name, replacement] of Object.entries(vars)) {
+    value = value.replace(`{${name}}`, String(replacement));
+  }
+  return value;
+};
+
 describe("BlockRenderer", () => {
   it("renders article cards with title, url, summary and metrics", () => {
     const wrapper = mount(BlockRenderer, {
@@ -16,7 +30,8 @@ describe("BlockRenderer", () => {
             source_label: "Hacker News",
             metrics: [{ label: "баллов", value: "230" }]
           }
-        ]
+        ],
+        t
       }
     });
 
@@ -36,7 +51,8 @@ describe("BlockRenderer", () => {
             type: "link_list",
             items: [{ label: "AGENTS.md", url: "https://example.com/agents", note: "rules" }]
           }
-        ]
+        ],
+        t
       }
     });
 

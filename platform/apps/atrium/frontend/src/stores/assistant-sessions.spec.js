@@ -146,7 +146,7 @@ describe("assistant sessions store", () => {
 
     expect(store.streaming).toBe(true);
     expect(store.streamingPhase).toBe("running");
-    expect(store.streamingStatus).toBe("Модель начала обработку…");
+    expect(store.streamingStatus).toBe("running");
 
     finishStream();
     await pending;

@@ -33,7 +33,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const draft = ref("");
   const streaming = ref(false);
   const streamingPhase = ref("");
-  const streamingStatus = computed(() => describeStreamingPhase(streamingPhase.value));
+  const streamingStatus = computed(() => streamingPhase.value);
   const status = ref("");
   const pendingMessageDeletion = ref(null);
 
@@ -248,7 +248,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
   };
 
-  const proposeSkillRun = async ({ skillId, targetId, params = {} } = {}) => {
+  const proposeSkillRun = async ({ skillId, targetId, params = {}, locale = "" } = {}) => {
     const normalizedSkillId = String(skillId || "").trim();
     if (!normalizedSkillId || streaming.value) return null;
     if (!(await commitPendingMessageDeletion())) return null;
@@ -267,7 +267,8 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       body: JSON.stringify({
         session_id: session.id,
         skill_id: normalizedSkillId,
-        params
+        params,
+        locale
       })
     });
     await reloadCurrent({ resumeActiveRun: false });
@@ -743,30 +744,13 @@ function normalizeErrorMessage(error) {
   }
 }
 
-function describeStreamingPhase(phase) {
-  switch (phase) {
-    case "creating":
-      return "Создаем run…";
-    case "queued":
-      return "Запрос в очереди…";
-    case "running":
-      return "Модель начала обработку…";
-    case "receiving":
-      return "Модель отвечает…";
-    case "cancelling":
-      return "Останавливаем генерацию…";
-    default:
-      return "";
-  }
-}
-
 function groupSessionsByDate(list) {
   const buckets = {
-    today: { id: "today", label: "Сегодня", labelEn: "Today", items: [] },
-    yesterday: { id: "yesterday", label: "Вчера", labelEn: "Yesterday", items: [] },
-    week: { id: "week", label: "7 дней", labelEn: "Last 7 days", items: [] },
-    month: { id: "month", label: "30 дней", labelEn: "Last 30 days", items: [] },
-    older: { id: "older", label: "Старше", labelEn: "Older", items: [] }
+    today: { id: "today", items: [] },
+    yesterday: { id: "yesterday", items: [] },
+    week: { id: "week", items: [] },
+    month: { id: "month", items: [] },
+    older: { id: "older", items: [] }
   };
   const now = Date.now();
   const dayMs = 24 * 60 * 60 * 1000;

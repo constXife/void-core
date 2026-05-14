@@ -1,7 +1,23 @@
 <script setup>
-defineProps({
-  block: { type: Object, required: true }
+const props = defineProps({
+  block: { type: Object, required: true },
+  t: { type: Function, required: true }
 });
+
+const t = (key, vars = {}) => props.t(key, vars);
+
+function metricLabel(label) {
+  switch (label) {
+    case "баллов":
+    case "points":
+      return t("assistant.metric.score");
+    case "комментариев":
+    case "comments":
+      return t("assistant.metric.descendants");
+    default:
+      return label;
+  }
+}
 </script>
 
 <template>
@@ -23,7 +39,7 @@ defineProps({
     <footer v-if="block.source_label || block.metrics?.length" class="assistant-article-card__meta">
       <span v-if="block.source_label">{{ block.source_label }}</span>
       <span v-for="metric in block.metrics || []" :key="`${metric.label}:${metric.value}`">
-        {{ metric.value }} {{ metric.label }}
+        {{ metric.value }} {{ metricLabel(metric.label) }}
       </span>
     </footer>
   </article>

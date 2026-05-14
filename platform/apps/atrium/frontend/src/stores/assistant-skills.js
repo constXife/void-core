@@ -39,7 +39,7 @@ export const useAssistantSkillsStore = defineStore("void-assistant-skills", () =
 
   const skillById = (id) => skills.value.find((skill) => skill.id === id) || null;
 
-  const loadSkills = async ({ force = false } = {}) => {
+  const loadSkills = async ({ force = false, locale = "" } = {}) => {
     if (loaded.value && !force) return;
     loading.value = true;
     status.value = "";
@@ -52,7 +52,7 @@ export const useAssistantSkillsStore = defineStore("void-assistant-skills", () =
       if (!Array.isArray(payload.skills)) {
         throw new Error("Assistant skills response must include skills array");
       }
-      skills.value = payload.skills.map(normalizeSkill);
+      skills.value = payload.skills.map((skill) => normalizeSkill(skill, locale));
       loaded.value = true;
     } catch (error) {
       console.error("void-assistant-skills: load failed", error);
@@ -87,8 +87,8 @@ export const useAssistantSkillsStore = defineStore("void-assistant-skills", () =
   };
 });
 
-function normalizeSkill(raw) {
-  const localized = selectLocalizedSkillText(raw);
+function normalizeSkill(raw, locale = "") {
+  const localized = selectLocalizedSkillText(raw, locale);
   return {
     id: String(raw.id),
     display_name: localized.displayName,
@@ -104,14 +104,14 @@ function normalizeSkill(raw) {
     forbidden: Array.isArray(raw.forbidden) ? [...raw.forbidden] : [],
     eval_hash: String(raw.eval_hash || ""),
     eval_passed: Boolean(raw.eval_passed),
-    templates: Array.isArray(raw.templates) ? raw.templates.map(normalizeTemplate) : []
+    templates: Array.isArray(raw.templates) ? raw.templates.map((template) => normalizeTemplate(template, locale)) : []
   };
 }
 
-function selectLocalizedSkillText(raw) {
+function selectLocalizedSkillText(raw, locale = "") {
   const locales = normalizeSkillLocales(raw.locales);
-  const locale = preferredSkillLocale();
-  const text = locales[locale] || locales.en || {};
+  const selectedLocale = normalizePreferredLocale(locale);
+  const text = locales[selectedLocale] || locales.en || {};
   return {
     displayName: String(text.display_name || raw.display_name || raw.id),
     description: String(text.description || raw.description || "")
@@ -131,7 +131,10 @@ function normalizeSkillLocales(rawLocales) {
   );
 }
 
-function preferredSkillLocale() {
+function normalizePreferredLocale(locale = "") {
+  const normalized = String(locale || "").toLowerCase();
+  if (normalized.startsWith("ru")) return "ru";
+  if (normalized.startsWith("en")) return "en";
   const nav = globalThis.navigator;
   const languages = Array.isArray(nav?.languages) && nav.languages.length
     ? nav.languages
@@ -141,12 +144,46 @@ function preferredSkillLocale() {
     : "en";
 }
 
-function normalizeTemplate(raw) {
+function normalizeTemplate(raw, locale = "") {
+  const localized = selectLocalizedTemplateText(raw, locale);
   return {
     id: String(raw.id),
-    name: String(raw.name || raw.id),
+    name: localized.name,
+    description: localized.description,
     trigger_kind: String(raw.trigger_kind || "schedule"),
     trigger_label: String(raw.trigger_label || ""),
+    params: normalizeTemplateParams(raw.params),
+    variant: raw.variant ? String(raw.variant) : null,
     enabled_instance_id: raw.enabled_instance_id ? String(raw.enabled_instance_id) : null
   };
+}
+
+function selectLocalizedTemplateText(raw, locale = "") {
+  const locales = normalizeTemplateLocales(raw.locales);
+  const selectedLocale = normalizePreferredLocale(locale);
+  const text = locales[selectedLocale] || locales.en || {};
+  return {
+    name: String(text.name || raw.name || raw.id),
+    description: String(text.description || raw.description || "")
+  };
+}
+
+function normalizeTemplateLocales(rawLocales) {
+  if (!rawLocales || typeof rawLocales !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(rawLocales).map(([locale, text]) => [
+      String(locale),
+      {
+        name: String(text?.name || ""),
+        description: String(text?.description || "")
+      }
+    ])
+  );
+}
+
+function normalizeTemplateParams(rawParams) {
+  if (!rawParams || typeof rawParams !== "object" || Array.isArray(rawParams)) return {};
+  return Object.fromEntries(
+    Object.entries(rawParams).map(([key, value]) => [String(key), String(value)])
+  );
 }

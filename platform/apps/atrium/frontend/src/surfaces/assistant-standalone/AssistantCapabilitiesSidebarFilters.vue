@@ -4,10 +4,12 @@ import { computed } from "vue";
 const props = defineProps({
   skills: { type: Array, required: true },
   filters: { type: Object, required: true },
-  availableTrustClasses: { type: Set, required: true }
+  availableTrustClasses: { type: Set, required: true },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["filter-change"]);
+const t = (key, vars = {}) => props.t(key, vars);
 
 const countBy = (predicate) => props.skills.filter(predicate).length;
 
@@ -15,7 +17,7 @@ const stageOptions = computed(() => {
   const stages = new Set(props.skills.map((s) => s.stage));
   return Array.from(stages).sort((a, b) => a - b).map((stage) => ({
     value: stage,
-    label: `Stage ${stage}`,
+    label: t("assistant.filters.stageValue", { value: stage }),
     count: countBy((s) => s.stage === stage)
   }));
 });
@@ -67,18 +69,18 @@ const isAllActive = (key) => props.filters[key] === null;
 <template>
   <div class="assistant-sidebar-filters">
     <p v-if="!showAnyFilter" class="assistant-sidebar-filters__empty">
-      {{ skills.length }} skills в каталоге. Фильтры появятся, когда каталог станет разнообразнее.
+      {{ t("assistant.capabilities.filterSummary", { count: skills.length }) }}
     </p>
 
     <section v-if="showStageFilter" class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Stage</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.stage") }}</h3>
       <button
         type="button"
         class="assistant-sidebar-filters__item"
         :class="{ 'assistant-sidebar-filters__item--active': isAllActive('stage') }"
         @click="setFilter('stage', null)"
       >
-        <span>Все</span>
+        <span>{{ t("assistant.filters.all") }}</span>
         <span class="assistant-sidebar-filters__count">{{ skills.length }}</span>
       </button>
       <button
@@ -95,7 +97,7 @@ const isAllActive = (key) => props.filters[key] === null;
     </section>
 
     <section v-if="showDomainFilter" class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Domain</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.domain") }}</h3>
       <button
         v-for="opt in domainOptions"
         :key="`domain-${opt.value}`"
@@ -110,7 +112,7 @@ const isAllActive = (key) => props.filters[key] === null;
     </section>
 
     <section v-if="showOutputFilter" class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Output</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.output") }}</h3>
       <button
         v-for="opt in outputOptions"
         :key="`output-${opt.value}`"
@@ -125,7 +127,7 @@ const isAllActive = (key) => props.filters[key] === null;
     </section>
 
     <section v-if="showTrustFilter" class="assistant-sidebar-filters__group">
-      <h3 class="assistant-sidebar-filters__title">Trust class</h3>
+      <h3 class="assistant-sidebar-filters__title">{{ t("assistant.filters.trustClass") }}</h3>
       <button
         v-for="opt in trustOptions"
         :key="`trust-${opt.value}`"

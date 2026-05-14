@@ -1,12 +1,15 @@
 <script setup>
-defineProps({
-  block: { type: Object, required: true }
+const props = defineProps({
+  block: { type: Object, required: true },
+  t: { type: Function, required: true }
 });
+
+const t = (key, vars = {}) => props.t(key, vars);
 </script>
 
 <template>
   <p class="assistant-unknown-block" role="alert">
-    Неподдерживаемый блок: {{ block?.type || "unknown" }}
+    {{ t("assistant.block.unknown", { type: block?.type || "unknown" }) }}
   </p>
 </template>
 

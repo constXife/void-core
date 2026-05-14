@@ -11,8 +11,11 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   hasSession: { type: Boolean, default: false },
   suggestions: { type: Array, default: () => [] },
-  sessionKey: { type: String, default: "draft" }
+  sessionKey: { type: String, default: "draft" },
+  t: { type: Function, required: true }
 });
+
+const t = (key, vars = {}) => props.t(key, vars);
 
 const messagesWithSeparators = computed(() => {
   const result = [];
@@ -37,16 +40,14 @@ function describeMessageDay(value) {
   const dayMs = 24 * 60 * 60 * 1000;
   const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-  if (startOfDay === startOfToday) return { key, label: "Сегодня" };
-  if (startOfDay === startOfToday - dayMs) return { key, label: "Вчера" };
-  const months = [
-    "января", "февраля", "марта", "апреля", "мая", "июня",
-    "июля", "августа", "сентября", "октября", "ноября", "декабря"
-  ];
+  if (startOfDay === startOfToday) return { key, label: t("assistant.conversation.today") };
+  if (startOfDay === startOfToday - dayMs) return { key, label: t("assistant.conversation.yesterday") };
   const sameYear = date.getFullYear() === now.getFullYear();
-  const label = sameYear
-    ? `${date.getDate()} ${months[date.getMonth()]}`
-    : `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  const label = new Intl.DateTimeFormat(document.documentElement.lang || "en-US", {
+    day: "numeric",
+    month: "long",
+    ...(sameYear ? {} : { year: "numeric" })
+  }).format(date);
   return { key, label };
 }
 
@@ -110,10 +111,11 @@ watch(
         <AssistantEmptyState
           v-if="showEmpty && !loading"
           :suggestions="suggestions"
+          :t="t"
           @choose="(value) => emit('choose-suggestion', value)"
         />
         <p v-else-if="loading && messages.length === 0" class="assistant-conversation__loading">
-          Загружаем чат…
+          {{ t("assistant.conversation.loading") }}
         </p>
         <TransitionGroup v-else name="assistant-message" tag="div" class="assistant-conversation__list" appear>
           <template v-for="entry in messagesWithSeparators" :key="entry.id">
@@ -134,6 +136,7 @@ watch(
               :show-delete="
                 !streaming && entry.message.role === 'assistant' && isDeletablePair(entry.message.id)
               "
+              :t="t"
               @regenerate="emit('regenerate')"
               @delete="(id) => emit('delete-message', id)"
               @approve-skills="(ids) => emit('approve-skills', ids)"

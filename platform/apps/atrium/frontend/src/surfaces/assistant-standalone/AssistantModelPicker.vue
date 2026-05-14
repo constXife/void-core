@@ -6,13 +6,15 @@ const props = defineProps({
   targets: { type: Array, default: () => [] },
   selectedId: { type: String, default: "" },
   preferredId: { type: String, default: "" },
-  disabled: { type: Boolean, default: false }
+  disabled: { type: Boolean, default: false },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["select"]);
 
 const open = ref(false);
 const rootRef = ref(null);
+const t = (key, vars = {}) => props.t(key, vars);
 
 // Группировка targets по provider_id с сохранением порядка появления.
 const grouped = computed(() => {
@@ -44,8 +46,8 @@ const triggerLabel = computed(() => {
     const model = activeTarget.value.model || "";
     return [provider, model].filter(Boolean).join(" · ");
   }
-  if (props.selectedId) return `${props.selectedId} (недоступна)`;
-  return "Модель не выбрана";
+  if (props.selectedId) return t("assistant.composer.modelMissing", { id: props.selectedId });
+  return t("assistant.composer.noModel");
 });
 
 const toggle = () => {
@@ -132,7 +134,7 @@ onUnmounted(() => {
             v-if="target.id === preferredId"
             :size="12"
             class="assistant-model-picker__badge"
-            :aria-label="'По умолчанию для новых чатов'"
+            :aria-label="t('assistant.composer.defaultForNew')"
           />
         </button>
       </div>

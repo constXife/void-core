@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
-  block: { type: Object, required: true }
+  block: { type: Object, required: true },
+  t: { type: Function, required: true }
 });
 </script>
 

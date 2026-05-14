@@ -2,6 +2,32 @@ import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 import AssistantMessage from "./AssistantMessage.vue";
 
+const messages = {
+  "assistant.message.proposalOne": "Предлагаю запустить {name}",
+  "assistant.message.proposalBatch": "Предлагаю запустить batch: {names}",
+  "assistant.message.awaitingApproval": "ожидает подтверждения",
+  "assistant.message.approve": "Запускать",
+  "assistant.message.reject": "Не запускать",
+  "assistant.message.changeLayout": "Изменить раскладку skill",
+  "assistant.message.copy": "Скопировать сообщение",
+  "assistant.message.regenerate": "Сгенерировать заново",
+  "assistant.message.deletePair": "Удалить пару сообщений",
+  "assistant.message.stopped": "Генерация остановлена.",
+  "assistant.layout.compact": "Compact",
+  "assistant.layout.cards": "Cards",
+  "assistant.metric.score": "баллов",
+  "assistant.metric.descendants": "комментариев",
+  "assistant.block.unknown": "Неподдерживаемый блок: {type}"
+};
+
+const t = (key, vars = {}) => {
+  let value = messages[key] || key;
+  for (const [name, replacement] of Object.entries(vars)) {
+    value = value.replace(`{${name}}`, String(replacement));
+  }
+  return value;
+};
+
 describe("AssistantMessage", () => {
   it("places assistant actions on the timestamp row", () => {
     const wrapper = mount(AssistantMessage, {
@@ -12,7 +38,8 @@ describe("AssistantMessage", () => {
           content: "Ответ",
           created_at: "2026-05-06T08:07:00Z"
         },
-        showRegenerate: true
+        showRegenerate: true,
+        t
       }
     });
 
@@ -31,7 +58,8 @@ describe("AssistantMessage", () => {
           content: "Ответ",
           created_at: "2026-05-06T08:07:00Z"
         },
-        showDelete: true
+        showDelete: true,
+        t
       }
     });
 
@@ -50,7 +78,8 @@ describe("AssistantMessage", () => {
           created_at: "2026-05-06T08:07:00Z"
         },
         streaming: true,
-        streamingStatus: "Модель начала обработку…"
+        streamingStatus: "Модель начала обработку…",
+        t
       }
     });
 
@@ -80,7 +109,8 @@ describe("AssistantMessage", () => {
               }
             ]
           }
-        }
+        },
+        t
       }
     });
 
@@ -102,7 +132,8 @@ describe("AssistantMessage", () => {
             { id: "skill-run-1", skill_id: "digest_hackernews", status: "awaiting_approval" },
             { id: "skill-run-2", skill_id: "digest_github", status: "awaiting_approval" }
           ]
-        }
+        },
+        t
       }
     });
 
@@ -126,7 +157,8 @@ describe("AssistantMessage", () => {
             skill_id: "digest_hackernews",
             status: "awaiting_approval"
           }
-        }
+        },
+        t
       }
     });
 
@@ -173,7 +205,8 @@ describe("AssistantMessage", () => {
               ]
             }
           ]
-        }
+        },
+        t
       }
     });
 
@@ -204,7 +237,8 @@ describe("AssistantMessage", () => {
               ]
             }
           ]
-        }
+        },
+        t
       }
     });
 
@@ -224,7 +258,8 @@ describe("AssistantMessage", () => {
           role: "user",
           content: "Вопрос",
           created_at: "2026-05-06T08:07:00Z"
-        }
+        },
+        t
       }
     });
 
@@ -241,7 +276,8 @@ describe("AssistantMessage", () => {
           role: "user",
           content: "Вопрос",
           created_at: "2026-05-06T08:07:00Z"
-        }
+        },
+        t
       }
     });
 
@@ -261,7 +297,8 @@ describe("AssistantMessage", () => {
           role: "user",
           content: "Вопрос",
           created_at: "2026-05-06T08:07:00Z"
-        }
+        },
+        t
       }
     });
 

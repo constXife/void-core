@@ -25,6 +25,10 @@ const props = defineProps({
     type: Object,
     default: null
   },
+  lang: {
+    type: String,
+    default: "en"
+  },
   t: {
     type: Function,
     required: true
@@ -39,19 +43,13 @@ const SIDEBAR_MIN_WIDTH = 220;
 const SIDEBAR_MAX_WIDTH = 480;
 const SIDEBAR_DEFAULT_WIDTH = 280;
 
-const SUGGESTIONS = [
-  "Объясни код",
-  "Сгенерируй идею",
-  "Помоги с письмом",
-  "Сделай резюме"
-];
-
 const route = useRoute();
 const router = useRouter();
 const coreStore = useAssistantStore();
 const sessionsStore = useAssistantSessionsStore();
 const skillsStore = useAssistantSkillsStore();
 const routinesStore = useAssistantRoutinesStore();
+const t = (key, vars = {}) => props.t(key, vars);
 
 const { enabled, loaded, targets, selectedTargetId } = storeToRefs(coreStore);
 const {
@@ -104,6 +102,21 @@ const {
 } = storeToRefs(routinesStore);
 const capabilitiesCount = computed(() => (skillsCount.value > 0 ? skillsCount.value : null));
 const routinesCount = computed(() => (routinesLoaded.value ? instancesCount.value : null));
+const suggestions = computed(() => [
+  t("assistant.suggestion.explainCode"),
+  t("assistant.suggestion.generateIdea"),
+  t("assistant.suggestion.helpEmail"),
+  t("assistant.suggestion.summarize")
+]);
+const localizedGroupedSessions = computed(() =>
+  groupedSessions.value.map((group) => ({
+    ...group,
+    label: t(`assistant.sidebar.group.${group.id}`)
+  }))
+);
+const streamingStatusText = computed(() =>
+  streamingStatus.value ? t(`assistant.status.${streamingStatus.value}`) : ""
+);
 
 const onTabChange = (tabId) => {
   if (tabId === activeTab.value) return;
@@ -117,16 +130,24 @@ const onTabChange = (tabId) => {
 
 // Capabilities handlers.
 const onSkillsFilterChange = ({ key, value }) => skillsStore.setFilter(key, value);
-const onEnableTemplate = ({ skillId, templateId }) => {
-  // TODO Wave 4: открыть AssistantRoutineDrawer в edit mode с populated values из template.
-  console.info("[wave2] enable-template requested", { skillId, templateId });
+const onEnableTemplate = async ({ skillId, params = {} }) => {
+  router.push({ name: "assistant-home" });
+  await sessionsStore.proposeSkillRun({
+    skillId,
+    targetId: composerTargetId.value,
+    params,
+    locale: props.lang
+  });
+  if (currentSessionId.value && route.params.id !== currentSessionId.value) {
+    router.replace({ name: "assistant-chat", params: { id: currentSessionId.value } });
+  }
 };
 const onGoToRoutine = (instanceId) => {
   router.push({ name: "assistant-routine-inspect", params: { instanceId } });
 };
 const onAskInChat = async (skillId) => {
   router.push({ name: "assistant-home" });
-  await sessionsStore.proposeSkillRun({ skillId, targetId: composerTargetId.value });
+  await sessionsStore.proposeSkillRun({ skillId, targetId: composerTargetId.value, locale: props.lang });
   if (currentSessionId.value && route.params.id !== currentSessionId.value) {
     router.replace({ name: "assistant-chat", params: { id: currentSessionId.value } });
   }
@@ -298,7 +319,7 @@ const onNewChat = () => {
 };
 
 const onRename = async (session) => {
-  const next = window.prompt("Новое название чата", session.title || "");
+  const next = window.prompt(t("assistant.dialog.renameTitle"), session.title || "");
   if (next === null) return;
   const trimmed = String(next).trim();
   if (!trimmed) return;
@@ -311,7 +332,9 @@ const onRename = async (session) => {
 
 const onDelete = async (session) => {
   const confirmed = window.confirm(
-    `Удалить чат «${session.title || "Без названия"}»? Его можно восстановить из корзины.`
+    t("assistant.dialog.deleteConfirm", {
+      title: session.title || t("assistant.sidebar.untitled")
+    })
   );
   if (!confirmed) return;
   try {
@@ -371,13 +394,20 @@ watch(sidebarCollapsed, (next) => {
   saveSidebarPreference(next);
 });
 
+watch(
+  () => props.lang,
+  (locale) => {
+    skillsStore.loadSkills({ force: true, locale });
+  }
+);
+
 onMounted(async () => {
   await coreStore.loadModels({ force: true });
   await sessionsStore.loadSessions();
   await syncFromRoute();
   // Подгружаем routines + skills в фоне, чтобы counts в tab badges были корректными
   // ещё до перехода в Capabilities/Routines tab.
-  skillsStore.loadSkills();
+  skillsStore.loadSkills({ locale: props.lang });
   routinesStore.loadInstances();
 });
 
@@ -456,7 +486,7 @@ function savePreferredTarget(value) {
     :style="sidebarStyle"
   >
     <AssistantSidebar
-      :groups="groupedSessions"
+      :groups="localizedGroupedSessions"
       :trashed="trashedSessions"
       :trashed-loaded="trashedLoaded"
       :active-id="currentSessionId"
@@ -464,6 +494,7 @@ function savePreferredTarget(value) {
       :collapsed="sidebarCollapsed"
       :identity="props.identity"
       :active-tab="activeTab"
+      :t="t"
       @new-chat="onNewChat"
       @select="onSelect"
       @rename="onRename"
@@ -482,6 +513,7 @@ function savePreferredTarget(value) {
           :skills="skills"
           :filters="skillFilters"
           :available-trust-classes="availableTrustClasses"
+          :t="t"
           @filter-change="onSkillsFilterChange"
         />
       </template>
@@ -490,6 +522,7 @@ function savePreferredTarget(value) {
         <AssistantRoutinesSidebarFilters
           :instances="instances"
           :filters="routineFilters"
+          :t="t"
           @filter-change="onRoutinesFilterChange"
         />
       </template>
@@ -517,11 +550,12 @@ function savePreferredTarget(value) {
           :messages="currentMessages"
           :current-user="props.currentUser"
           :streaming="streaming"
-          :streaming-status="streamingStatus"
+          :streaming-status="streamingStatusText"
           :loading="loadingCurrent"
           :has-session="Boolean(currentSession)"
-          :suggestions="SUGGESTIONS"
+          :suggestions="suggestions"
           :session-key="currentSessionId || 'draft'"
+          :t="t"
           @regenerate="onRegenerate"
           @delete-message="onDeleteMessage"
           @choose-suggestion="onChooseSuggestion"
@@ -539,6 +573,7 @@ function savePreferredTarget(value) {
           :preferred-target-id="preferredTargetId"
           :picker-disabled="composerDisabled || streaming"
           :disabled="composerDisabled"
+          :t="t"
           @send="onSend"
           @stop="onStop"
           @select-target="onSelectTarget"
@@ -554,9 +589,9 @@ function savePreferredTarget(value) {
           role="status"
           aria-live="polite"
         >
-          <span>Удаление через 5 секунд</span>
+          <span>{{ t("assistant.undo.pending") }}</span>
           <button type="button" class="assistant-standalone__undo-button" @click="onUndoMessageDelete">
-            Отменить
+            {{ t("assistant.undo.cancel") }}
           </button>
         </div>
       </section>
@@ -567,6 +602,8 @@ function savePreferredTarget(value) {
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
       >
         <AssistantCapabilitiesPanel
+          :lang="props.lang"
+          :t="t"
           @enable-template="onEnableTemplate"
           @go-to-routine="onGoToRoutine"
           @ask-in-chat="onAskInChat"
@@ -579,6 +616,7 @@ function savePreferredTarget(value) {
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
       >
         <AssistantRoutinesPanel
+          :t="t"
           @open-drawer="onOpenRoutineDrawer"
           @open-runs="onOpenRoutineRuns"
           @pick-template="onPickTemplate"
@@ -592,6 +630,7 @@ function savePreferredTarget(value) {
         :mode="drawerMode"
         :instance="drawerInstance"
         :saving="routinesSaving"
+        :t="t"
         @close="onDrawerClose"
         @switch-to-edit="onDrawerSwitchToEdit"
         @save="onDrawerSave"

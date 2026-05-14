@@ -4,6 +4,10 @@ import { storeToRefs } from "pinia";
 import { useAssistantRoutinesStore } from "../../stores/assistant-routines.js";
 import AssistantRoutineCard from "./AssistantRoutineCard.vue";
 
+defineProps({
+  t: { type: Function, required: true }
+});
+
 const emit = defineEmits([
   "open-drawer",
   "open-runs",
@@ -42,35 +46,34 @@ onMounted(() => {
     <div class="assistant-routines__inner">
       <header class="assistant-routines__head">
         <div>
-          <h1 class="assistant-routines__title">Routines</h1>
+          <h1 class="assistant-routines__title">{{ t("assistant.routines.title") }}</h1>
           <p class="assistant-routines__sub">
-            Это твои настроенные программы ассистента — ContractInstance per-owner.
-            Чтобы создать новую, попроси в chat или выбери template из Capabilities.
+            {{ t("assistant.routines.intro") }}
           </p>
         </div>
         <button
           type="button"
           class="assistant-routines__new"
           @click="onPickTemplate"
-        >+ Из template…</button>
+        >+ {{ t("assistant.routines.newFromTemplate") }}</button>
       </header>
 
-      <p v-if="loading && !loaded" class="assistant-routines__hint">Загружаем…</p>
+      <p v-if="loading && !loaded" class="assistant-routines__hint">{{ t("assistant.routines.loading") }}</p>
 
       <p v-else-if="status" class="assistant-routines__error" role="alert">{{ status }}</p>
 
       <template v-else-if="loaded">
         <div v-if="isEmptyOverall" class="assistant-routines__empty">
-          <h2 class="assistant-routines__empty-title">Пока ничего не настроено</h2>
+          <h2 class="assistant-routines__empty-title">{{ t("assistant.routines.emptyTitle") }}</h2>
           <p class="assistant-routines__empty-text">
-            Заведи routine через диалог в Chat или нажми «+ Из template…» — наверху.
+            {{ t("assistant.routines.emptyText") }}
           </p>
         </div>
 
         <div v-else-if="isEmptyAfterFilter" class="assistant-routines__hint">
-          <p>Ничего не нашлось под текущие фильтры.</p>
+          <p>{{ t("assistant.routines.noResults") }}</p>
           <button type="button" class="assistant-routines__reset" @click="onResetFilters">
-            Сбросить фильтры
+            {{ t("assistant.routines.resetFilters") }}
           </button>
         </div>
 
@@ -80,6 +83,7 @@ onMounted(() => {
             :key="routine.id"
             :routine="routine"
             :toggle-busy="saving"
+            :t="t"
             @toggle="onToggle"
             @open-drawer="onOpenDrawer"
             @open-runs="onOpenRuns"

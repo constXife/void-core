@@ -1,19 +1,21 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { MoreHorizontal, Pencil, Trash2, RotateCcw } from "lucide-vue-next";
 
 const props = defineProps({
   session: { type: Object, required: true },
   active: { type: Boolean, default: false },
-  trashed: { type: Boolean, default: false }
+  trashed: { type: Boolean, default: false },
+  t: { type: Function, required: true }
 });
 
 const emit = defineEmits(["select", "rename", "delete", "restore"]);
 
 const menuOpen = ref(false);
 const rootRef = ref(null);
+const t = (key, vars = {}) => props.t(key, vars);
 
-const placeholderTitle = "Без названия";
+const placeholderTitle = computed(() => t("assistant.sidebar.untitled"));
 
 const onSelect = () => {
   if (props.trashed) return;
@@ -84,7 +86,7 @@ onBeforeUnmount(() => {
     <button
       type="button"
       class="assistant-sidebar-item__menu-trigger"
-      :aria-label="'Open chat menu'"
+      :aria-label="t('assistant.sidebar.openMenu')"
       @click="toggleMenu"
     >
       <MoreHorizontal :size="14" />
@@ -98,7 +100,7 @@ onBeforeUnmount(() => {
         @click="onRename"
       >
         <Pencil :size="14" />
-        <span>Переименовать</span>
+        <span>{{ t("assistant.sidebar.rename") }}</span>
       </button>
       <button
         v-if="!trashed"
@@ -107,7 +109,7 @@ onBeforeUnmount(() => {
         @click="onDelete"
       >
         <Trash2 :size="14" />
-        <span>Удалить</span>
+        <span>{{ t("assistant.sidebar.delete") }}</span>
       </button>
       <button
         v-if="trashed"
@@ -116,7 +118,7 @@ onBeforeUnmount(() => {
         @click="onRestore"
       >
         <RotateCcw :size="14" />
-        <span>Восстановить</span>
+        <span>{{ t("assistant.sidebar.restore") }}</span>
       </button>
     </div>
   </div>
