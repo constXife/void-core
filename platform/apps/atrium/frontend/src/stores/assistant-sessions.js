@@ -684,7 +684,7 @@ function normalizeMessageList(value) {
     skill_run: normalizeSkillRun(entry?.skill_run),
     skill_runs: normalizeSkillRunList(entry?.skill_runs),
     narration_content: String(entry?.narration_content || ""),
-    run_steps: [],
+    run_steps: normalizeRunStepList(entry?.run_steps),
     stopped: Boolean(entry?.stopped),
     error: Boolean(entry?.error),
     created_at: String(entry?.created_at || "")
@@ -723,6 +723,11 @@ function normalizeRunStep(value) {
     skill_id: value.skill_id ? String(value.skill_id) : "",
     skill_run_id: value.skill_run_id ? String(value.skill_run_id) : ""
   };
+}
+
+function normalizeRunStepList(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeRunStep).filter(Boolean);
 }
 
 function normalizeRun(payload) {

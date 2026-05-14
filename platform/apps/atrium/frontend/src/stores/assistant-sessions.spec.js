@@ -305,6 +305,44 @@ describe("assistant sessions store", () => {
     await pending;
   });
 
+  it("loads persisted narration and run steps from session history", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({
+        ...sessionPayload(),
+        messages: [
+          {
+            ...assistantMessage("projection"),
+            narration_content: "Собираю данные.",
+            run_steps: [
+              {
+                id: "skill-run:skill-run-1",
+                key: "skill_run",
+                status: "completed",
+                skill_id: "digest_hackernews",
+                skill_run_id: "skill-run-1"
+              }
+            ]
+          }
+        ],
+        active_run: null
+      })
+    );
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+
+    expect(store.currentMessages[0].narration_content).toBe("Собираю данные.");
+    expect(store.currentMessages[0].run_steps).toEqual([
+      {
+        id: "skill-run:skill-run-1",
+        key: "skill_run",
+        status: "completed",
+        skill_id: "digest_hackernews",
+        skill_run_id: "skill-run-1"
+      }
+    ]);
+  });
+
   it("approves a skill batch through the backend batch endpoint", async () => {
     let sessionReads = 0;
     globalThis.fetch = vi.fn(async (url, init = {}) => {
