@@ -470,7 +470,9 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     if (event.event === "delta") {
       streamingPhase.value = "receiving";
       const text = String(event.json?.text || "");
-      if (text && event.json?.kind === "narration") {
+      if (event.json?.kind === "step") {
+        upsertAssistantRunStep(assistantMessageId, event.json?.step);
+      } else if (text && event.json?.kind === "narration") {
         appendAssistantNarration(assistantMessageId, text);
       } else if (text) {
         appendAssistantText(assistantMessageId, text);
@@ -516,6 +518,19 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
         ? { ...message, narration_content: `${message.narration_content || ""}${text}` }
         : message
     );
+  };
+
+  const upsertAssistantRunStep = (id, rawStep) => {
+    const step = normalizeRunStep(rawStep);
+    if (!step) return;
+    currentMessages.value = currentMessages.value.map((message) => {
+      if (message.id !== id) return message;
+      const steps = Array.isArray(message.run_steps) ? message.run_steps : [];
+      const nextSteps = steps.some((item) => item.id === step.id)
+        ? steps.map((item) => (item.id === step.id ? { ...item, ...step } : item))
+        : [...steps, step];
+      return { ...message, run_steps: nextSteps };
+    });
   };
 
   const markMessage = (id, patch) => {
@@ -610,6 +625,7 @@ function createOptimisticMessage(role, content) {
     skill_run: null,
     skill_runs: [],
     narration_content: "",
+    run_steps: [],
     error: false,
     stopped: false,
     optimistic: true
@@ -668,6 +684,7 @@ function normalizeMessageList(value) {
     skill_run: normalizeSkillRun(entry?.skill_run),
     skill_runs: normalizeSkillRunList(entry?.skill_runs),
     narration_content: String(entry?.narration_content || ""),
+    run_steps: [],
     stopped: Boolean(entry?.stopped),
     error: Boolean(entry?.error),
     created_at: String(entry?.created_at || "")
@@ -691,6 +708,21 @@ function normalizeSkillRun(value) {
 function normalizeSkillRunList(value) {
   if (!Array.isArray(value)) return [];
   return value.map(normalizeSkillRun).filter(Boolean);
+}
+
+function normalizeRunStep(value) {
+  if (!value || typeof value !== "object") return null;
+  const id = String(value.id || "");
+  const key = String(value.key || "");
+  const status = String(value.status || "");
+  if (!id || !key || !status) return null;
+  return {
+    id,
+    key,
+    status,
+    skill_id: value.skill_id ? String(value.skill_id) : "",
+    skill_run_id: value.skill_run_id ? String(value.skill_run_id) : ""
+  };
 }
 
 function normalizeRun(payload) {

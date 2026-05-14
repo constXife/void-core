@@ -183,7 +183,9 @@ export const useAssistantStore = defineStore("void-assistant", () => {
   const applyStreamEvent = (event, assistantMessageId) => {
     if (event.event === "delta") {
       const text = String(event.json?.text || "");
-      if (text && event.json?.kind === "narration") {
+      if (event.json?.kind === "step") {
+        upsertAssistantRunStep(assistantMessageId, event.json?.step);
+      } else if (text && event.json?.kind === "narration") {
         appendAssistantNarration(assistantMessageId, text);
       } else if (text) {
         appendAssistantText(assistantMessageId, text);
@@ -219,6 +221,19 @@ export const useAssistantStore = defineStore("void-assistant", () => {
         ? { ...message, narration_content: `${message.narration_content || ""}${text}` }
         : message
     );
+  };
+
+  const upsertAssistantRunStep = (id, rawStep) => {
+    const step = normalizeRunStep(rawStep);
+    if (!step) return;
+    messages.value = messages.value.map((message) => {
+      if (message.id !== id) return message;
+      const steps = Array.isArray(message.run_steps) ? message.run_steps : [];
+      const nextSteps = steps.some((item) => item.id === step.id)
+        ? steps.map((item) => (item.id === step.id ? { ...item, ...step } : item))
+        : [...steps, step];
+      return { ...message, run_steps: nextSteps };
+    });
   };
 
   const markAssistantMessage = (id, patch) => {
@@ -269,6 +284,7 @@ function createMessage(role, content) {
     content,
     skill_run: null,
     narration_content: "",
+    run_steps: [],
     error: false,
     stopped: false
   };
@@ -291,4 +307,19 @@ function normalizeSkillRun(value) {
   const blocks = Array.isArray(value.blocks) ? value.blocks : [];
   if (!id || blocks.length === 0) return null;
   return { id, blocks };
+}
+
+function normalizeRunStep(value) {
+  if (!value || typeof value !== "object") return null;
+  const id = String(value.id || "");
+  const key = String(value.key || "");
+  const status = String(value.status || "");
+  if (!id || !key || !status) return null;
+  return {
+    id,
+    key,
+    status,
+    skill_id: value.skill_id ? String(value.skill_id) : "",
+    skill_run_id: value.skill_run_id ? String(value.skill_run_id) : ""
+  };
 }

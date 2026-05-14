@@ -762,6 +762,42 @@
   color: var(--ink-muted);
 }
 
+.assistant-message__steps {
+  display: grid;
+  gap: 0.35rem;
+  width: min(32rem, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-message__step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.75rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--surface-base);
+  color: var(--ink-secondary);
+  font-size: var(--text-xs, 12px);
+}
+
+.assistant-message__step span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.assistant-message__step--running span:last-child {
+  color: var(--accent-purple);
+}
+
+.assistant-message__step--failed span:last-child {
+  color: var(--danger, #f85149);
+}
+
 .assistant-message__proposal {
   display: flex;
   flex-direction: column;

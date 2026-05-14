@@ -54,6 +54,12 @@ const hasSkillBlocks = computed(() => skillBlocks.value.length > 0);
 const showNarration = computed(
   () => isAssistant.value && narrationContent.value && !hasSkillBlocks.value
 );
+const runSteps = computed(() =>
+  Array.isArray(props.message.run_steps) ? props.message.run_steps : []
+);
+const showRunSteps = computed(
+  () => isAssistant.value && runSteps.value.length > 0 && !hasSkillBlocks.value
+);
 const isSkillProposal = computed(() => props.message.message_kind === "skill_proposal");
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
 const layoutVariant = computed(() => props.message.layout_config?.variant || "cards");
@@ -130,6 +136,34 @@ function proposalStatusLabel(status) {
   }
 }
 
+function stepLabel(step) {
+  switch (step.key) {
+    case "skill_proposal":
+      return t("assistant.step.skillProposal", {
+        skill: skillDisplayName(step.skill_id || "")
+      });
+    case "skill_run":
+      return t("assistant.step.skillRun", {
+        skill: skillDisplayName(step.skill_id || "")
+      });
+    default:
+      return t("assistant.step.unknown");
+  }
+}
+
+function stepStatusLabel(status) {
+  switch (status) {
+    case "running":
+      return t("assistant.step.status.running");
+    case "completed":
+      return t("assistant.step.status.completed");
+    case "failed":
+      return t("assistant.step.status.failed");
+    default:
+      return t("assistant.step.status.unknown");
+  }
+}
+
 const copyContent = async () => {
   if (!navigator?.clipboard) return;
   try {
@@ -183,6 +217,17 @@ const onChangeLayout = () => {
         <p v-if="showNarration" class="assistant-message__narration">
           {{ narrationContent }}
         </p>
+        <ul v-if="showRunSteps" class="assistant-message__steps" aria-live="polite">
+          <li
+            v-for="step in runSteps"
+            :key="step.id"
+            class="assistant-message__step"
+            :class="`assistant-message__step--${step.status}`"
+          >
+            <span>{{ stepLabel(step) }}</span>
+            <span>{{ stepStatusLabel(step.status) }}</span>
+          </li>
+        </ul>
         <AssistantMarkdown
           v-if="!isSkillProposal && !hasSkillBlocks && (message.content || !isStreamingTail)"
           :content="message.content"

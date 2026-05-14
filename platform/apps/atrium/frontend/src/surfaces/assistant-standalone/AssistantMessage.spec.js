@@ -13,6 +13,13 @@ const messages = {
   "assistant.message.regenerate": "Сгенерировать заново",
   "assistant.message.deletePair": "Удалить пару сообщений",
   "assistant.message.stopped": "Генерация остановлена.",
+  "assistant.step.skillProposal": "Подготовка {skill}",
+  "assistant.step.skillRun": "Запуск {skill}",
+  "assistant.step.unknown": "Шаг ассистента",
+  "assistant.step.status.running": "выполняется",
+  "assistant.step.status.completed": "готово",
+  "assistant.step.status.failed": "ошибка",
+  "assistant.step.status.unknown": "статус неизвестен",
   "assistant.layout.compact": "Compact",
   "assistant.layout.cards": "Cards",
   "assistant.metric.score": "баллов",
@@ -107,6 +114,34 @@ describe("AssistantMessage", () => {
     expect(wrapper.find(".assistant-message__narration").text()).toBe(
       "Подбираю подходящий навык."
     );
+    expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
+  });
+
+  it("renders structured run steps outside markdown", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "",
+          run_steps: [
+            {
+              id: "skill-run:skill-run-1",
+              key: "skill_run",
+              status: "running",
+              skill_id: "digest_hackernews",
+              skill_run_id: "skill-run-1"
+            }
+          ],
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        streaming: true,
+        t
+      }
+    });
+
+    expect(wrapper.find(".assistant-message__step").text()).toContain("Запуск Hacker News digest");
+    expect(wrapper.find(".assistant-message__step").text()).toContain("выполняется");
     expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
   });
 
