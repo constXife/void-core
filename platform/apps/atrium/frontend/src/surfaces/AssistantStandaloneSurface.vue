@@ -63,6 +63,7 @@ const {
   draft,
   streaming,
   streamingStatus,
+  statusKind,
   status,
   loadingSessions,
   loadingCurrent,
@@ -579,7 +580,13 @@ function savePreferredTarget(value) {
           @select-target="onSelectTarget"
         />
 
-        <p v-if="status" class="assistant-standalone__status" role="status">
+        <p
+          v-if="status"
+          class="assistant-standalone__status"
+          :class="{ 'assistant-standalone__status--error': statusKind === 'error' }"
+          :role="statusKind === 'error' ? 'alert' : 'status'"
+          :aria-live="statusKind === 'error' ? 'assertive' : 'polite'"
+        >
           {{ status }}
         </p>
 

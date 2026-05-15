@@ -526,6 +526,7 @@
 /* ---- Tab panels ---- */
 
 .assistant-standalone__tab-panel {
+  position: relative;
   min-height: 0;
   overflow: hidden;
   display: grid;
@@ -1600,15 +1601,35 @@
 
 .assistant-standalone__status {
   position: absolute;
-  bottom: calc(100% - 0.4rem);
-  right: 1rem;
+  left: 50%;
+  bottom: 7.4rem;
+  z-index: 9;
   margin: 0;
-  padding: 0.3rem 0.6rem;
-  background: color-mix(in srgb, var(--status-warning, #ef4444) 18%, var(--surface-raised));
-  border: 1px solid color-mix(in srgb, var(--status-warning, #ef4444) 30%, transparent);
-  border-radius: 6px;
+  width: min(42rem, calc(100% - 2rem));
+  max-height: 9rem;
+  overflow: auto;
+  padding: 0.75rem 0.9rem;
+  background: color-mix(in srgb, var(--status-warning, #ef4444) 26%, var(--surface-raised));
+  border: 1px solid color-mix(in srgb, var(--status-warning, #ef4444) 62%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36);
   color: var(--ink-primary);
-  font-size: var(--text-xs, 11px);
+  font-size: var(--text-sm, 13px);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  transform: translateX(-50%);
+}
+
+.assistant-standalone__status--error {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--status-warning, #ef4444) 20%, transparent),
+      transparent 34%
+    ),
+    color-mix(in srgb, var(--status-warning, #ef4444) 24%, var(--surface-raised));
+  color: #f8fafc;
 }
 
 .assistant-standalone__undo {

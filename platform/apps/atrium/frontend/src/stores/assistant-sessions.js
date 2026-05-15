@@ -35,6 +35,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const streamingPhase = ref("");
   const streamingStatus = computed(() => streamingPhase.value);
   const status = ref("");
+  const statusKind = ref("");
   const pendingMessageDeletion = ref(null);
 
   let activeAbort = null;
@@ -51,7 +52,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       const payload = await fetchJson(SESSIONS_URL);
       sessions.value = normalizeSessionList(payload?.sessions);
       sessionsLoaded.value = true;
-      status.value = "";
+      clearStatus();
     } catch (error) {
       reportError("Failed to load assistant sessions", error);
     } finally {
@@ -99,7 +100,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       );
       activeRun = normalizeRun(payload?.active_run);
       currentLoaded.value = true;
-      status.value = "";
+      clearStatus();
     } catch (error) {
       currentSession.value = null;
       currentMessages.value = [];
@@ -194,7 +195,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     draft.value = "";
     streaming.value = true;
     streamingPhase.value = "creating";
-    status.value = "";
+    clearStatus();
 
     activeAbort = new AbortController();
     let assistantMessageId = optimisticAssistant.id;
@@ -338,7 +339,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     if (!shouldResumeRun(run)) return;
     streaming.value = true;
     streamingPhase.value = run.status || "running";
-    status.value = "";
+    clearStatus();
     activeAbort = new AbortController();
     activeRunId = run.id;
     const assistantMessageId = run.assistant_message_id;
@@ -566,6 +567,12 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const reportError = (label, error) => {
     console.error(`void-assistant: ${label}`, error);
     status.value = String(error?.message || error || label);
+    statusKind.value = "error";
+  };
+
+  const clearStatus = () => {
+    status.value = "";
+    statusKind.value = "";
   };
 
   return {
@@ -602,6 +609,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     sessionsLoaded,
     softDeleteSession,
     status,
+    statusKind,
     streaming,
     streamingPhase,
     streamingStatus,

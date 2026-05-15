@@ -17,6 +17,42 @@ beforeEach(() => {
 });
 
 describe("assistant sessions store", () => {
+  it("marks session load failures as visible error status", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let requestCount = 0;
+    globalThis.fetch = vi.fn(async () => {
+      requestCount += 1;
+      if (requestCount === 1) {
+        return new Response(
+          JSON.stringify({
+            error: "assistant_messages_list_failed",
+            message: 'error returned from database: syntax error at or near "step"'
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+      return jsonResponse({
+        ...sessionPayload(),
+        messages: [assistantMessage("restored")],
+        active_run: null
+      });
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+
+    expect(store.statusKind).toBe("error");
+    expect(store.status).toContain("assistant_messages_list_failed");
+
+    await store.reloadCurrent();
+
+    expect(store.status).toBe("");
+    expect(store.statusKind).toBe("");
+  });
+
   it("resumes the active run after loading a session", async () => {
     let sessionReads = 0;
     globalThis.fetch = vi.fn(async (url) => {
