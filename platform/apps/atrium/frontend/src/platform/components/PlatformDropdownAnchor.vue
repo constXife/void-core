@@ -1,3 +1,8 @@
+<script>
+const DROPDOWN_OPEN_EVENT = "platform-dropdown-anchor:open";
+let nextDropdownAnchorId = 0;
+</script>
+
 <script setup>
 import { onMounted, onUnmounted, ref } from "vue";
 
@@ -19,17 +24,27 @@ const props = defineProps({
 const emit = defineEmits(["update:open"]);
 
 const rootEl = ref(null);
+const anchorId = ++nextDropdownAnchorId;
 
 const close = () => {
   emit("update:open", false);
 };
 
 const openDropdown = () => {
+  document.dispatchEvent(
+    new CustomEvent(DROPDOWN_OPEN_EVENT, {
+      detail: { anchorId }
+    })
+  );
   emit("update:open", true);
 };
 
 const toggle = () => {
-  emit("update:open", !props.open);
+  if (props.open) {
+    close();
+  } else {
+    openDropdown();
+  }
 };
 
 const contains = (target) => Boolean(rootEl.value?.contains?.(target));
@@ -40,12 +55,20 @@ const handleDocumentClick = (event) => {
   close();
 };
 
+const handleSiblingOpen = (event) => {
+  if (!props.open) return;
+  if (event?.detail?.anchorId === anchorId) return;
+  close();
+};
+
 onMounted(() => {
   document.addEventListener("click", handleDocumentClick);
+  document.addEventListener(DROPDOWN_OPEN_EVENT, handleSiblingOpen);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleDocumentClick);
+  document.removeEventListener(DROPDOWN_OPEN_EVENT, handleSiblingOpen);
 });
 
 defineExpose({
