@@ -166,8 +166,12 @@
 /* ---- Collapsed sidebar (icons-only) ---- */
 
 .assistant-sidebar--collapsed {
-  padding: 0.6rem 0.4rem;
+  padding: 0 0.4rem 0.6rem;
   gap: 0.3rem;
+}
+
+.assistant-sidebar--collapsed .assistant-sidebar__brand {
+  margin: 0 -0.4rem;
 }
 
 .assistant-sidebar--collapsed .assistant-sidebar__top {
