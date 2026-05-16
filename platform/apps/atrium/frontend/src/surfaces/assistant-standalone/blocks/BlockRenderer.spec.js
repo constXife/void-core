@@ -5,6 +5,9 @@ import BlockRenderer from "./BlockRenderer.vue";
 const messages = {
   "assistant.metric.score": "баллов",
   "assistant.metric.descendants": "комментариев",
+  "assistant.newspaper.lead": "Главное",
+  "assistant.newspaper.secondary": "Материалы",
+  "assistant.newspaper.rail": "Ещё",
   "assistant.block.unknown": "Неподдерживаемый блок: {type}"
 };
 
@@ -61,5 +64,53 @@ describe("BlockRenderer", () => {
     expect(link.text()).toBe("AGENTS.md");
     expect(link.attributes("href")).toBe("https://example.com/agents");
     expect(wrapper.text()).toContain("rules");
+  });
+
+  it("renders newspaper blocks", () => {
+    const wrapper = mount(BlockRenderer, {
+      props: {
+        blocks: [
+          {
+            type: "lead_story",
+            kicker: "Lead · Hacker News · 100 баллов",
+            title: "Lead",
+            deck: "Lead summary.",
+            url: "https://example.com/lead",
+            source_label: "Hacker News",
+            metrics: [{ label: "баллов", value: "100" }]
+          },
+          {
+            type: "secondary_grid",
+            columns: 2,
+            items: [
+              {
+                kicker: "Story · Hacker News",
+                title: "Secondary",
+                url: "https://example.com/secondary",
+                summary: "Secondary summary.",
+                metrics: []
+              }
+            ]
+          },
+          {
+            type: "rail",
+            items: [
+              {
+                kicker: "Hacker News",
+                title: "Rail",
+                url: "https://example.com/rail",
+                metric_line: "3 комментариев"
+              }
+            ]
+          }
+        ],
+        t
+      }
+    });
+
+    expect(wrapper.get(".assistant-lead-story__title").text()).toBe("Lead");
+    expect(wrapper.text()).toContain("100 баллов");
+    expect(wrapper.get(".assistant-secondary-grid__title").text()).toBe("Secondary");
+    expect(wrapper.get(".assistant-rail-block a").text()).toBe("Rail");
   });
 });

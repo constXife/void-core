@@ -4,6 +4,7 @@ import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
+import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
@@ -95,6 +96,12 @@ const routes = [
           name: "assistant-routine-edit",
           component: AssistantProductRoute,
           meta: { ...assistantAccountMeta, drawerMode: "edit" }
+        },
+        {
+          path: "/runs/:id",
+          name: "assistant-run-report",
+          component: AssistantRunReportRoute,
+          meta: assistantAccountMeta
         },
         {
           path: "/routines/:instanceId/runs",

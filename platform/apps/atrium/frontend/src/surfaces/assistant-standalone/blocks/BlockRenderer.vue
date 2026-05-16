@@ -2,6 +2,9 @@
 import SectionHeaderBlock from "./SectionHeaderBlock.vue";
 import ArticleCardBlock from "./ArticleCardBlock.vue";
 import LinkListBlock from "./LinkListBlock.vue";
+import LeadStoryBlock from "./LeadStoryBlock.vue";
+import SecondaryGridBlock from "./SecondaryGridBlock.vue";
+import RailBlock from "./RailBlock.vue";
 import UnknownBlock from "./UnknownBlock.vue";
 
 defineProps({
@@ -21,6 +24,12 @@ function componentFor(block) {
       return ArticleCardBlock;
     case "link_list":
       return LinkListBlock;
+    case "lead_story":
+      return LeadStoryBlock;
+    case "secondary_grid":
+      return SecondaryGridBlock;
+    case "rail":
+      return RailBlock;
     default:
       return UnknownBlock;
   }
