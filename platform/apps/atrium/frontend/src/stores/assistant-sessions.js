@@ -249,7 +249,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
   };
 
-  const proposeSkillRun = async ({ skillId, targetId, params = {}, locale = "" } = {}) => {
+  const proposeSkillRun = async ({ skillId, targetId, params = {}, variant = null, locale = "" } = {}) => {
     const normalizedSkillId = String(skillId || "").trim();
     if (!normalizedSkillId || streaming.value) return null;
     if (!(await commitPendingMessageDeletion())) return null;
@@ -263,14 +263,17 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       currentLoaded.value = true;
     }
 
+    const requestBody = {
+      session_id: session.id,
+      skill_id: normalizedSkillId,
+      params,
+      locale
+    };
+    if (variant) requestBody.variant = variant;
+
     const payload = await fetchJson(SKILL_PROPOSALS_URL, {
       method: "POST",
-      body: JSON.stringify({
-        session_id: session.id,
-        skill_id: normalizedSkillId,
-        params,
-        locale
-      })
+      body: JSON.stringify(requestBody)
     });
     await reloadCurrent({ resumeActiveRun: false });
     return payload;

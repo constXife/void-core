@@ -131,12 +131,13 @@ const onTabChange = (tabId) => {
 
 // Capabilities handlers.
 const onSkillsFilterChange = ({ key, value }) => skillsStore.setFilter(key, value);
-const onEnableTemplate = async ({ skillId, params = {} }) => {
+const onEnableTemplate = async ({ skillId, params = {}, variant = null }) => {
   router.push({ name: "assistant-home" });
   await sessionsStore.proposeSkillRun({
     skillId,
     targetId: composerTargetId.value,
     params,
+    variant,
     locale: props.lang
   });
   if (currentSessionId.value && route.params.id !== currentSessionId.value) {

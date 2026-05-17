@@ -463,6 +463,47 @@ describe("assistant sessions store", () => {
 
     expect(store.currentMessages[0].layout_config).toEqual({ variant: "compact" });
   });
+
+  it("passes template variant when proposing a skill run", async () => {
+    const requests = [];
+    globalThis.fetch = vi.fn(async (url, init = {}) => {
+      requests.push({ url: String(url), init });
+      if (String(url) === "/assistant/sessions") {
+        return jsonResponse(sessionPayload());
+      }
+      if (String(url) === "/assistant/skill-proposals") {
+        return jsonResponse({
+          skill_run: skillRunPayload("skill-run-1", "digest_hackernews")
+        });
+      }
+      if (String(url) === "/assistant/sessions/session-1") {
+        return jsonResponse({
+          ...sessionPayload(),
+          messages: [assistantMessage("proposal")],
+          active_run: null
+        });
+      }
+      throw new Error(`unexpected request ${url}`);
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.proposeSkillRun({
+      skillId: "digest_hackernews",
+      targetId: "default",
+      params: { top_n: "10" },
+      variant: "newspaper",
+      locale: "ru"
+    });
+
+    const proposal = requests.find((request) => request.url === "/assistant/skill-proposals");
+    expect(JSON.parse(proposal.init.body)).toEqual({
+      session_id: "session-1",
+      skill_id: "digest_hackernews",
+      params: { top_n: "10" },
+      variant: "newspaper",
+      locale: "ru"
+    });
+  });
 });
 
 function sessionPayload() {
