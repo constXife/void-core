@@ -13,6 +13,8 @@ If you are new here, read the documents in this order.
 ## Component and extension docs
 
 - `ATRIUM.md` — the role and limits of the Atrium foundation shell
+- `../platform/tool-gateway/README.md` — ToolGateway and confirm-token
+  foundation contract for assistant tool calls
 - `../platform/web-host-contract/README.md` — the canonical contract for session-aware private web hosts
 - `CA_ROTATION.md` — the canonical PKI rotation model for the `step-ca` baseline
 

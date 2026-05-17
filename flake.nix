@@ -881,10 +881,12 @@
 
     packages = forAllSystems (pkgs: let
       atrium = import ./platform/packages/atrium {inherit pkgs;};
+      toolGatewayRust = pkgs.callPackage ./platform/packages/tool-gateway-rust.nix {};
     in {
       governance-lint = mkGovernanceLint pkgs;
       lint = mkLintApp pkgs;
       foundation-options-doc = (mkFoundationOptionsDoc pkgs).optionsCommonMark;
+      tool-gateway-rust = toolGatewayRust;
       atrium-source = atrium.source;
       atrium-frontend-dist = atrium.frontendDist;
       atrium-client-root-default = atrium.clientRootDefault;
@@ -906,6 +908,7 @@
       deadnix = mkCommandCheck pkgs "deadnix-check" [pkgs.deadnix] "deadnix .";
       statix = mkCommandCheck pkgs "statix-check" [pkgs.statix] "statix check .";
       foundation-options-doc = (mkFoundationOptionsDoc pkgs).optionsCommonMark;
+      inherit (self.packages.${pkgs.system}) tool-gateway-rust;
       governance = pkgs.runCommand "governance-check" {} ''
         cd ${self}
         ${mkGovernanceLint pkgs}/bin/void-core-governance-lint .

@@ -1,0 +1,9 @@
+[package]
+name = "void-tool-gateway"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Foundation ToolGateway and confirm-token storage contracts for void-core"
+
+[lib]
+path = "src/lib.rs"
