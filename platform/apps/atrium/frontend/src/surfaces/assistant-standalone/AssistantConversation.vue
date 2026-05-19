@@ -8,6 +8,7 @@ const props = defineProps({
   currentUser: { type: Object, default: null },
   streaming: { type: Boolean, default: false },
   streamingStatus: { type: String, default: "" },
+  latencyTick: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },
   hasSession: { type: Boolean, default: false },
   suggestions: { type: Array, default: () => [] },
@@ -128,6 +129,7 @@ watch(
               :current-user="currentUser"
               :streaming="streaming && entry.message.id === lastAssistantId"
               :streaming-status="streamingStatus"
+              :latency-tick="latencyTick"
               :show-regenerate="
                 !streaming &&
                 entry.message.role === 'assistant' &&

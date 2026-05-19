@@ -20,6 +20,7 @@ const props = defineProps({
   currentUser: { type: Object, default: null },
   streaming: { type: Boolean, default: false },
   streamingStatus: { type: String, default: "" },
+  latencyTick: { type: Number, default: 0 },
   showRegenerate: { type: Boolean, default: false },
   showDelete: { type: Boolean, default: false },
   t: { type: Function, required: true }
@@ -102,7 +103,10 @@ const showActions = computed(
     !isStreamingTail.value &&
     (props.message.content || hasSkillBlocks.value || props.showRegenerate || props.showDelete)
 );
-const showFooter = computed(() => (timestamp.value && !isStreamingTail.value) || showActions.value);
+const latencyText = computed(() => formatLatencyText(props.message.timings, props.streaming));
+const showFooter = computed(
+  () => latencyText.value || (timestamp.value && !isStreamingTail.value) || showActions.value
+);
 
 function formatTimestamp(value) {
   // Дата выводится через day-separator выше по conversation, время в самом
@@ -114,6 +118,52 @@ function formatTimestamp(value) {
   const hh = String(date.getHours()).padStart(2, "0");
   const mm = String(date.getMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+function formatLatencyText(timings, streaming) {
+  if (!isAssistant.value || !timings || typeof timings !== "object") return "";
+  props.latencyTick;
+  const startedAt =
+    timestampToMs(timings.started_at) ||
+    timestampToMs(timings.created_at) ||
+    timestampToMs(timings.request_started_at);
+  if (!startedAt) return "";
+  const firstDeltaAt = timestampToMs(timings.first_delta_at);
+  const completedAt = timestampToMs(timings.completed_at);
+  const now = Date.now();
+  if (streaming && !firstDeltaAt) {
+    return t("assistant.latency.thinking", { time: formatDuration(now - startedAt) });
+  }
+  if (streaming && firstDeltaAt) {
+    return t("assistant.latency.answering", {
+      time: formatDuration(now - firstDeltaAt),
+      thinking: formatDuration(firstDeltaAt - startedAt)
+    });
+  }
+  if (completedAt) {
+    const total = formatDuration(completedAt - startedAt);
+    if (firstDeltaAt) {
+      return t("assistant.latency.completedWithThinking", {
+        total,
+        thinking: formatDuration(firstDeltaAt - startedAt)
+      });
+    }
+    return t("assistant.latency.completed", { total });
+  }
+  return "";
+}
+
+function timestampToMs(value) {
+  if (!value) return 0;
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 function skillDisplayName(skillId) {
@@ -276,6 +326,7 @@ const onChangeLayout = () => {
       </div>
 
       <div v-if="showFooter" class="assistant-message__footer">
+        <span v-if="latencyText" class="assistant-message__latency">{{ latencyText }}</span>
         <time
           v-if="timestamp && !isStreamingTail"
           class="assistant-message__time"

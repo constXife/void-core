@@ -34,12 +34,14 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const streaming = ref(false);
   const streamingPhase = ref("");
   const streamingStatus = computed(() => streamingPhase.value);
+  const latencyTick = ref(0);
   const status = ref("");
   const statusKind = ref("");
   const pendingMessageDeletion = ref(null);
 
   let activeAbort = null;
   let activeRunId = "";
+  let activeLatencyTimer = null;
   let pendingMessageDeletionInternal = null;
 
   const groupedSessions = computed(() => groupSessionsByDate(sessions.value));
@@ -111,6 +113,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     if (resumeActiveRun && shouldResumeRun(activeRun)) {
       resumeRun(activeRun);
     }
+    return activeRun;
   };
 
   const createSession = async ({ targetId } = {}) => {
@@ -191,14 +194,21 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     const targetForRequest = targetId || session.target_id || "";
     const optimisticUser = createOptimisticMessage("user", content);
     const optimisticAssistant = createOptimisticMessage("assistant", "");
+    const requestStartedAt = new Date().toISOString();
+    optimisticAssistant.timings = {
+      request_started_at: requestStartedAt,
+      created_at: requestStartedAt
+    };
     currentMessages.value = [...currentMessages.value, optimisticUser, optimisticAssistant];
     draft.value = "";
     streaming.value = true;
     streamingPhase.value = "creating";
+    startLatencyTimer();
     clearStatus();
 
     activeAbort = new AbortController();
     let assistantMessageId = optimisticAssistant.id;
+    let lastEventId = 0;
 
     try {
       const payload = await createAssistantRun({
@@ -211,6 +221,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       if (!activeRunId) {
         throw new Error("Assistant run create returned empty id");
       }
+      applyRunTimingPatch(assistantMessageId, timingFromRunPayload(payload?.run));
       streamingPhase.value = "queued";
       const serverUserMessageId = String(
         payload?.user_message_id || payload?.run?.user_message_id || ""
@@ -227,14 +238,20 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       }
       await readAssistantRunEvents(activeRunId, {
         signal: activeAbort.signal,
-        onEvent: (event) => applyStreamEvent(event, assistantMessageId)
+        onEvent: (event) => applyStreamEvent(event, assistantMessageId),
+        onEventId: (id) => {
+          lastEventId = id;
+        },
+        onReconnect: () => {
+          streamingPhase.value = "reconnecting";
+        }
       });
       bumpSessionUpdatedAt(session.id);
       await reloadCurrent({ resumeActiveRun: false });
     } catch (error) {
       if (error?.name === "AbortError") {
         markMessage(assistantMessageId, { stopped: true });
-      } else {
+      } else if (!(await recoverInterruptedRun(activeRunId, assistantMessageId, lastEventId))) {
         markMessage(assistantMessageId, {
           error: true,
           content: normalizeErrorMessage(error)
@@ -244,6 +261,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     } finally {
       streaming.value = false;
       streamingPhase.value = "";
+      stopLatencyTimer();
       activeAbort = null;
       activeRunId = "";
     }
@@ -338,31 +356,42 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     return payload;
   };
 
-  const resumeRun = async (run) => {
+  const resumeRun = async (run, { after = 0 } = {}) => {
     if (!shouldResumeRun(run)) return;
     streaming.value = true;
     streamingPhase.value = run.status || "running";
+    startLatencyTimer();
+    applyRunTimingPatch(run.assistant_message_id, timingFromRunPayload(run));
     clearStatus();
     activeAbort = new AbortController();
     activeRunId = run.id;
     const assistantMessageId = run.assistant_message_id;
+    let lastEventId = Number(after || 0);
 
     try {
       await readAssistantRunEvents(run.id, {
         signal: activeAbort.signal,
-        onEvent: (event) => applyStreamEvent(event, assistantMessageId)
+        after: lastEventId,
+        onEvent: (event) => applyStreamEvent(event, assistantMessageId),
+        onEventId: (id) => {
+          lastEventId = id;
+        },
+        onReconnect: () => {
+          streamingPhase.value = "reconnecting";
+        }
       });
       bumpSessionUpdatedAt(run.session_id);
       await reloadCurrent({ resumeActiveRun: false });
     } catch (error) {
       if (error?.name === "AbortError") {
         markMessage(assistantMessageId, { stopped: true });
-      } else {
+      } else if (!(await recoverInterruptedRun(run.id, assistantMessageId, lastEventId))) {
         reportError("Assistant chat resume failed", error);
       }
     } finally {
       streaming.value = false;
       streamingPhase.value = "";
+      stopLatencyTimer();
       activeAbort = null;
       activeRunId = "";
     }
@@ -391,6 +420,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     activeRunId = "";
     streaming.value = false;
     streamingPhase.value = "";
+    stopLatencyTimer();
   };
 
   const regenerateLast = async ({ targetId } = {}) => {
@@ -469,10 +499,12 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const applyStreamEvent = (event, assistantMessageId) => {
     if (event.event === "queued" || event.event === "running") {
       streamingPhase.value = event.event;
+      if (event.event === "running") markMessageStarted(assistantMessageId);
       return;
     }
     if (event.event === "delta") {
       streamingPhase.value = "receiving";
+      markMessageFirstDelta(assistantMessageId);
       const text = String(event.json?.text || "");
       if (event.json?.kind === "step") {
         upsertAssistantRunStep(assistantMessageId, event.json?.step);
@@ -493,6 +525,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
     if (event.event === "done") {
       streamingPhase.value = "completed";
+      markMessageCompleted(assistantMessageId);
       const skillRun = normalizeSkillRun(event.json?.skill_run);
       if (skillRun) markMessage(assistantMessageId, { skill_run: skillRun });
       const skillRuns = normalizeSkillRunList(event.json?.skill_runs);
@@ -506,8 +539,23 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     }
     if (event.event === "cancelled") {
       streamingPhase.value = "cancelled";
+      markMessageCompleted(assistantMessageId);
       markMessage(assistantMessageId, { stopped: true });
     }
+  };
+
+  const recoverInterruptedRun = async (runId, assistantMessageId, after) => {
+    if (!currentSessionId.value || !runId) return false;
+    const activeRun = await reloadCurrent({ resumeActiveRun: false });
+    const assistantMessage = currentMessages.value.find((message) => message.id === assistantMessageId);
+    if (hasMaterializedAssistantOutput(assistantMessage)) {
+      return true;
+    }
+    if (shouldResumeRun(activeRun)) {
+      await resumeRun(activeRun, { after });
+      return true;
+    }
+    return false;
   };
 
   const appendAssistantText = (id, text) => {
@@ -543,6 +591,36 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     );
   };
 
+  const applyRunTimingPatch = (id, timings) => {
+    if (!id || !timings) return;
+    markMessage(id, { timings: mergeTimings(resolveMessageTimings(id), timings) });
+  };
+
+  const markMessageStarted = (id) => {
+    const timings = resolveMessageTimings(id);
+    applyRunTimingPatch(id, {
+      started_at: timings.started_at || new Date().toISOString()
+    });
+  };
+
+  const markMessageFirstDelta = (id) => {
+    const timings = resolveMessageTimings(id);
+    applyRunTimingPatch(id, {
+      started_at:
+        timings.started_at || timings.created_at || timings.request_started_at || new Date().toISOString(),
+      first_delta_at: timings.first_delta_at || new Date().toISOString()
+    });
+  };
+
+  const markMessageCompleted = (id) => {
+    applyRunTimingPatch(id, {
+      completed_at: new Date().toISOString()
+    });
+  };
+
+  const resolveMessageTimings = (id) =>
+    currentMessages.value.find((message) => message.id === id)?.timings || {};
+
   const bumpSessionUpdatedAt = (id) => {
     const now = new Date().toISOString();
     sessions.value = sessions.value
@@ -576,6 +654,21 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   const clearStatus = () => {
     status.value = "";
     statusKind.value = "";
+  };
+
+  const startLatencyTimer = () => {
+    if (activeLatencyTimer) return;
+    latencyTick.value = Date.now();
+    activeLatencyTimer = window.setInterval(() => {
+      latencyTick.value = Date.now();
+    }, 1000);
+  };
+
+  const stopLatencyTimer = () => {
+    if (!activeLatencyTimer) return;
+    window.clearInterval(activeLatencyTimer);
+    activeLatencyTimer = null;
+    latencyTick.value = Date.now();
   };
 
   return {
@@ -616,6 +709,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     streaming,
     streamingPhase,
     streamingStatus,
+    latencyTick,
     pendingMessageDeletion,
     undoMessageDeletion,
     trashedLoaded,
@@ -684,22 +778,27 @@ function normalizeSessionList(value) {
 
 function normalizeMessageList(value) {
   if (!Array.isArray(value)) return [];
-  return value.map((entry) => ({
-    id: String(entry?.id || ""),
-    role: String(entry?.role || ""),
-    content: String(entry?.content || ""),
-    message_kind: String(entry?.message_kind || "text"),
-    skill_run_ids: Array.isArray(entry?.skill_run_ids) ? entry.skill_run_ids.map(String) : [],
-    layout_config:
-      entry?.layout_config && typeof entry.layout_config === "object" ? entry.layout_config : {},
-    skill_run: normalizeSkillRun(entry?.skill_run),
-    skill_runs: normalizeSkillRunList(entry?.skill_runs),
-    narration_content: String(entry?.narration_content || ""),
-    run_steps: normalizeRunStepList(entry?.run_steps),
-    stopped: Boolean(entry?.stopped),
-    error: Boolean(entry?.error),
-    created_at: String(entry?.created_at || "")
-  }));
+  return value.map((entry) => {
+    const run = normalizeMessageRun(entry?.run);
+    return {
+      id: String(entry?.id || ""),
+      role: String(entry?.role || ""),
+      content: String(entry?.content || ""),
+      message_kind: String(entry?.message_kind || "text"),
+      skill_run_ids: Array.isArray(entry?.skill_run_ids) ? entry.skill_run_ids.map(String) : [],
+      layout_config:
+        entry?.layout_config && typeof entry.layout_config === "object" ? entry.layout_config : {},
+      skill_run: normalizeSkillRun(entry?.skill_run),
+      skill_runs: normalizeSkillRunList(entry?.skill_runs),
+      narration_content: String(entry?.narration_content || ""),
+      run_steps: normalizeRunStepList(entry?.run_steps),
+      stopped: Boolean(entry?.stopped),
+      error: Boolean(entry?.error),
+      created_at: String(entry?.created_at || ""),
+      run,
+      timings: timingFromRunPayload(run)
+    };
+  });
 }
 
 function normalizeSkillRun(value) {
@@ -753,8 +852,52 @@ function normalizeRun(payload) {
     id,
     session_id: sessionId,
     assistant_message_id: assistantMessageId,
-    status
+    status,
+    created_at: String(payload.created_at || ""),
+    started_at: String(payload.started_at || ""),
+    completed_at: String(payload.completed_at || "")
   };
+}
+
+function normalizeMessageRun(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const id = String(payload.id || "");
+  if (!id) return null;
+  return {
+    id,
+    status: String(payload.status || ""),
+    target_id: String(payload.target_id || ""),
+    created_at: String(payload.created_at || ""),
+    started_at: String(payload.started_at || ""),
+    completed_at: String(payload.completed_at || "")
+  };
+}
+
+function timingFromRunPayload(run) {
+  if (!run || typeof run !== "object") return {};
+  return {
+    run_id: String(run.id || ""),
+    created_at: String(run.created_at || ""),
+    started_at: String(run.started_at || ""),
+    completed_at: String(run.completed_at || "")
+  };
+}
+
+function mergeTimings(current = {}, patch = {}) {
+  return Object.fromEntries(
+    Object.entries({ ...current, ...patch }).filter(([, value]) => value !== undefined && value !== "")
+  );
+}
+
+function hasMaterializedAssistantOutput(message) {
+  return Boolean(
+    message &&
+      (message.content ||
+        message.error ||
+        message.stopped ||
+        message.skill_run ||
+        (Array.isArray(message.skill_runs) && message.skill_runs.length > 0))
+  );
 }
 
 function resolveMessagePair(messages, messageId) {

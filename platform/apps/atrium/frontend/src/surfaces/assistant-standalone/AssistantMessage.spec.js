@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import AssistantMessage from "./AssistantMessage.vue";
 
 const messages = {
@@ -20,6 +20,10 @@ const messages = {
   "assistant.step.status.completed": "готово",
   "assistant.step.status.failed": "ошибка",
   "assistant.step.status.unknown": "статус неизвестен",
+  "assistant.latency.thinking": "Думает {time}",
+  "assistant.latency.answering": "Отвечает {time} · думала {thinking}",
+  "assistant.latency.completed": "Ответила за {total}",
+  "assistant.latency.completedWithThinking": "Ответила за {total} · думала {thinking}",
   "assistant.layout.compact": "Compact",
   "assistant.layout.cards": "Cards",
   "assistant.metric.score": "баллов",
@@ -94,6 +98,53 @@ describe("AssistantMessage", () => {
       "Модель начала обработку…"
     );
     expect(wrapper.find(".assistant-message__cursor").exists()).toBe(true);
+  });
+
+  it("shows live thinking latency while waiting for the first token", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-06T08:07:12Z"));
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "",
+          created_at: "2026-05-06T08:07:00Z",
+          timings: {
+            started_at: "2026-05-06T08:07:00Z"
+          }
+        },
+        streaming: true,
+        latencyTick: Date.now(),
+        t
+      }
+    });
+
+    expect(wrapper.find(".assistant-message__latency").text()).toBe("Думает 0:12");
+    vi.useRealTimers();
+  });
+
+  it("shows completed latency from persisted run timings", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Ответ",
+          created_at: "2026-05-06T08:07:00Z",
+          timings: {
+            started_at: "2026-05-06T08:07:00Z",
+            first_delta_at: "2026-05-06T08:07:10Z",
+            completed_at: "2026-05-06T08:07:45Z"
+          }
+        },
+        t
+      }
+    });
+
+    expect(wrapper.find(".assistant-message__latency").text()).toBe(
+      "Ответила за 0:45 · думала 0:10"
+    );
   });
 
   it("renders narration as plain muted text outside markdown", () => {

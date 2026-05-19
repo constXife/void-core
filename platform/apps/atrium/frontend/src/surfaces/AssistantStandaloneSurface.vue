@@ -63,6 +63,7 @@ const {
   draft,
   streaming,
   streamingStatus,
+  latencyTick,
   statusKind,
   status,
   loadingSessions,
@@ -553,6 +554,7 @@ function savePreferredTarget(value) {
           :current-user="props.currentUser"
           :streaming="streaming"
           :streaming-status="streamingStatusText"
+          :latency-tick="latencyTick"
           :loading="loadingCurrent"
           :has-session="Boolean(currentSession)"
           :suggestions="suggestions"

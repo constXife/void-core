@@ -188,6 +188,64 @@ describe("assistant sessions store", () => {
     await pending;
   });
 
+  it("hydrates the completed answer when the event stream disconnects during a run", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let sessionReads = 0;
+    globalThis.fetch = vi.fn(async (url) => {
+      expect(String(url)).toBe("/assistant/sessions/session-1");
+      sessionReads += 1;
+      if (sessionReads === 1) {
+        return jsonResponse({
+          ...sessionPayload(),
+          messages: [],
+          active_run: null
+        });
+      }
+      return jsonResponse({
+        ...sessionPayload(),
+        messages: [
+          {
+            ...assistantMessage("final answer"),
+            id: "message-assistant-server",
+            run: {
+              id: "run-1",
+              status: "completed",
+              target_id: "default",
+              created_at: "2026-05-06T07:00:00Z",
+              started_at: "2026-05-06T07:00:01Z",
+              completed_at: "2026-05-06T07:00:11Z"
+            }
+          }
+        ],
+        active_run: null
+      });
+    });
+    createAssistantRun.mockResolvedValue({
+      run_id: "run-1",
+      user_message_id: "message-user-server",
+      assistant_message_id: "message-assistant-server",
+      run: {
+        id: "run-1",
+        status: "queued",
+        created_at: "2026-05-06T07:00:00Z"
+      }
+    });
+    readAssistantRunEvents.mockImplementation(async (_runId, { onEvent, onEventId }) => {
+      onEventId(7);
+      onEvent({ event: "delta", id: "7", json: { text: "partial" } });
+      throw new Error("Assistant run event stream disconnected");
+    });
+
+    const store = useAssistantSessionsStore();
+    await store.selectSession("session-1");
+    store.draft = "hello";
+    await store.send({ targetId: "default" });
+
+    expect(store.status).toBe("");
+    expect(store.currentMessages[0].content).toBe("final answer");
+    expect(store.currentMessages[0].timings.completed_at).toBe("2026-05-06T07:00:11Z");
+  });
+
   it("attaches skill blocks from the completion event before session reload", async () => {
     let finishStream;
     globalThis.fetch = vi.fn(async () =>

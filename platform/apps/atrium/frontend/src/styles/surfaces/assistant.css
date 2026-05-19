@@ -948,7 +948,8 @@
   padding-left: 2px;
 }
 
-.assistant-message__time {
+.assistant-message__time,
+.assistant-message__latency {
   font-size: var(--text-2xs, 10px);
   color: var(--ink-secondary);
   font-variant-numeric: tabular-nums;
@@ -956,7 +957,12 @@
   transition: opacity var(--duration-fast, 150ms) var(--ease-default, ease);
 }
 
-.assistant-message:hover .assistant-message__time {
+.assistant-message__latency {
+  color: var(--ink-muted);
+}
+
+.assistant-message:hover .assistant-message__time,
+.assistant-message:hover .assistant-message__latency {
   opacity: 1;
 }
 

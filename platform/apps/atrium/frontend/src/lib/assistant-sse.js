@@ -31,11 +31,14 @@ function findSseDelimiter(buffer) {
 function parseSseBlock(block) {
   const lines = String(block || "").split(/\r?\n/);
   let event = "message";
+  let id = "";
   const data = [];
 
   for (const line of lines) {
     if (line.startsWith("event:")) {
       event = line.slice("event:".length).trim();
+    } else if (line.startsWith("id:")) {
+      id = line.slice("id:".length).trim();
     } else if (line.startsWith("data:")) {
       data.push(line.slice("data:".length).trimStart());
     }
@@ -45,6 +48,7 @@ function parseSseBlock(block) {
   const payload = data.join("\n");
   return {
     event,
+    id,
     data: payload,
     json: parseJsonPayload(payload)
   };

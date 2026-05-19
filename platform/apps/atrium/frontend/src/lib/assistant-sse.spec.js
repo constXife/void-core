@@ -9,9 +9,20 @@ describe("readAssistantSseEvents", () => {
 
     expect(buffer).toBe("");
     expect(events).toEqual([
-      { event: "delta", data: '{"text":"hi"}', json: { text: "hi" } },
-      { event: "done", data: "{}", json: {} }
+      { event: "delta", id: "", data: '{"text":"hi"}', json: { text: "hi" } },
+      { event: "done", id: "", data: "{}", json: {} }
     ]);
+  });
+
+  it("parses event ids for resumable streams", () => {
+    const { events } = readAssistantSseEvents('id: 42\nevent: delta\ndata: {"text":"hi"}\n\n');
+
+    expect(events[0]).toEqual({
+      event: "delta",
+      id: "42",
+      data: '{"text":"hi"}',
+      json: { text: "hi" }
+    });
   });
 
   it("keeps partial events in the buffer", () => {
