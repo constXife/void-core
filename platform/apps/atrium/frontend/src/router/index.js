@@ -8,6 +8,7 @@ import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
+import CustomSurfaceComposerRoute from "../pages/CustomSurfaceComposerRoute.vue";
 import AdminContentRoute from "../pages/admin/AdminContentRoute.vue";
 import AdminDashboardRoute from "../pages/admin/AdminDashboardRoute.vue";
 import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
@@ -145,6 +146,18 @@ const routes = [
         path: "",
         name: "space",
         component: AtriumHomePage
+      }
+    ]
+  },
+  {
+    path: "/composer",
+    component: AppLayout,
+    meta: { workspace: true, authRequired: true },
+    children: [
+      {
+        path: "",
+        name: "custom-surface-composer",
+        component: CustomSurfaceComposerRoute
       }
     ]
   },
