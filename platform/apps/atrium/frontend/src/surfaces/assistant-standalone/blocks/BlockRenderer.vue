@@ -5,6 +5,7 @@ import LinkListBlock from "./LinkListBlock.vue";
 import LeadStoryBlock from "./LeadStoryBlock.vue";
 import SecondaryGridBlock from "./SecondaryGridBlock.vue";
 import RailBlock from "./RailBlock.vue";
+import ArtifactLinkBlock from "./ArtifactLinkBlock.vue";
 import UnknownBlock from "./UnknownBlock.vue";
 
 defineProps({
@@ -30,6 +31,8 @@ function componentFor(block) {
       return SecondaryGridBlock;
     case "rail":
       return RailBlock;
+    case "artifact_link":
+      return ArtifactLinkBlock;
     default:
       return UnknownBlock;
   }

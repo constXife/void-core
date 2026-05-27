@@ -6,6 +6,7 @@ import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
+import ArtifactPage from "../surfaces/artifact/ArtifactPage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
 import CustomSurfaceComposerRoute from "../pages/CustomSurfaceComposerRoute.vue";
@@ -160,6 +161,15 @@ const routes = [
         component: CustomSurfaceComposerRoute
       }
     ]
+  },
+  {
+    // Generic fullscreen artifact view. Entry-point — ArtifactLinkBlock card в чате,
+    // schema dispatch внутри ArtifactPage. URL stable: можно share, открыть позже.
+    // Доступен на обоих hosts (assistant.* и main) — это generic primitive, не product-specific.
+    path: "/artifacts/:artifactId",
+    name: "artifact-detail",
+    component: ArtifactPage,
+    meta: { authRequired: true, accountRequired: true }
   },
   {
     path: "/admin",
