@@ -4,6 +4,7 @@ import { useAtriumAppStore } from "../stores/atrium-app.js";
 import {
   ApiCallError,
   compilePageSpec,
+  fetchLatestPagespec,
   fetchScopedManifest,
   previewPageSpec,
   resolveBridgeArtifacts,
@@ -38,6 +39,9 @@ const resolveError = ref(null);
 
 const saveError = ref(null);
 const saveLoading = ref(false);
+const saveSuccess = ref(null);  // { pagespecId, version, confirmTokenId } после успешного save
+const latestSaved = ref(null);  // pre-loaded latest pagespec на mount (если есть)
+const latestLoading = ref(false);
 
 const bridgeBlocks = computed(() => {
   const blocks = pageSpec.value?.blocks || [];
@@ -116,12 +120,37 @@ async function runSave() {
   if (!pageSpec.value) return;
   saveLoading.value = true;
   saveError.value = null;
+  saveSuccess.value = null;
   try {
-    await savePageSpec({ pageSpec: pageSpec.value, pageKind: PAGE_KIND });
+    const result = await savePageSpec({ pageSpec: pageSpec.value, pageKind: PAGE_KIND });
+    saveSuccess.value = {
+      pagespecId: result?.pagespecId,
+      version: result?.version,
+      confirmTokenId: result?.confirmTokenId
+    };
+    // После successful save обновляем latestSaved так чтобы reload показал свежую версию.
+    latestSaved.value = result;
   } catch (error) {
     saveError.value = formatApiError(error);
   } finally {
     saveLoading.value = false;
+  }
+}
+
+async function loadLatestSaved() {
+  latestLoading.value = true;
+  try {
+    const result = await fetchLatestPagespec(PAGE_KIND);
+    latestSaved.value = result;
+    // Auto-populate pageSpec для удобной "продолжить редактирование" UX.
+    if (result?.pagespec) {
+      pageSpec.value = result.pagespec;
+    }
+  } catch (error) {
+    // 404 returns null уже — другие ошибки log'аем но не блокируем composer mount.
+    console.warn("Failed to load latest saved pagespec:", error);
+  } finally {
+    latestLoading.value = false;
   }
 }
 
@@ -132,7 +161,10 @@ function formatApiError(error) {
   return { status: 0, code: "unknown_error", message: String(error?.message || error) };
 }
 
-onMounted(loadManifest);
+onMounted(() => {
+  loadManifest();
+  loadLatestSaved();
+});
 </script>
 
 <template>
@@ -243,12 +275,32 @@ onMounted(loadManifest);
 
     <section class="composer__panel">
       <h2>{{ t("composer.savePanelTitle") }}</h2>
-      <p class="composer__hint">{{ t("composer.saveStubNote") }}</p>
+      <p
+        v-if="latestSaved && !saveSuccess"
+        class="composer__hint composer__hint--success"
+      >
+        {{ t("composer.savedLatest", {
+          version: latestSaved.version,
+          createdAt: latestSaved.createdAt
+        }) }}
+      </p>
+      <p v-else-if="latestLoading" class="composer__hint">
+        {{ t("composer.savedLoading") }}
+      </p>
       <div class="composer__actions">
         <button type="button" :disabled="saveButtonDisabled" @click="runSave">
           {{ saveLoading ? t("composer.saveLoading") : t("composer.saveButton") }}
         </button>
       </div>
+      <p
+        v-if="saveSuccess"
+        class="composer__success"
+      >
+        {{ t("composer.saveSuccessMessage", {
+          version: saveSuccess.version,
+          pagespecId: saveSuccess.pagespecId
+        }) }}
+      </p>
       <p
         v-if="saveError"
         class="composer__error"
@@ -387,5 +439,19 @@ onMounted(loadManifest);
 .composer__bridge-blocks {
   display: grid;
   gap: 12px;
+}
+
+.composer__hint--success {
+  color: var(--color-text, #111827);
+  font-weight: 500;
+}
+
+.composer__success {
+  font-size: 0.875rem;
+  color: var(--color-success, #047857);
+  background: var(--color-success-surface, #ecfdf5);
+  padding: 0.625rem;
+  border-radius: 0.375rem;
+  margin: 0;
 }
 </style>

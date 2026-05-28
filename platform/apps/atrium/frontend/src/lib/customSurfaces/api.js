@@ -119,3 +119,49 @@ export function resolveBridgeArtifacts(params) {
     pageSpec: params.pageSpec
   });
 }
+
+/**
+ * Fetch latest saved PageSpec для current user + pageKind.
+ * Returns null если нет ни одной save'нутой версии (404 от backend).
+ * @param {string} pageKind
+ * @returns {Promise<object|null>} saved PageSpec record или null
+ */
+export async function fetchLatestPagespec(pageKind) {
+  const normalized = String(pageKind || "").trim();
+  if (!normalized) {
+    throw new Error("pageKind is required");
+  }
+  let response;
+  try {
+    response = await fetch(
+      `/atrium/custom-surfaces/pagespecs/${encodeURIComponent(normalized)}/latest`,
+      { credentials: "include", headers: { Accept: "application/json" } }
+    );
+  } catch (networkError) {
+    throw new ApiCallError(`network error: ${networkError.message}`, {
+      status: 0,
+      code: "custom_surfaces_network_error"
+    });
+  }
+  if (response.status === 404) {
+    return null;
+  }
+  const text = await response.text();
+  let payload = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch (err) {
+      throw new ApiCallError(`malformed response body: ${err.message}`, {
+        status: response.status,
+        code: "custom_surfaces_malformed_response"
+      });
+    }
+  }
+  if (!response.ok) {
+    const code = (payload && payload.error) || `http_${response.status}`;
+    const message = (payload && payload.message) || `request failed (${response.status})`;
+    throw new ApiCallError(message, { status: response.status, code });
+  }
+  return payload;
+}

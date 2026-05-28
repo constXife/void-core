@@ -609,7 +609,10 @@ export const MESSAGES = {
     "composer.savePanelTitle": "Save",
     "composer.saveStubNote": "Save persists PageSpec to PostgreSQL; lands with P1.1 migration and P1.2 slice 3.",
     "composer.saveButton": "Save PageSpec",
-    "composer.saveLoading": "Saving…"
+    "composer.saveLoading": "Saving…",
+    "composer.savedLoading": "Loading previously saved version…",
+    "composer.savedLatest": "Loaded saved version {version} (created {createdAt}). Compile a new PageSpec to overwrite, or save current as next version.",
+    "composer.saveSuccessMessage": "Saved as version {version} — pagespec id {pagespecId}."
   },
   ru: {
     "app.title": "Atrium",
@@ -1206,7 +1209,10 @@ export const MESSAGES = {
     "composer.savePanelTitle": "Сохранить",
     "composer.saveStubNote": "Сохранение PageSpec в PostgreSQL — после P1.1 (миграция) и P1.2 slice 3.",
     "composer.saveButton": "Сохранить PageSpec",
-    "composer.saveLoading": "Сохранение…"
+    "composer.saveLoading": "Сохранение…",
+    "composer.savedLoading": "Загружаем предыдущую сохранённую версию…",
+    "composer.savedLatest": "Загружена сохранённая версия {version} (создана {createdAt}). Скомпилируй новый PageSpec чтобы переписать, или сохрани текущий как следующую версию.",
+    "composer.saveSuccessMessage": "Сохранено как версия {version} — pagespec id {pagespecId}."
   }
 };
 
