@@ -83,13 +83,18 @@ const tabRouteHistory = reactive(new Map());
 const TAB_DEFAULTS = {
   chat: { name: "assistant-home" },
   capabilities: { name: "assistant-capabilities" },
-  routines: { name: "assistant-routines" }
+  routines: { name: "assistant-routines" },
+  // artifact-list — top-level route (не внутри assistant host wrapper); клик по tab
+  // выводит юзера в standalone ArtifactListPage. Возврат — browser back или клик
+  // на другой tab (router.push снова приведёт в assistant host).
+  artifacts: { name: "artifact-list" }
 };
 
 const activeTab = computed(() => {
   const name = String(route.name || "");
   if (name === "assistant-capabilities" || name === "assistant-capability-detail") return "capabilities";
   if (name.startsWith("assistant-routine")) return "routines";
+  if (name === "artifact-list" || name === "artifact-detail") return "artifacts";
   return "chat";
 });
 

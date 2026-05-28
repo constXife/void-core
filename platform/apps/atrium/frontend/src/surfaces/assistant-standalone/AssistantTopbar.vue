@@ -11,9 +11,12 @@ const props = defineProps({
 const emit = defineEmits(["tab-change"]);
 
 const tabs = computed(() => [
-  { id: "chat", label: props.t("assistant.tabs.chat"), count: null },
-  { id: "capabilities", label: props.t("assistant.tabs.capabilities"), count: props.capabilitiesCount },
-  { id: "routines", label: props.t("assistant.tabs.routines"), count: props.routinesCount }
+  { id: "chat", label: props.t("assistant.tabs.chat"), count: null, showCount: false },
+  { id: "capabilities", label: props.t("assistant.tabs.capabilities"), count: props.capabilitiesCount, showCount: true },
+  { id: "routines", label: props.t("assistant.tabs.routines"), count: props.routinesCount, showCount: true },
+  // Artifacts tab без count — count fetch для list зашёл бы в backend на каждом render
+  // существующих tabs и усложнил бы Surface; пока tab без badge, ArtifactListPage сама загружает items.
+  { id: "artifacts", label: props.t("assistant.tabs.artifacts"), count: null, showCount: false }
 ]);
 
 const onClick = (tabId) => {
@@ -36,7 +39,7 @@ const onClick = (tabId) => {
       >
         <span class="assistant-topbar__tab-label">{{ tab.label }}</span>
         <span
-          v-if="tab.id !== 'chat'"
+          v-if="tab.showCount"
           class="assistant-topbar__tab-count"
           :data-loading="tab.count === null"
         >{{ tab.count === null ? "·" : tab.count }}</span>

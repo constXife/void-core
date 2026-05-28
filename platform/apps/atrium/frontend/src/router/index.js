@@ -7,6 +7,7 @@ import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
 import ArtifactPage from "../surfaces/artifact/ArtifactPage.vue";
+import ArtifactListPage from "../surfaces/artifact/ArtifactListPage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
 import CustomSurfaceComposerRoute from "../pages/CustomSurfaceComposerRoute.vue";
@@ -161,6 +162,14 @@ const routes = [
         component: CustomSurfaceComposerRoute
       }
     ]
+  },
+  {
+    // Generic artifact list view. Entry-point — sidebar nav item "АРТЕФАКТЫ".
+    // Paginated list всех skill_runs текущего юзера; row click → /artifacts/:id.
+    path: "/artifacts",
+    name: "artifact-list",
+    component: ArtifactListPage,
+    meta: { authRequired: true, accountRequired: true }
   },
   {
     // Generic fullscreen artifact view. Entry-point — ArtifactLinkBlock card в чате,
