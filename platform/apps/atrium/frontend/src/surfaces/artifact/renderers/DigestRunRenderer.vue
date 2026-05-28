@@ -124,7 +124,57 @@ const displayDate = computed(() => {
   /* Override BlockRenderer's chat-width constraint */
   width: 100%;
   max-width: none;
-  gap: 16px;
+  gap: 0;
+}
+
+/*
+  Newspaper polish: убрать chat-style borders/backgrounds на ArticleCard'ах,
+  заменить typography separation (тонкая нижняя линия между статьями).
+  Это переключает читаемое ощущение с "cards в чате" на "колонка статей в газете".
+*/
+.digest-run__body :deep(.assistant-article-card) {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 24px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  gap: 8px;
+}
+
+.digest-run__body :deep(.assistant-article-card:last-child) {
+  border-bottom: none;
+}
+
+/* Newspaper-style title: serif heading, no underline (browser default), underline on hover */
+.digest-run__body :deep(.assistant-article-card__title) {
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.digest-run__body :deep(.assistant-article-card__title:hover) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Summary / lede — slightly larger чем chat-inline */
+.digest-run__body :deep(.assistant-article-card__summary),
+.digest-run__body :deep(.assistant-article-card__original) {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Meta: тонкая стрипа с метриками */
+.digest-run__body :deep(.assistant-article-card__meta) {
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
 @media (max-width: 720px) {
