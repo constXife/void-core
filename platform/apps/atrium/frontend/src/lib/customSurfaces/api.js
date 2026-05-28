@@ -104,3 +104,18 @@ export function savePageSpec(params) {
     pageKind: params.pageKind
   });
 }
+
+/**
+ * Resolve assistant.latest_artifact bridge blocks в PageSpec (per ADR-21).
+ * Для каждого bridge block instance backend fetches latest matching skill_run и
+ * возвращает envelope ready-to-render. Render path read-only — никакого skill triggering.
+ *
+ * @param {object} params
+ * @param {object} params.pageSpec
+ * @returns {Promise<{artifacts: {[instanceId: string]: {artifactId: string|null, envelope: object|null, emptyReason?: string}}}>}
+ */
+export function resolveBridgeArtifacts(params) {
+  return postJson("/atrium/custom-surfaces/resolve-artifacts", {
+    pageSpec: params.pageSpec
+  });
+}

@@ -6,8 +6,10 @@ import {
   compilePageSpec,
   fetchScopedManifest,
   previewPageSpec,
+  resolveBridgeArtifacts,
   savePageSpec
 } from "../lib/customSurfaces/api.js";
+import AssistantLatestArtifactBlock from "../surfaces/artifact/AssistantLatestArtifactBlock.vue";
 
 const appStore = useAtriumAppStore();
 const { t } = appStore;
@@ -28,8 +30,19 @@ const compileLoading = ref(false);
 const previewError = ref(null);
 const previewLoading = ref(false);
 
+// Bridge blocks (assistant.latest_artifact) resolution per ADR-21.
+// После successful preview validation мы запрашиваем actual envelope для каждого bridge block —
+// composer показывает real rendered preview этих blocks. Inventory blocks остаются TBD (P1.4).
+const resolvedBridgeArtifacts = ref({});
+const resolveError = ref(null);
+
 const saveError = ref(null);
 const saveLoading = ref(false);
+
+const bridgeBlocks = computed(() => {
+  const blocks = pageSpec.value?.blocks || [];
+  return blocks.filter((b) => b?.block === "assistant.latest_artifact");
+});
 
 const manifestJson = computed(() =>
   manifest.value ? JSON.stringify(manifest.value, null, 2) : ""
@@ -79,8 +92,19 @@ async function runPreview() {
   if (!pageSpec.value) return;
   previewLoading.value = true;
   previewError.value = null;
+  resolveError.value = null;
+  resolvedBridgeArtifacts.value = {};
   try {
     await previewPageSpec({ pageSpec: pageSpec.value });
+    // Если в PageSpec есть bridge blocks — fetch их envelopes для render.
+    if (bridgeBlocks.value.length > 0) {
+      try {
+        const result = await resolveBridgeArtifacts({ pageSpec: pageSpec.value });
+        resolvedBridgeArtifacts.value = result?.artifacts || {};
+      } catch (error) {
+        resolveError.value = formatApiError(error);
+      }
+    }
   } catch (error) {
     previewError.value = formatApiError(error);
   } finally {
@@ -192,6 +216,29 @@ onMounted(loadManifest);
       >
         <strong>{{ previewError.code }}</strong> — {{ previewError.message }}
       </p>
+    </section>
+
+    <section v-if="pageSpec" class="composer__panel">
+      <h2>{{ t("composer.previewBridgeTitle") }}</h2>
+      <p class="composer__hint">{{ t("composer.previewBridgeNote") }}</p>
+      <p
+        v-if="resolveError"
+        class="composer__error"
+      >
+        <strong>{{ resolveError.code }}</strong> — {{ resolveError.message }}
+      </p>
+      <p v-if="bridgeBlocks.length === 0" class="composer__hint">
+        {{ t("composer.previewBridgeEmpty") }}
+      </p>
+      <div v-else class="composer__bridge-blocks">
+        <AssistantLatestArtifactBlock
+          v-for="block in bridgeBlocks"
+          :key="block.id"
+          :block="block"
+          :resolved="resolvedBridgeArtifacts[block.id] || {}"
+          :t="t"
+        />
+      </div>
     </section>
 
     <section class="composer__panel">
@@ -335,5 +382,10 @@ onMounted(loadManifest);
 .composer__error--stub {
   color: var(--color-warning, #92400e);
   background: var(--color-warning-surface, #fef3c7);
+}
+
+.composer__bridge-blocks {
+  display: grid;
+  gap: 12px;
 }
 </style>
