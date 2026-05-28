@@ -9,6 +9,7 @@ import { useRoute } from "vue-router";
 import { readAssistantSkillRun } from "../../lib/assistant-skill-runs.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import DigestNewspaperRenderer from "./renderers/DigestNewspaperRenderer.vue";
+import DigestRunRenderer from "./renderers/DigestRunRenderer.vue";
 
 const route = useRoute();
 const appStore = useAtriumAppStore();
@@ -46,6 +47,8 @@ function rendererFor(schema) {
   switch (schema) {
     case "newspaper_issue.v1":
       return DigestNewspaperRenderer;
+    case "digest_run.v1":
+      return DigestRunRenderer;
     default:
       return null;
   }
