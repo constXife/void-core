@@ -7,7 +7,9 @@
 // row click'а симметрично с chat card click'ом.
 import { computed, ref, onMounted } from "vue";
 
-import { listAssistantSkillRuns } from "../../lib/assistant-skill-runs.js";
+import { Trash2 } from "lucide-vue-next";
+
+import { deleteAssistantSkillRun, listAssistantSkillRuns } from "../../lib/assistant-skill-runs.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import ArtifactLinkBlock from "../assistant-standalone/blocks/ArtifactLinkBlock.vue";
 
@@ -54,6 +56,24 @@ async function load({ reset = false } = {}) {
   }
 }
 
+async function onDelete(item) {
+  const confirmText = t("artifact.list.delete_confirm");
+  // window.confirm — простой native prompt; для polished UX позже заменим на modal dialog.
+  // Сейчас destructive action → один явный confirm step достаточен.
+  if (!window.confirm(confirmText)) return;
+  try {
+    await deleteAssistantSkillRun(item.id);
+    items.value = items.value.filter((existing) => existing.id !== item.id);
+    if (items.value.length === 0 && offset.value > 0) {
+      // Только что удалили последний на текущей странице — подгружаем follow-up
+      offset.value = Math.max(0, offset.value - 1);
+      await load({ reset: true });
+    }
+  } catch (err) {
+    error.value = err?.message || t("artifact.list.delete_failed");
+  }
+}
+
 function formatDate(value) {
   if (!value) return "";
   try {
@@ -75,7 +95,12 @@ onMounted(() => load({ reset: true }));
 </script>
 
 <template>
-  <main class="artifact-list">
+  <!--
+    Без `<main>` — этот компонент рендерится как panel внутри AssistantStandaloneSurface,
+    рядом с CapabilitiesPanel / RoutinesPanel. Surface уже obeys page chrome / scroll
+    container. Контент сразу с заголовка.
+  -->
+  <div class="artifact-list">
     <header class="artifact-list__header">
       <h1 class="artifact-list__title">{{ t("artifact.list.title") }}</h1>
     </header>
@@ -89,11 +114,22 @@ onMounted(() => load({ reset: true }));
 
     <ul v-if="items.length" class="artifact-list__items">
       <li v-for="item in items" :key="item.id" class="artifact-list__row">
-        <ArtifactLinkBlock
-          v-if="item.artifact_link"
-          :block="item.artifact_link"
-          :t="t"
-        />
+        <div class="artifact-list__row-card">
+          <ArtifactLinkBlock
+            v-if="item.artifact_link"
+            :block="item.artifact_link"
+            :t="t"
+          />
+          <button
+            type="button"
+            class="artifact-list__delete"
+            :aria-label="t('artifact.list.delete')"
+            :title="t('artifact.list.delete')"
+            @click="onDelete(item)"
+          >
+            <Trash2 :size="16" />
+          </button>
+        </div>
         <time
           v-if="item.created_at"
           class="artifact-list__date"
@@ -111,7 +147,7 @@ onMounted(() => load({ reset: true }));
     <div v-if="loading" class="artifact-list__state" role="status">
       {{ t("artifact.list.loading") }}
     </div>
-  </main>
+  </div>
 </template>
 
 <style scoped>
@@ -144,6 +180,39 @@ onMounted(() => load({ reset: true }));
 .artifact-list__row {
   display: grid;
   gap: 4px;
+}
+
+.artifact-list__row-card {
+  position: relative;
+}
+
+/* ArtifactLink card занимает full width row'а; delete button плавает в right edge */
+.artifact-list__row-card :deep(.assistant-artifact-link) {
+  padding-right: 56px;
+}
+
+.artifact-list__delete {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, color-mix(in srgb, currentColor 50%, transparent));
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.artifact-list__delete:hover {
+  background: color-mix(in srgb, #ef4444 18%, transparent);
+  color: #fca5a5;
 }
 
 .artifact-list__date {

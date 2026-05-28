@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import AssistantSidebar from "./assistant-standalone/AssistantSidebar.vue";
 import AssistantConversation from "./assistant-standalone/AssistantConversation.vue";
+import ArtifactListPanel from "./artifact/ArtifactListPage.vue";
 import AssistantComposer from "./assistant-standalone/AssistantComposer.vue";
 import AssistantTopbar from "./assistant-standalone/AssistantTopbar.vue";
 import AssistantCapabilitiesPanel from "./assistant-standalone/AssistantCapabilitiesPanel.vue";
@@ -637,6 +638,14 @@ function savePreferredTarget(value) {
           @pick-template="onPickTemplate"
           @open-menu="onRoutineMenu"
         />
+      </section>
+
+      <!-- Artifacts tab — paginated список skill_run artifacts текущего юзера. -->
+      <section
+        v-if="activeTab === 'artifacts'"
+        class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
+      >
+        <ArtifactListPanel />
       </section>
 
       <!-- Routine drawer (per D1) — overlay над Routines list. -->

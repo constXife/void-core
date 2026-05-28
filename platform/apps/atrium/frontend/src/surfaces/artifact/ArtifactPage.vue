@@ -5,9 +5,9 @@
 // Adding a new artifact type later = добавить import + один branch в `rendererFor`.
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronLeft } from "lucide-vue-next";
+import { ChevronLeft, Trash2 } from "lucide-vue-next";
 
-import { readAssistantSkillRun } from "../../lib/assistant-skill-runs.js";
+import { deleteAssistantSkillRun, readAssistantSkillRun } from "../../lib/assistant-skill-runs.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import DigestNewspaperRenderer from "./renderers/DigestNewspaperRenderer.vue";
 import DigestRunRenderer from "./renderers/DigestRunRenderer.vue";
@@ -24,6 +24,18 @@ function onBack() {
     router.back();
   } else {
     router.push({ name: "assistant-home" });
+  }
+}
+
+async function onDelete() {
+  if (!envelope.value?.id) return;
+  if (!window.confirm(t("artifact.list.delete_confirm"))) return;
+  try {
+    await deleteAssistantSkillRun(envelope.value.id);
+    // После delete — возврат в список артефактов (если из него пришли) или assistant-home.
+    router.push({ name: "artifact-list" });
+  } catch (err) {
+    error.value = err?.message || t("artifact.list.delete_failed");
   }
 }
 
@@ -76,6 +88,17 @@ const Renderer = computed(() => rendererFor(envelope.value?.schema));
         <ChevronLeft :size="16" />
         <span>{{ t("artifact.back") }}</span>
       </button>
+      <button
+        v-if="envelope"
+        type="button"
+        class="artifact-page__delete"
+        :aria-label="t('artifact.list.delete')"
+        :title="t('artifact.list.delete')"
+        @click="onDelete"
+      >
+        <Trash2 :size="16" />
+        <span>{{ t("artifact.list.delete") }}</span>
+      </button>
     </header>
     <div v-if="loading" class="artifact-page__state" role="status">
       {{ t("artifact.loading") }}
@@ -117,11 +140,33 @@ const Renderer = computed(() => rendererFor(envelope.value?.schema));
   z-index: 10;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 24px;
   background: color-mix(in srgb, var(--surface-base, #0f172a) 88%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.artifact-page__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, color-mix(in srgb, currentColor 60%, transparent));
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.artifact-page__delete:hover {
+  border-color: color-mix(in srgb, #ef4444 50%, transparent);
+  background: color-mix(in srgb, #ef4444 14%, transparent);
+  color: #fca5a5;
 }
 
 .artifact-page__back {

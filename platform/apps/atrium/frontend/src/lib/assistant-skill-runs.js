@@ -30,6 +30,28 @@ export async function readAssistantSkillRun(
 }
 
 /**
+ * Удаление skill_run artifact'а. Проходит ownership check на backend.
+ * @returns {Promise<{deleted: true, id: string}>}
+ */
+export async function deleteAssistantSkillRun(id, { signal } = {}) {
+  const normalizedId = String(id || "").trim();
+  if (!normalizedId) {
+    throw new Error("Assistant skill run id is required");
+  }
+  const response = await fetch(`/assistant/skill-runs/${encodeURIComponent(normalizedId)}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    signal
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(text || response.statusText || "Assistant skill run delete failed");
+  }
+  return response.json();
+}
+
+/**
  * Paginated list скилл-артефактов текущего юзера.
  *
  * @param {Object} options
