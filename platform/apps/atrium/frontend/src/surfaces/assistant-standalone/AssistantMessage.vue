@@ -63,6 +63,12 @@ const showRunSteps = computed(
 );
 const isSkillProposal = computed(() => props.message.message_kind === "skill_proposal");
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
+// Если message содержит только один ArtifactLink block (mini layout), inline layout switcher
+// "Cards / Compact" функционально noop — backend всё равно эмитит ArtifactLink независимо
+// от layout_config.variant. Скрываем кнопку чтобы не сбивать с толку.
+const isOnlyArtifactLink = computed(
+  () => skillBlocks.value.length === 1 && skillBlocks.value[0]?.type === "artifact_link"
+);
 const layoutVariant = computed(() => props.message.layout_config?.variant || "cards");
 const nextLayoutVariant = computed(() => (layoutVariant.value === "compact" ? "cards" : "compact"));
 const layoutButtonLabel = computed(() =>
@@ -342,7 +348,7 @@ const onChangeLayout = () => {
         >{{ timestamp }}</time>
         <div v-if="showActions" class="assistant-message__actions">
           <button
-            v-if="isSkillResult && hasSkillBlocks"
+            v-if="isSkillResult && hasSkillBlocks && !isOnlyArtifactLink"
             type="button"
             class="assistant-message__action assistant-message__action--text"
             @click="onChangeLayout"

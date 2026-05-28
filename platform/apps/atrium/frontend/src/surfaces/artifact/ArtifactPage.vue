@@ -100,7 +100,13 @@ const Renderer = computed(() => rendererFor(envelope.value?.schema));
 
 <style scoped>
 .artifact-page {
-  min-height: 100vh;
+  /*
+    body { overflow: hidden } в app/22-base.css блокирует document-level скролл.
+    ArtifactPage должна быть своим scroll container — height фиксируется на viewport,
+    overflow-y: auto. Sticky topbar остаётся sticky относительно этого контейнера.
+  */
+  height: 100dvh;
+  overflow-y: auto;
   background: var(--surface-base, #0f172a);
   color: var(--text-primary, #f8fafc);
 }

@@ -13,10 +13,21 @@ const props = defineProps({
 });
 
 // Filter section_header — backend эмитит "Hacker News digest" header, который дублирует
-// masthead (skill display name). Остальные blocks (ArticleCard, etc.) проходят без изменений.
+// masthead (skill display name).
+// Также убираем source_label из каждой ArticleCard footer'а — masthead уже показывает источник,
+// дубликат на каждой карточке = шум.
 const blocks = computed(() => {
   const all = props.envelope?.blocks || [];
-  return all.filter((b) => b?.type !== "section_header");
+  return all
+    .filter((b) => b?.type !== "section_header")
+    .map((b) => {
+      if (b?.type === "article_card" && b.source_label) {
+        // Shallow clone + drop source_label чтобы не мутировать prop.envelope payload.
+        const { source_label: _omit, ...rest } = b;
+        return rest;
+      }
+      return b;
+    });
 });
 
 const title = computed(() => {
