@@ -4,7 +4,8 @@
 //
 // Adding a new artifact type later = добавить import + один branch в `rendererFor`.
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { ChevronLeft } from "lucide-vue-next";
 
 import { readAssistantSkillRun } from "../../lib/assistant-skill-runs.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
@@ -12,8 +13,19 @@ import DigestNewspaperRenderer from "./renderers/DigestNewspaperRenderer.vue";
 import DigestRunRenderer from "./renderers/DigestRunRenderer.vue";
 
 const route = useRoute();
+const router = useRouter();
 const appStore = useAtriumAppStore();
 const t = (key, vars = {}) => appStore.t(key, vars);
+
+function onBack() {
+  // Если есть browser history (юзер пришёл из чата) — возвращаемся туда.
+  // Если открыли по direct URL (share, bookmark) — fall back на assistant home.
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push({ name: "assistant-home" });
+  }
+}
 
 const artifactId = computed(() => String(route.params.artifactId || ""));
 
@@ -59,6 +71,12 @@ const Renderer = computed(() => rendererFor(envelope.value?.schema));
 
 <template>
   <main class="artifact-page">
+    <header class="artifact-page__topbar">
+      <button type="button" class="artifact-page__back" @click="onBack" :aria-label="t('artifact.back')">
+        <ChevronLeft :size="16" />
+        <span>{{ t("artifact.back") }}</span>
+      </button>
+    </header>
     <div v-if="loading" class="artifact-page__state" role="status">
       {{ t("artifact.loading") }}
     </div>
@@ -85,6 +103,39 @@ const Renderer = computed(() => rendererFor(envelope.value?.schema));
   min-height: 100vh;
   background: var(--surface-base, #0f172a);
   color: var(--text-primary, #f8fafc);
+}
+
+.artifact-page__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: color-mix(in srgb, var(--surface-base, #0f172a) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.artifact-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary, #f8fafc);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.artifact-page__back:hover {
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  background: color-mix(in srgb, currentColor 6%, transparent);
 }
 
 .artifact-page__state {

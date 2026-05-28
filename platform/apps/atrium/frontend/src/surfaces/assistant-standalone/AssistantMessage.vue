@@ -305,7 +305,14 @@ const onChangeLayout = () => {
             </button>
           </div>
         </div>
-        <BlockRenderer v-if="hasSkillBlocks" :blocks="skillBlocks" :t="t" />
+        <!--
+          Skill blocks рендерим только в `skill_result` message — в `skill_proposal`
+          они дублируют скилл результат, потому что один skill_run_id referenced и
+          в proposal и в result messages. Proposal phase показывает "Ready to run X"
+          + approve/reject controls; result phase показывает финальные blocks (Mini
+          ArtifactLink card).
+        -->
+        <BlockRenderer v-if="hasSkillBlocks && !isSkillProposal" :blocks="skillBlocks" :t="t" />
         <p
           v-if="showStreamingStatus"
           class="assistant-message__streaming-line"

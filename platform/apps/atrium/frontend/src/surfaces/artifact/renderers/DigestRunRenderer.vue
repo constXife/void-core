@@ -12,7 +12,12 @@ const props = defineProps({
   t: { type: Function, required: true }
 });
 
-const blocks = computed(() => props.envelope?.blocks || []);
+// Filter section_header — backend эмитит "Hacker News digest" header, который дублирует
+// masthead (skill display name). Остальные blocks (ArticleCard, etc.) проходят без изменений.
+const blocks = computed(() => {
+  const all = props.envelope?.blocks || [];
+  return all.filter((b) => b?.type !== "section_header");
+});
 
 const title = computed(() => {
   const skillId = props.envelope?.skill_id || "";
