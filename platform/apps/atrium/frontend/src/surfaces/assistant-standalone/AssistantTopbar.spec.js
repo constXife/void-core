@@ -6,7 +6,8 @@ const ruMessages = {
   "assistant.tabs.ariaLabel": "Разделы ассистента",
   "assistant.tabs.chat": "Чат",
   "assistant.tabs.capabilities": "Возможности",
-  "assistant.tabs.routines": "Рутины"
+  "assistant.tabs.routines": "Рутины",
+  "assistant.tabs.artifacts": "Артефакты"
 };
 
 const t = (key) => ruMessages[key] || key;
@@ -24,6 +25,6 @@ describe("AssistantTopbar", () => {
 
     expect(wrapper.find("nav").attributes("aria-label")).toBe("Разделы ассистента");
     expect(wrapper.findAll(".assistant-topbar__tab-label").map((node) => node.text()))
-      .toEqual(["Чат", "Возможности", "Рутины"]);
+      .toEqual(["Чат", "Возможности", "Рутины", "Артефакты"]);
   });
 });
