@@ -39,6 +39,7 @@ const prompt = ref("");
 const pageSpec = ref(null);
 const compileError = ref(null);
 const compileLoading = ref(false);
+const compileAttempts = ref([]);
 
 const previewError = ref(null);
 const previewLoading = ref(false);
@@ -91,11 +92,27 @@ async function loadManifest() {
 async function runCompile() {
   compileLoading.value = true;
   compileError.value = null;
+  compileAttempts.value = [];
   try {
-    pageSpec.value = await compilePageSpec({
-      prompt: prompt.value,
-      pageKind: PAGE_KIND
-    });
+    // compile endpoint возвращает CompileResponse {ok, pageSpec, validation, attempts,
+    // targetId, model} — не сам PageSpec. Извлекаем pageSpec; при ok=false показываем
+    // понятную ошибку (LLM выдал невалидный output даже после repair attempt).
+    const result = await compilePageSpec({ prompt: prompt.value, pageKind: PAGE_KIND });
+    compileAttempts.value = Array.isArray(result?.attempts) ? result.attempts : [];
+    if (result?.ok && result?.pageSpec) {
+      pageSpec.value = result.pageSpec;
+    } else {
+      pageSpec.value = null;
+      const layers = result?.validation?.layers;
+      const firstErr = result?.validation?.errors?.[0];
+      compileError.value = {
+        status: 422,
+        code: firstErr?.code || "compile_validation_failed",
+        message: firstErr?.message
+          ? `LLM выдал невалидный PageSpec (${result?.model || "?"}): ${firstErr.message}. Попробуй переформулировать запрос или повтори.`
+          : `LLM не собрал валидный PageSpec после repair (parseable=${layers?.parseable}). Попробуй переформулировать запрос.`
+      };
+    }
   } catch (error) {
     pageSpec.value = null;
     compileError.value = formatApiError(error);
@@ -332,13 +349,20 @@ onMounted(() => {
 
 <style scoped>
 .composer {
+  /*
+    body { overflow: hidden } (app/22-base.css) блокирует document scroll.
+    Composer — standalone surface, должен быть своим scroll container:
+    height фиксируется на viewport, overflow-y: auto. (Раньше был внутри
+    AppLayout со своим скроллом; после перевода в standalone нужен явный.)
+  */
+  height: 100dvh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
-  min-height: 100vh;
 }
 
 .composer__topbar {
