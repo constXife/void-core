@@ -160,16 +160,15 @@ const routes = [
     ]
   },
   {
+    // Composer — standalone authoring surface, top-level (не AppLayout workspace shell).
+    // Не требует workspace bootstrap: composer работает с custom-surfaces API, не с atrium
+    // workspace data. Раньше был обёрнут в AppLayout с workspace:true — на assistant host
+    // (где нет /atrium/workspace endpoint) это давало 'Unexpected token <' toast от
+    // workspace fetch SPA fallback. Доступен на обоих hosts как generic primitive.
     path: "/composer",
-    component: AppLayout,
-    meta: { workspace: true, authRequired: true },
-    children: [
-      {
-        path: "",
-        name: "custom-surface-composer",
-        component: CustomSurfaceComposerRoute
-      }
-    ]
+    name: "custom-surface-composer",
+    component: CustomSurfaceComposerRoute,
+    meta: { authRequired: true, accountRequired: true }
   },
   {
     // Generic fullscreen artifact view. Entry-point — ArtifactLinkBlock card в чате,

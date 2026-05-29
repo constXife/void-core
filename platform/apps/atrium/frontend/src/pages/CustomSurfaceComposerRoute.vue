@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { ChevronLeft } from "lucide-vue-next";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import {
   ApiCallError,
@@ -13,7 +15,17 @@ import {
 import AssistantLatestArtifactBlock from "../surfaces/artifact/AssistantLatestArtifactBlock.vue";
 
 const appStore = useAtriumAppStore();
+const router = useRouter();
 const { t } = appStore;
+
+function onBack() {
+  // Composer — standalone surface. Возврат: browser history если есть, иначе assistant home.
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push({ name: "assistant-home" });
+  }
+}
 
 // Phase 1 slice 1 supports only inventory.overview pageKind (см. ADR-0020).
 // Будущий slice добавит pageKind selector над routing/state.
@@ -169,6 +181,12 @@ onMounted(() => {
 
 <template>
   <div class="composer">
+    <div class="composer__topbar">
+      <button type="button" class="composer__back" @click="onBack" :aria-label="t('artifact.back')">
+        <ChevronLeft :size="16" />
+        <span>{{ t("artifact.back") }}</span>
+      </button>
+    </div>
     <header class="composer__header">
       <h1>{{ t("composer.title") }}</h1>
       <p class="composer__subtitle">{{ t("composer.subtitle") }}</p>
@@ -320,6 +338,32 @@ onMounted(() => {
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+  min-height: 100vh;
+}
+
+.composer__topbar {
+  display: flex;
+  align-items: center;
+}
+
+.composer__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text, #111827);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.composer__back:hover {
+  border-color: var(--color-text-muted, #6b7280);
+  background: var(--color-surface-subtle, #f3f4f6);
 }
 
 .composer__header h1 {
