@@ -348,13 +348,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/*
+  Composer — standalone surface на тёмном Atrium shell. Использует dark theme
+  vars (--text-primary / --surface-* / currentColor mixes) consistent с artifact
+  components. Раньше CSS опирался на light-theme --color-* vars с #ffffff
+  fallback'ами → белые панели + светлый текст на тёмном фоне = неконтрастно.
+*/
 .composer {
-  /*
-    body { overflow: hidden } (app/22-base.css) блокирует document scroll.
-    Composer — standalone surface, должен быть своим scroll container:
-    height фиксируется на viewport, overflow-y: auto. (Раньше был внутри
-    AppLayout со своим скроллом; после перевода в standalone нужен явный.)
-  */
+  /* body { overflow: hidden } блокирует document scroll → свой scroll container. */
   height: 100dvh;
   overflow-y: auto;
   display: flex;
@@ -363,6 +364,7 @@ onMounted(() => {
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+  color: var(--text-primary, #f8fafc);
 }
 
 .composer__topbar {
@@ -375,10 +377,10 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 8px;
   background: transparent;
-  color: var(--color-text, #111827);
+  color: var(--text-primary, #f8fafc);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -386,17 +388,18 @@ onMounted(() => {
 }
 
 .composer__back:hover {
-  border-color: var(--color-text-muted, #6b7280);
-  background: var(--color-surface-subtle, #f3f4f6);
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  background: color-mix(in srgb, currentColor 6%, transparent);
 }
 
 .composer__header h1 {
   font-size: 1.75rem;
   margin: 0 0 0.5rem;
+  color: var(--text-primary, #f8fafc);
 }
 
 .composer__subtitle {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-muted, color-mix(in srgb, currentColor 60%, transparent));
   margin: 0;
 }
 
@@ -409,17 +412,17 @@ onMounted(() => {
 }
 
 .composer__pageKind code {
-  background: var(--color-surface-subtle, #f3f4f6);
+  background: color-mix(in srgb, currentColor 10%, transparent);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-family: ui-monospace, SFMono-Regular, monospace;
 }
 
 .composer__panel {
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 0.75rem;
   padding: 1.25rem;
-  background: var(--color-surface, #ffffff);
+  background: var(--surface-elevated, color-mix(in srgb, #ffffff 5%, transparent));
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -428,11 +431,12 @@ onMounted(() => {
 .composer__panel h2 {
   font-size: 1.125rem;
   margin: 0;
+  color: var(--text-primary, #f8fafc);
 }
 
 .composer__label {
   font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-muted, color-mix(in srgb, currentColor 60%, transparent));
 }
 
 .composer__panel textarea {
@@ -440,9 +444,15 @@ onMounted(() => {
   font-family: inherit;
   font-size: 0.95rem;
   padding: 0.625rem;
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: 0.375rem;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 0.5rem;
   resize: vertical;
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  color: var(--text-primary, #f8fafc);
+}
+
+.composer__panel textarea::placeholder {
+  color: color-mix(in srgb, currentColor 40%, transparent);
 }
 
 .composer__actions {
@@ -452,56 +462,57 @@ onMounted(() => {
 
 .composer__actions button {
   padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid var(--color-accent, #2563eb);
-  background: var(--color-accent, #2563eb);
+  border-radius: 0.5rem;
+  border: 1px solid var(--accent, #2563eb);
+  background: var(--accent, #2563eb);
   color: #ffffff;
   cursor: pointer;
   font-size: 0.95rem;
 }
 
 .composer__actions button:disabled {
-  background: var(--color-surface-subtle, #e5e7eb);
-  border-color: var(--color-surface-subtle, #e5e7eb);
-  color: var(--color-text-muted, #6b7280);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  border-color: color-mix(in srgb, currentColor 12%, transparent);
+  color: color-mix(in srgb, currentColor 45%, transparent);
   cursor: not-allowed;
 }
 
 .composer__details summary {
   cursor: pointer;
   font-size: 0.95rem;
-  color: var(--color-text, #111827);
+  color: var(--text-primary, #f8fafc);
 }
 
 .composer__json {
   margin-top: 0.5rem;
   padding: 0.75rem;
-  background: var(--color-surface-subtle, #f9fafb);
-  border-radius: 0.375rem;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  border-radius: 0.5rem;
   font-size: 0.8rem;
   font-family: ui-monospace, SFMono-Regular, monospace;
+  color: var(--text-primary, #f8fafc);
   overflow-x: auto;
   max-height: 24rem;
 }
 
 .composer__hint {
   font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-muted, color-mix(in srgb, currentColor 60%, transparent));
   margin: 0;
 }
 
 .composer__error {
   font-size: 0.875rem;
-  color: var(--color-danger, #b91c1c);
-  background: var(--color-danger-surface, #fef2f2);
+  color: #fca5a5;
+  background: color-mix(in srgb, #ef4444 14%, transparent);
   padding: 0.625rem;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   margin: 0;
 }
 
 .composer__error--stub {
-  color: var(--color-warning, #92400e);
-  background: var(--color-warning-surface, #fef3c7);
+  color: #fcd34d;
+  background: color-mix(in srgb, #f59e0b 14%, transparent);
 }
 
 .composer__bridge-blocks {
@@ -510,16 +521,16 @@ onMounted(() => {
 }
 
 .composer__hint--success {
-  color: var(--color-text, #111827);
+  color: var(--text-primary, #f8fafc);
   font-weight: 500;
 }
 
 .composer__success {
   font-size: 0.875rem;
-  color: var(--color-success, #047857);
-  background: var(--color-success-surface, #ecfdf5);
+  color: #6ee7b7;
+  background: color-mix(in srgb, #10b981 14%, transparent);
   padding: 0.625rem;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   margin: 0;
 }
 </style>
