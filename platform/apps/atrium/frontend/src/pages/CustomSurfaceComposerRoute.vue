@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ChevronLeft } from "lucide-vue-next";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import {
@@ -16,6 +16,7 @@ import AssistantLatestArtifactBlock from "../surfaces/artifact/AssistantLatestAr
 
 const appStore = useAtriumAppStore();
 const router = useRouter();
+const route = useRoute();
 const { t } = appStore;
 
 function onBack() {
@@ -27,9 +28,15 @@ function onBack() {
   }
 }
 
-// Phase 1 slice 1 supports only inventory.overview pageKind (см. ADR-0020).
-// Будущий slice добавит pageKind selector над routing/state.
-const PAGE_KIND = "inventory.overview";
+// pageKind берётся из query (?pageKind=freeform.overview), default inventory.overview.
+// Composer remount'ится при навигации, поэтому read-once на setup корректен. Полноценный
+// pageKind selector над routing — будущий slice.
+const ALLOWED_PAGE_KINDS = ["inventory.overview", "freeform.overview"];
+const requestedPageKind =
+  typeof route.query.pageKind === "string" ? route.query.pageKind.trim() : "";
+const PAGE_KIND = ALLOWED_PAGE_KINDS.includes(requestedPageKind)
+  ? requestedPageKind
+  : "inventory.overview";
 
 const manifest = ref(null);
 const manifestError = ref(null);
