@@ -126,6 +126,49 @@ export function resolveBridgeArtifacts(params) {
  * @param {string} pageKind
  * @returns {Promise<object|null>} saved PageSpec record или null
  */
+/**
+ * Fetch inventory dashboard-data (summary stats + item rows + locations) для slice.
+ * Источник данных для freeform.overview render (mounted на atrium host downstream).
+ * @param {string} slice — inventory slice key (pantry/care/wardrobe/device/cookware)
+ * @returns {Promise<object>} { summary, items, locations, ... }
+ */
+export async function fetchInventoryDashboardData(slice) {
+  const normalized = String(slice || "").trim();
+  if (!normalized) {
+    throw new Error("slice is required");
+  }
+  let response;
+  try {
+    response = await fetch(
+      `/api/knowledge/v1/inventory/dashboard-data?slice=${encodeURIComponent(normalized)}`,
+      { credentials: "include", headers: { Accept: "application/json" } }
+    );
+  } catch (networkError) {
+    throw new ApiCallError(`network error: ${networkError.message}`, {
+      status: 0,
+      code: "custom_surfaces_network_error"
+    });
+  }
+  const text = await response.text();
+  let payload = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch (err) {
+      throw new ApiCallError(`malformed response body: ${err.message}`, {
+        status: response.status,
+        code: "custom_surfaces_malformed_response"
+      });
+    }
+  }
+  if (!response.ok) {
+    const code = (payload && payload.error) || `http_${response.status}`;
+    const message = (payload && payload.message) || `request failed (${response.status})`;
+    throw new ApiCallError(message, { status: response.status, code });
+  }
+  return payload;
+}
+
 export async function fetchLatestPagespec(pageKind) {
   const normalized = String(pageKind || "").trim();
   if (!normalized) {
