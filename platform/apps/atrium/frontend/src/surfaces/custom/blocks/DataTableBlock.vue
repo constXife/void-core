@@ -39,7 +39,14 @@ function cell(row, column) {
       </thead>
       <tbody>
         <tr v-for="(row, index) in rows" :key="row.id || index">
-          <td v-for="column in columns" :key="column">{{ cell(row, column) }}</td>
+          <td v-for="column in columns" :key="column">
+            <span
+              v-if="column === 'status' && row[column]"
+              class="data-table__status"
+              :data-status="String(row[column]).toLowerCase()"
+            >{{ cell(row, column) }}</span>
+            <template v-else>{{ cell(row, column) }}</template>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -89,5 +96,37 @@ function cell(row, column) {
   font-style: italic;
   font-size: 13px;
   color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+/* Status badge — generic colour cues по типичным значениям статуса; неизвестные → neutral. */
+.data-table__status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: var(--text-muted, color-mix(in srgb, currentColor 70%, transparent));
+}
+
+.data-table__status[data-status="ok"],
+.data-table__status[data-status="fresh"],
+.data-table__status[data-status="active"] {
+  background: color-mix(in srgb, #22c55e 18%, transparent);
+  color: #86efac;
+}
+
+.data-table__status[data-status="low"],
+.data-table__status[data-status="opened"] {
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: #fcd34d;
+}
+
+.data-table__status[data-status="missing"],
+.data-table__status[data-status="expired"],
+.data-table__status[data-status="discarded"] {
+  background: color-mix(in srgb, #ef4444 18%, transparent);
+  color: #fca5a5;
 }
 </style>

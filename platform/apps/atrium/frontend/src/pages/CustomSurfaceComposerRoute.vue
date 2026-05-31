@@ -28,15 +28,15 @@ function onBack() {
   }
 }
 
-// pageKind берётся из query (?pageKind=freeform.overview), default inventory.overview.
-// Composer remount'ится при навигации, поэтому read-once на setup корректен. Полноценный
-// pageKind selector над routing — будущий slice.
+// pageKind — реактивный selector. Initial value из query (?pageKind=freeform.overview),
+// default inventory.overview. Переключение re-fetch'ит manifest + latest saved spec и
+// сбрасывает composed state (manifest и saved spec специфичны pageKind).
 const ALLOWED_PAGE_KINDS = ["inventory.overview", "freeform.overview"];
 const requestedPageKind =
   typeof route.query.pageKind === "string" ? route.query.pageKind.trim() : "";
-const PAGE_KIND = ALLOWED_PAGE_KINDS.includes(requestedPageKind)
-  ? requestedPageKind
-  : "inventory.overview";
+const pageKind = ref(
+  ALLOWED_PAGE_KINDS.includes(requestedPageKind) ? requestedPageKind : "inventory.overview"
+);
 
 const manifest = ref(null);
 const manifestError = ref(null);
@@ -87,7 +87,7 @@ async function loadManifest() {
   manifestLoading.value = true;
   manifestError.value = null;
   try {
-    manifest.value = await fetchScopedManifest({ pageKind: PAGE_KIND });
+    manifest.value = await fetchScopedManifest({ pageKind: pageKind.value });
   } catch (error) {
     manifest.value = null;
     manifestError.value = formatApiError(error);
@@ -104,7 +104,7 @@ async function runCompile() {
     // compile endpoint возвращает CompileResponse {ok, pageSpec, validation, attempts,
     // targetId, model} — не сам PageSpec. Извлекаем pageSpec; при ok=false показываем
     // понятную ошибку (LLM выдал невалидный output даже после repair attempt).
-    const result = await compilePageSpec({ prompt: prompt.value, pageKind: PAGE_KIND });
+    const result = await compilePageSpec({ prompt: prompt.value, pageKind: pageKind.value });
     compileAttempts.value = Array.isArray(result?.attempts) ? result.attempts : [];
     if (result?.ok && result?.pageSpec) {
       pageSpec.value = result.pageSpec;
@@ -158,7 +158,7 @@ async function runSave() {
   saveError.value = null;
   saveSuccess.value = null;
   try {
-    const result = await savePageSpec({ pageSpec: pageSpec.value, pageKind: PAGE_KIND });
+    const result = await savePageSpec({ pageSpec: pageSpec.value, pageKind: pageKind.value });
     saveSuccess.value = {
       pagespecId: result?.pagespecId,
       version: result?.version,
@@ -176,7 +176,7 @@ async function runSave() {
 async function loadLatestSaved() {
   latestLoading.value = true;
   try {
-    const result = await fetchLatestPagespec(PAGE_KIND);
+    const result = await fetchLatestPagespec(pageKind.value);
     latestSaved.value = result;
     // Auto-populate pageSpec для удобной "продолжить редактирование" UX.
     if (result?.pagespec) {
@@ -197,6 +197,20 @@ function formatApiError(error) {
   return { status: 0, code: "unknown_error", message: String(error?.message || error) };
 }
 
+function switchPageKind(next) {
+  if (!ALLOWED_PAGE_KINDS.includes(next) || next === pageKind.value) return;
+  pageKind.value = next;
+  // manifest и saved spec специфичны pageKind — сбрасываем composed/preview state и перезагружаем.
+  pageSpec.value = null;
+  compileError.value = null;
+  compileAttempts.value = [];
+  saveSuccess.value = null;
+  saveError.value = null;
+  resolvedBridgeArtifacts.value = {};
+  loadManifest();
+  loadLatestSaved();
+}
+
 onMounted(() => {
   loadManifest();
   loadLatestSaved();
@@ -215,8 +229,16 @@ onMounted(() => {
       <h1>{{ t("composer.title") }}</h1>
       <p class="composer__subtitle">{{ t("composer.subtitle") }}</p>
       <p class="composer__pageKind">
-        <span class="composer__label">{{ t("composer.pageKindLabel") }}</span>
-        <code>{{ PAGE_KIND }}</code>
+        <label class="composer__label" for="composer-pagekind">{{ t("composer.pageKindLabel") }}</label>
+        <select
+          id="composer-pagekind"
+          class="composer__pageKind-select"
+          :value="pageKind"
+          :disabled="manifestLoading || compileLoading || saveLoading"
+          @change="switchPageKind($event.target.value)"
+        >
+          <option v-for="pk in ALLOWED_PAGE_KINDS" :key="pk" :value="pk">{{ pk }}</option>
+        </select>
       </p>
     </header>
 
@@ -423,6 +445,23 @@ onMounted(() => {
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.composer__pageKind-select {
+  background: var(--surface-elevated, color-mix(in srgb, #ffffff 6%, transparent));
+  color: var(--text-primary, #f8fafc);
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.composer__pageKind-select:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .composer__panel {

@@ -777,6 +777,7 @@ function normalizeSession(payload) {
   return {
     id: String(payload.id || ""),
     title: String(payload.title || ""),
+    title_source: payload.title_source ? String(payload.title_source) : "",
     target_id: String(payload.target_id || ""),
     created_at: String(payload.created_at || ""),
     updated_at: String(payload.updated_at || ""),
