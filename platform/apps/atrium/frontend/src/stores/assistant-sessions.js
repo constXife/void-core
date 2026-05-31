@@ -96,6 +96,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     try {
       const payload = await fetchJson(`${SESSIONS_URL}/${currentSessionId.value}`);
       currentSession.value = normalizeSession(payload);
+      upsertSessionSnapshot(currentSession.value);
       currentMessages.value = filterPendingDeletedMessages(
         currentSessionId.value,
         normalizeMessageList(payload?.messages)
@@ -637,6 +638,19 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
         updated_at: new Date().toISOString()
       };
     });
+  };
+
+  const upsertSessionSnapshot = (snapshot) => {
+    if (!snapshot?.id) return;
+    let seen = false;
+    sessions.value = sessions.value.map((session) => {
+      if (session.id !== snapshot.id) return session;
+      seen = true;
+      return { ...session, ...snapshot };
+    });
+    if (!seen) {
+      sessions.value = [snapshot, ...sessions.value];
+    }
   };
 
   const filterPendingDeletedMessages = (sessionId, messages) => {
