@@ -113,4 +113,59 @@ describe("BlockRenderer", () => {
     expect(wrapper.get(".assistant-secondary-grid__title").text()).toBe("Secondary");
     expect(wrapper.get(".assistant-rail-block a").text()).toBe("Rail");
   });
+
+  it("renders a table block with columns, rows, highlight and note", () => {
+    const wrapper = mount(BlockRenderer, {
+      props: {
+        blocks: [
+          {
+            type: "table",
+            title: "Сравнение горных велосипедов",
+            subtitle: "по цене и весу",
+            columns: [
+              { key: "price", label: "Цена" },
+              { key: "weight", label: "Вес" }
+            ],
+            rows: [
+              {
+                label: "Trek Marlin 7",
+                cells: [
+                  { column: "price", value: "≈ 90 000 ₽" },
+                  { column: "weight", value: "13.9 кг" }
+                ]
+              },
+              {
+                label: "Giant Talon 1",
+                cells: [{ column: "price", value: "≈ 85 000 ₽" }],
+                highlight: true
+              }
+            ],
+            note: "Talon 1 дешевле."
+          }
+        ],
+        t
+      }
+    });
+
+    const table = wrapper.get(".skill-table");
+    expect(table.get(".skill-table__title").text()).toBe("Сравнение горных велосипедов");
+    expect(table.text()).toContain("Цена");
+    expect(table.text()).toContain("Trek Marlin 7");
+    expect(table.text()).toContain("≈ 90 000 ₽");
+    // missing weight cell у Giant Talon 1 → placeholder
+    expect(table.text()).toContain("—");
+    expect(table.text()).toContain("Talon 1 дешевле.");
+    expect(wrapper.findAll(".skill-table__row--highlight")).toHaveLength(1);
+  });
+
+  it("falls back to UnknownBlock for an unregistered block type", () => {
+    const wrapper = mount(BlockRenderer, {
+      props: {
+        blocks: [{ type: "definitely_not_a_block" }],
+        t
+      }
+    });
+
+    expect(wrapper.get(".assistant-unknown-block").text()).toContain("definitely_not_a_block");
+  });
 });

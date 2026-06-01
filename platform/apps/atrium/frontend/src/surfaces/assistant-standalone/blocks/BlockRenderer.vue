@@ -6,6 +6,7 @@ import LeadStoryBlock from "./LeadStoryBlock.vue";
 import SecondaryGridBlock from "./SecondaryGridBlock.vue";
 import RailBlock from "./RailBlock.vue";
 import ArtifactLinkBlock from "./ArtifactLinkBlock.vue";
+import TableBlock from "./TableBlock.vue";
 import UnknownBlock from "./UnknownBlock.vue";
 
 defineProps({
@@ -33,6 +34,8 @@ function componentFor(block) {
       return RailBlock;
     case "artifact_link":
       return ArtifactLinkBlock;
+    case "table":
+      return TableBlock;
     default:
       return UnknownBlock;
   }
