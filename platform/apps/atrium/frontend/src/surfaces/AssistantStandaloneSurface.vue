@@ -88,7 +88,9 @@ const TAB_DEFAULTS = {
   // artifact-list — top-level route (не внутри assistant host wrapper); клик по tab
   // выводит юзера в standalone ArtifactListPage. Возврат — browser back или клик
   // на другой tab (router.push снова приведёт в assistant host).
-  artifacts: { name: "artifact-list" }
+  artifacts: { name: "artifact-list" },
+  // surfaces — Custom Surface composer (/composer); generic primitive, доступен на обоих хостах.
+  surfaces: { name: "custom-surface-composer" }
 };
 
 const activeTab = computed(() => {
@@ -96,6 +98,7 @@ const activeTab = computed(() => {
   if (name === "assistant-capabilities" || name === "assistant-capability-detail") return "capabilities";
   if (name.startsWith("assistant-routine")) return "routines";
   if (name === "artifact-list" || name === "artifact-detail") return "artifacts";
+  if (name === "custom-surface-composer" || name === "custom-surface-render") return "surfaces";
   return "chat";
 });
 

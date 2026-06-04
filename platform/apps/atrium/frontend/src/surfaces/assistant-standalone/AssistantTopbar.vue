@@ -16,7 +16,9 @@ const tabs = computed(() => [
   { id: "routines", label: props.t("assistant.tabs.routines"), count: props.routinesCount, showCount: true },
   // Artifacts tab без count — count fetch для list зашёл бы в backend на каждом render
   // существующих tabs и усложнил бы Surface; пока tab без badge, ArtifactListPage сама загружает items.
-  { id: "artifacts", label: props.t("assistant.tabs.artifacts"), count: null, showCount: false }
+  { id: "artifacts", label: props.t("assistant.tabs.artifacts"), count: null, showCount: false },
+  // Surfaces — вход в Custom Surface composer (/composer). Без count.
+  { id: "surfaces", label: props.t("assistant.tabs.surfaces"), count: null, showCount: false }
 ]);
 
 const onClick = (tabId) => {
