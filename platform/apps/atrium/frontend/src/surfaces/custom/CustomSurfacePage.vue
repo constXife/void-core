@@ -1,18 +1,23 @@
 <script setup>
-// CustomSurfacePage — render сохранённого PageSpec. Generic route /surfaces/:pageKind.
-// Fetches latest PageSpec + inventory dashboard-data, adapts данные в per-slot datasets,
-// раскладывает block instances по регионам (header/left/right/footer) и рендерит каждый
-// через block registry. Read-only — рендер не триггерит никаких мутаций/skill execution.
+// CustomSurfacePage — view-контейнер сохранённого PageSpec. Generic route /surfaces/:pageKind.
+// Владеет async: fetch latest PageSpec + inventory dashboard-data (→ adapt в per-slot datasets)
+// + resolve bridge-артефактов; loading/error/empty states. Сам рендер делегирован
+// SurfaceRenderer (тот же компонент, что использует composer preview → нет divergence).
+// Read-only — рендер не триггерит мутаций/skill execution.
 //
 // Доступен на atrium host (там AppState + inventory dashboard-data endpoint same-origin).
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ChevronLeft } from "lucide-vue-next";
 
-import { fetchLatestPagespec, fetchInventoryDashboardData } from "../../lib/customSurfaces/api.js";
+import {
+  fetchLatestPagespec,
+  fetchInventoryDashboardData,
+  resolveBridgeArtifacts
+} from "../../lib/customSurfaces/api.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import { adaptDashboardData } from "./adapter.js";
-import { componentForBlock } from "./blockRegistry.js";
+import SurfaceRenderer from "./SurfaceRenderer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -20,35 +25,17 @@ const appStore = useAtriumAppStore();
 const t = (key, vars = {}) => appStore.t(key, vars);
 
 const DEFAULT_SLICE = "pantry";
-const REGION_ORDER = ["header", "left", "right", "footer"];
 
 const pageKind = computed(() => String(route.params.pageKind || ""));
 const slice = computed(() => String(route.query.slice || DEFAULT_SLICE));
 
 const pageSpec = ref(null);
 const slotData = ref({});
+const bridgeArtifacts = ref({});
 const loading = ref(false);
 const error = ref("");
 
 const title = computed(() => pageSpec.value?.title || t("surface.render.default_title"));
-
-const blocks = computed(() =>
-  Array.isArray(pageSpec.value?.blocks) ? pageSpec.value.blocks : []
-);
-
-// Регионы, в которых реально есть блоки — рисуем только их (graceful collapse пустых).
-const activeRegions = computed(() =>
-  REGION_ORDER.filter((region) => blocks.value.some((b) => b.region === region))
-);
-
-function blocksInRegion(region) {
-  return blocks.value.filter((b) => b.region === region);
-}
-
-function datasetFor(block) {
-  const dataSlot = block?.props?.dataSlot;
-  return (dataSlot && slotData.value[dataSlot]) || {};
-}
 
 function onBack() {
   if (window.history.length > 1) router.back();
@@ -58,6 +45,7 @@ function onBack() {
 async function load() {
   loading.value = true;
   error.value = "";
+  bridgeArtifacts.value = {};
   try {
     const record = await fetchLatestPagespec(pageKind.value);
     if (!record || !record.pagespec) {
@@ -67,6 +55,14 @@ async function load() {
     pageSpec.value = record.pagespec;
     const dashboard = await fetchInventoryDashboardData(slice.value);
     slotData.value = adaptDashboardData(dashboard);
+    // Bridge-артефакты — отдельный, некритичный путь: если резолв упал, не валим
+    // весь render (inventory-блоки уже есть). Один broken bridge ≠ пустая страница.
+    try {
+      const resolved = await resolveBridgeArtifacts({ pageSpec: pageSpec.value });
+      bridgeArtifacts.value = resolved?.artifacts || {};
+    } catch {
+      bridgeArtifacts.value = {};
+    }
   } catch (err) {
     error.value = err?.message || t("surface.render.error");
     pageSpec.value = null;
@@ -103,27 +99,13 @@ watch([pageKind, slice], load, { immediate: true });
       {{ t("surface.render.empty") }}
     </div>
 
-    <div v-else class="surface-page__layout">
-      <section
-        v-for="region in activeRegions"
-        :key="region"
-        class="surface-page__region"
-        :data-region="region"
-      >
-        <template v-for="block in blocksInRegion(region)" :key="block.id">
-          <component
-            :is="componentForBlock(block.block)"
-            v-if="componentForBlock(block.block)"
-            :block="block"
-            :data="datasetFor(block)"
-            :t="t"
-          />
-          <div v-else class="surface-page__unknown" role="status">
-            {{ t("surface.render.unsupported_block", { block: block.block }) }}
-          </div>
-        </template>
-      </section>
-    </div>
+    <SurfaceRenderer
+      v-else
+      :page-spec="pageSpec"
+      :slot-data="slotData"
+      :bridge-artifacts="bridgeArtifacts"
+      :t="t"
+    />
   </main>
 </template>
 
@@ -174,32 +156,6 @@ watch([pageKind, slice], load, { immediate: true });
   font-weight: 600;
 }
 
-.surface-page__layout {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.surface-page__region {
-  display: grid;
-  gap: 14px;
-  align-content: start;
-}
-
-/* header и footer тянутся на обе колонки; header — горизонтальный ряд (KPI cards). */
-.surface-page__region[data-region="header"],
-.surface-page__region[data-region="footer"] {
-  grid-column: 1 / -1;
-}
-
-.surface-page__region[data-region="header"] {
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-}
-
 .surface-page__state {
   max-width: 720px;
   margin: 80px auto;
@@ -211,23 +167,5 @@ watch([pageKind, slice], load, { immediate: true });
 
 .surface-page__state--error {
   color: var(--text-error, #fca5a5);
-}
-
-.surface-page__unknown {
-  padding: 16px;
-  border: 1px dashed color-mix(in srgb, currentColor 20%, transparent);
-  border-radius: 10px;
-  font-size: 12px;
-  font-style: italic;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
-}
-
-@media (max-width: 720px) {
-  .surface-page__layout {
-    grid-template-columns: 1fr;
-  }
-  .surface-page__region[data-region="header"] {
-    grid-auto-flow: row;
-  }
 }
 </style>

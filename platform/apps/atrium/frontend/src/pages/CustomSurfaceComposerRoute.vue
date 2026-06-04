@@ -6,13 +6,15 @@ import { useAtriumAppStore } from "../stores/atrium-app.js";
 import {
   ApiCallError,
   compilePageSpec,
+  fetchInventoryDashboardData,
   fetchLatestPagespec,
   fetchScopedManifest,
   previewPageSpec,
   resolveBridgeArtifacts,
   savePageSpec
 } from "../lib/customSurfaces/api.js";
-import AssistantLatestArtifactBlock from "../surfaces/artifact/AssistantLatestArtifactBlock.vue";
+import { adaptDashboardData } from "../surfaces/custom/adapter.js";
+import SurfaceRenderer from "../surfaces/custom/SurfaceRenderer.vue";
 
 const appStore = useAtriumAppStore();
 const router = useRouter();
@@ -56,6 +58,10 @@ const previewLoading = ref(false);
 // composer показывает real rendered preview этих blocks. Inventory blocks остаются TBD (P1.4).
 const resolvedBridgeArtifacts = ref({});
 const resolveError = ref(null);
+
+// Inventory/primitive data для honest visual preview (тот же путь, что view-route).
+const DEFAULT_SLICE = "pantry";
+const slotData = ref({});
 
 const saveError = ref(null);
 const saveLoading = ref(false);
@@ -134,8 +140,18 @@ async function runPreview() {
   previewError.value = null;
   resolveError.value = null;
   resolvedBridgeArtifacts.value = {};
+  slotData.value = {};
   try {
     await previewPageSpec({ pageSpec: pageSpec.value });
+    // Inventory/primitive-блоки: dashboard-data для честного визуального preview (тот же путь,
+    // что view-route). Degraded gracefully (например на assistant host, где endpoint отдаёт
+    // не-JSON) — блоки рендерятся с пустыми данными, preview не валится.
+    try {
+      const dashboard = await fetchInventoryDashboardData(DEFAULT_SLICE);
+      slotData.value = adaptDashboardData(dashboard);
+    } catch {
+      slotData.value = {};
+    }
     // Если в PageSpec есть bridge blocks — fetch их envelopes для render.
     if (bridgeBlocks.value.length > 0) {
       try {
@@ -207,6 +223,7 @@ function switchPageKind(next) {
   saveSuccess.value = null;
   saveError.value = null;
   resolvedBridgeArtifacts.value = {};
+  slotData.value = {};
   loadManifest();
   loadLatestSaved();
 }
@@ -323,18 +340,12 @@ onMounted(() => {
       >
         <strong>{{ resolveError.code }}</strong> — {{ resolveError.message }}
       </p>
-      <p v-if="bridgeBlocks.length === 0" class="composer__hint">
-        {{ t("composer.previewBridgeEmpty") }}
-      </p>
-      <div v-else class="composer__bridge-blocks">
-        <AssistantLatestArtifactBlock
-          v-for="block in bridgeBlocks"
-          :key="block.id"
-          :block="block"
-          :resolved="resolvedBridgeArtifacts[block.id] || {}"
-          :t="t"
-        />
-      </div>
+      <SurfaceRenderer
+        :page-spec="pageSpec"
+        :slot-data="slotData"
+        :bridge-artifacts="resolvedBridgeArtifacts"
+        :t="t"
+      />
     </section>
 
     <section class="composer__panel">
