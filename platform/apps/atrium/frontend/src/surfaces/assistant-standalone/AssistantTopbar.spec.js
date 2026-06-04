@@ -8,7 +8,7 @@ const ruMessages = {
   "assistant.tabs.capabilities": "Возможности",
   "assistant.tabs.routines": "Рутины",
   "assistant.tabs.artifacts": "Артефакты",
-  "assistant.tabs.surfaces": "Поверхности"
+  "assistant.tabs.surfaces": "Страницы"
 };
 
 const t = (key) => ruMessages[key] || key;
@@ -26,6 +26,6 @@ describe("AssistantTopbar", () => {
 
     expect(wrapper.find("nav").attributes("aria-label")).toBe("Разделы ассистента");
     expect(wrapper.findAll(".assistant-topbar__tab-label").map((node) => node.text()))
-      .toEqual(["Чат", "Возможности", "Рутины", "Артефакты", "Поверхности"]);
+      .toEqual(["Чат", "Возможности", "Рутины", "Артефакты", "Страницы"]);
   });
 });
