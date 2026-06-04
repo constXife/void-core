@@ -63,6 +63,19 @@ describe("atrium markdown sanitization", () => {
     expect(html).toContain("<mark class=\"assistant-markdown__highlight\">важный вывод</mark>");
   });
 
+  it("renders inline bold/code inside list items", () => {
+    const html = renderMarkdown("- **Метка:** текст с `кодом`\n- *курсив* и обычный");
+    expect(html).toContain("<strong>Метка:</strong>");
+    expect(html).toContain("<code>кодом</code>");
+    expect(html).toContain("<em>курсив</em>");
+    expect(html).not.toContain("**Метка:**");
+  });
+
+  it("keeps semantic highlight inside list items", () => {
+    const html = renderMarkdown("- ==важное== в списке");
+    expect(html).toContain("<mark class=\"assistant-markdown__highlight\">важное</mark>");
+  });
+
   it("renders assistant admonition blocks with semantic classes only", () => {
     const html = renderMarkdown(":::warning\n**Риск:** проверь backend DELETE.\n:::");
     expect(html).toContain(

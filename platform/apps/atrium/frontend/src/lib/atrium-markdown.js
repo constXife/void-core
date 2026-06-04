@@ -156,7 +156,16 @@ function createMarkdownRenderer(options) {
   const renderTable = renderer.table.bind(renderer);
 
   renderer.html = (token) => escapeHtml(token.text || token.raw || "");
-  renderer.text = (token) => renderAssistantHighlights(escapeHtml(token.text || token.raw || ""));
+  renderer.text = function renderText(token) {
+    // marked tokenizes inline markup (strong/em/code/links) inside list-item and
+    // loose text tokens into `token.tokens`. The default renderer recurses via
+    // parseInline; без этого `**bold**`/`*em*` в пунктах списка остаются сырыми.
+    // Leaf text-токены без вложенных tokens идут через escape + highlight как раньше.
+    if (token.tokens && token.tokens.length) {
+      return this.parser.parseInline(token.tokens);
+    }
+    return renderAssistantHighlights(escapeHtml(token.text || token.raw || ""));
+  };
   renderer.table = (token) => (
     `<div class="assistant-markdown__table-scroll">${renderTable(token)}</div>`
   );
