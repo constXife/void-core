@@ -10,7 +10,6 @@ import ArtifactPage from "../surfaces/artifact/ArtifactPage.vue";
 import CustomSurfacePage from "../surfaces/custom/CustomSurfacePage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
 import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
-import CustomSurfaceComposerRoute from "../pages/CustomSurfaceComposerRoute.vue";
 import AdminContentRoute from "../pages/admin/AdminContentRoute.vue";
 import AdminDashboardRoute from "../pages/admin/AdminDashboardRoute.vue";
 import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
@@ -159,17 +158,6 @@ const routes = [
         component: AtriumHomePage
       }
     ]
-  },
-  {
-    // Composer — standalone authoring surface, top-level (не AppLayout workspace shell).
-    // Не требует workspace bootstrap: composer работает с custom-surfaces API, не с atrium
-    // workspace data. Раньше был обёрнут в AppLayout с workspace:true — на assistant host
-    // (где нет /atrium/workspace endpoint) это давало 'Unexpected token <' toast от
-    // workspace fetch SPA fallback. Доступен на обоих hosts как generic primitive.
-    path: "/composer",
-    name: "custom-surface-composer",
-    component: CustomSurfaceComposerRoute,
-    meta: { authRequired: true, accountRequired: true }
   },
   {
     // Generic fullscreen artifact view. Entry-point — ArtifactLinkBlock card в чате,
