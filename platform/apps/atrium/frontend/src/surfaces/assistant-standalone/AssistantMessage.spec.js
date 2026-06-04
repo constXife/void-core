@@ -10,9 +10,12 @@ const messages = {
   "assistant.message.reject": "Не запускать",
   "assistant.message.changeLayout": "Изменить раскладку skill",
   "assistant.message.copy": "Скопировать сообщение",
+  "assistant.message.copyCode": "Копировать",
+  "assistant.message.copiedCode": "Скопировано",
   "assistant.message.regenerate": "Сгенерировать заново",
   "assistant.message.deletePair": "Удалить пару сообщений",
   "assistant.message.stopped": "Генерация остановлена.",
+  "assistant.message.thinking": "Размышления",
   "assistant.step.skillProposal": "Подготовка {skill}",
   "assistant.step.skillRun": "Запуск {skill}",
   "assistant.step.unknown": "Шаг ассистента",
@@ -166,6 +169,50 @@ describe("AssistantMessage", () => {
       "Подбираю подходящий навык."
     );
     expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
+  });
+
+  it("renders provider think tags as a separate collapsed reasoning block", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "<think>Hidden reasoning</think>\nFinal answer",
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        t
+      }
+    });
+
+    const thinking = wrapper.find(".assistant-message__thinking");
+    expect(thinking.exists()).toBe(true);
+    expect(thinking.attributes("open")).toBeUndefined();
+    expect(thinking.text()).toContain("Размышления");
+    expect(thinking.text()).toContain("Hidden reasoning");
+    expect(wrapper.find(".assistant-markdown").text()).toContain("Final answer");
+    expect(wrapper.find(".assistant-markdown").text()).not.toContain("<think>");
+    expect(wrapper.find(".assistant-markdown").text()).not.toContain("Hidden reasoning");
+  });
+
+  it("keeps an unfinished provider think block open while streaming", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "<think>Still reasoning",
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        streaming: true,
+        t
+      }
+    });
+
+    const thinking = wrapper.find(".assistant-message__thinking");
+    expect(thinking.exists()).toBe(true);
+    expect(thinking.attributes("open")).toBe("");
+    expect(thinking.text()).toContain("Still reasoning");
+    expect(wrapper.find(".assistant-markdown").exists()).toBe(false);
   });
 
   it("renders structured run steps outside markdown", () => {

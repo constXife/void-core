@@ -103,6 +103,12 @@ const canActOnProposal = computed(
 const showCursor = computed(() => isStreamingTail.value);
 const timestamp = computed(() => formatTimestamp(props.message.created_at));
 const fullTimestamp = computed(() => props.message.created_at || "");
+const contentSegments = computed(() =>
+  isAssistant.value ? splitThinkingSegments(props.message.content) : [answerSegment(props.message.content)]
+);
+const hasRenderableContent = computed(() =>
+  contentSegments.value.some((segment) => segment.content.trim())
+);
 const showActions = computed(
   () =>
     isAssistant.value &&
@@ -170,6 +176,60 @@ function formatDuration(ms) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function answerSegment(content) {
+  return {
+    kind: "answer",
+    content: String(content || "")
+  };
+}
+
+function thinkingSegment(content) {
+  return {
+    kind: "thinking",
+    content: String(content || "")
+  };
+}
+
+function splitThinkingSegments(content) {
+  const source = String(content || "");
+  if (!source) return [];
+
+  const segments = [];
+  const tagPattern = /<\/?think>/gi;
+  let cursor = 0;
+  let thinkingStart = null;
+  let match;
+
+  while ((match = tagPattern.exec(source)) !== null) {
+    const tag = match[0].toLowerCase();
+    const tagStart = match.index;
+    const tagEnd = tagPattern.lastIndex;
+
+    if (tag === "<think>") {
+      if (thinkingStart === null && tagStart > cursor) {
+        segments.push(answerSegment(source.slice(cursor, tagStart)));
+      }
+      thinkingStart = tagEnd;
+      cursor = tagEnd;
+      continue;
+    }
+
+    if (thinkingStart !== null) {
+      segments.push(thinkingSegment(source.slice(thinkingStart, tagStart)));
+      thinkingStart = null;
+      cursor = tagEnd;
+    }
+  }
+
+  if (thinkingStart !== null) {
+    segments.push(thinkingSegment(source.slice(thinkingStart)));
+  } else if (cursor < source.length) {
+    segments.push(answerSegment(source.slice(cursor)));
+  }
+
+  return segments.filter((segment) => segment.content.trim());
 }
 
 function skillDisplayName(skillId) {
@@ -285,10 +345,35 @@ const onChangeLayout = () => {
           </li>
         </ul>
         <AssistantMarkdown
-          v-if="!isSkillProposal && !hasSkillBlocks && (message.content || !isStreamingTail)"
+          v-if="!isSkillProposal && !hasSkillBlocks && !isAssistant && (message.content || !isStreamingTail)"
           :content="message.content"
-          :render-diagrams="isAssistant && !message.error"
+          :render-diagrams="false"
+          :copy-code-label="t('assistant.message.copyCode')"
+          :copied-code-label="t('assistant.message.copiedCode')"
         />
+        <template v-if="!isSkillProposal && !hasSkillBlocks && isAssistant && (hasRenderableContent || !isStreamingTail)">
+          <template v-for="(segment, index) in contentSegments" :key="`${segment.kind}-${index}`">
+            <AssistantMarkdown
+              v-if="segment.kind === 'answer'"
+              :content="segment.content"
+              :render-diagrams="!message.error"
+              :copy-code-label="t('assistant.message.copyCode')"
+              :copied-code-label="t('assistant.message.copiedCode')"
+            />
+            <details
+              v-else
+              class="assistant-message__thinking"
+              :open="isStreamingTail"
+            >
+              <summary class="assistant-message__thinking-summary">
+                {{ t("assistant.message.thinking") }}
+              </summary>
+              <p class="assistant-message__thinking-content">
+                {{ segment.content }}
+              </p>
+            </details>
+          </template>
+        </template>
         <div v-if="isSkillProposal" class="assistant-message__proposal">
           <div class="assistant-message__proposal-main">
             <span class="assistant-message__proposal-title">{{ proposalTitle }}</span>

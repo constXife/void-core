@@ -12,6 +12,14 @@ const props = defineProps({
     type: String,
     default: ""
   },
+  copyCodeLabel: {
+    type: String,
+    default: "Copy code"
+  },
+  copiedCodeLabel: {
+    type: String,
+    default: "Copied"
+  },
   renderDiagrams: {
     type: Boolean,
     default: false
@@ -22,6 +30,7 @@ let renderCounter = 0;
 let mermaidRuntime = null;
 const rootRef = ref(null);
 const zoomedDiagramSvg = ref("");
+const codeCopyResetTimers = new WeakMap();
 let themeObserver = null;
 
 const html = computed(() => {
@@ -33,6 +42,7 @@ const html = computed(() => {
 watch(
   html,
   async () => {
+    await installCodeCopyButtons();
     await renderMermaidDiagrams();
   },
   { flush: "post", immediate: true }
@@ -55,6 +65,48 @@ onBeforeUnmount(() => {
   themeObserver?.disconnect();
   themeObserver = null;
 });
+
+async function installCodeCopyButtons() {
+  await nextTick();
+  const buttons = Array.from(rootRef.value?.querySelectorAll("[data-assistant-code-copy]") || []);
+  for (const button of buttons) {
+    button.textContent = props.copyCodeLabel;
+    button.setAttribute("aria-label", props.copyCodeLabel);
+    button.setAttribute("title", props.copyCodeLabel);
+    if (button.dataset.assistantCodeCopyInstalled === "true") continue;
+    button.dataset.assistantCodeCopyInstalled = "true";
+    button.addEventListener("click", () => copyCodeBlock(button));
+  }
+}
+
+async function copyCodeBlock(button) {
+  const code = button.closest("[data-assistant-code-block]")?.querySelector("code");
+  const text = code?.textContent || "";
+  if (!text || !navigator?.clipboard?.writeText) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    markCodeCopySuccess(button);
+  } catch (error) {
+    console.error("void-assistant: copy code block failed", error);
+  }
+}
+
+function markCodeCopySuccess(button) {
+  button.textContent = props.copiedCodeLabel;
+  button.setAttribute("aria-label", props.copiedCodeLabel);
+  button.setAttribute("title", props.copiedCodeLabel);
+
+  const previousTimer = codeCopyResetTimers.get(button);
+  if (previousTimer) clearTimeout(previousTimer);
+  const timer = window.setTimeout(() => {
+    button.textContent = props.copyCodeLabel;
+    button.setAttribute("aria-label", props.copyCodeLabel);
+    button.setAttribute("title", props.copyCodeLabel);
+    codeCopyResetTimers.delete(button);
+  }, 1200);
+  codeCopyResetTimers.set(button, timer);
+}
 
 async function renderMermaidDiagrams() {
   if (!props.renderDiagrams) return;

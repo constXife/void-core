@@ -28,8 +28,18 @@ describe("atrium markdown sanitization", () => {
 
   it("leaves mermaid fences as code unless diagrams are explicitly enabled", () => {
     const html = renderMarkdown("```mermaid\nflowchart TD\n  A --> B\n```");
+    expect(html).toContain("assistant-markdown__code-block");
+    expect(html).toContain("data-assistant-code-copy=\"true\"");
     expect(html).toContain("<pre><code class=\"language-mermaid\">");
     expect(html).not.toContain("data-assistant-mermaid");
+  });
+
+  it("wraps fenced command blocks with copy controls", () => {
+    const html = renderMarkdown("```sh\nsudo apt update\nsudo apt install openocd\n```");
+    expect(html).toContain("assistant-markdown__code-block");
+    expect(html).toContain("data-assistant-code-block=\"true\"");
+    expect(html).toContain("data-assistant-code-copy=\"true\"");
+    expect(html).toContain("<code class=\"language-sh\">sudo apt update\nsudo apt install openocd</code>");
   });
 
   it("renders assistant mermaid fences as explicit diagram placeholders", () => {

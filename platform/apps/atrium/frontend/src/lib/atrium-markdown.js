@@ -174,11 +174,14 @@ function createMarkdownRenderer(options) {
       ].join("");
     }
     return [
+      '<div class="assistant-markdown__code-block" data-assistant-code-block="true">',
+      '<button type="button" class="assistant-markdown__code-copy" data-assistant-code-copy="true"></button>',
       "<pre><code",
       language ? ` class="language-${escapeAttribute(language)}"` : "",
       ">",
       escapeHtml(code),
-      "</code></pre>\n"
+      "</code></pre>",
+      "</div>\n"
     ].join("");
   };
 

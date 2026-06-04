@@ -23,6 +23,31 @@ afterEach(() => {
 });
 
 describe("AssistantMarkdown", () => {
+  it("copies fenced code block content from the inline copy button", async () => {
+    const writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText }
+    });
+
+    const wrapper = mount(AssistantMarkdown, {
+      props: {
+        content: "```sh\nsudo apt update\nsudo apt install openocd\n```",
+        copyCodeLabel: "Копировать",
+        copiedCodeLabel: "Скопировано"
+      }
+    });
+
+    await flushPromises();
+    const button = wrapper.get(".assistant-markdown__code-copy");
+    expect(button.text()).toBe("Копировать");
+
+    await button.trigger("click");
+
+    expect(writeText).toHaveBeenCalledWith("sudo apt update\nsudo apt install openocd");
+    expect(button.text()).toBe("Скопировано");
+  });
+
   it("renders mermaid blocks only when diagram rendering is enabled", async () => {
     const wrapper = mount(AssistantMarkdown, {
       props: {
