@@ -127,12 +127,13 @@ export function resolveBridgeArtifacts(params) {
  * @returns {Promise<object|null>} saved PageSpec record или null
  */
 /**
- * Fetch inventory dashboard-data (summary stats + item rows + locations) для slice.
- * Источник данных для freeform.overview render (mounted на atrium host downstream).
+ * Resolve read_model data-slots для render-пути (ADR-0027 C3).
+ * Backend (connector-registry + server-side adapt) отдаёт per-slot датасеты с provenance,
+ * поэтому браузер больше НЕ ходит в `/api/knowledge/...` напрямую.
  * @param {string} slice — inventory slice key (pantry/care/wardrobe/device/cookware)
- * @returns {Promise<object>} { summary, items, locations, ... }
+ * @returns {Promise<{slots: Record<string, {payload: object, provenance: object}>}>}
  */
-export async function fetchInventoryDashboardData(slice) {
+export async function fetchResolvedReadModel(slice) {
   const normalized = String(slice || "").trim();
   if (!normalized) {
     throw new Error("slice is required");
@@ -140,7 +141,7 @@ export async function fetchInventoryDashboardData(slice) {
   let response;
   try {
     response = await fetch(
-      `/api/knowledge/v1/inventory/dashboard-data?slice=${encodeURIComponent(normalized)}`,
+      `/atrium/custom-surfaces/resolve-read-model?slice=${encodeURIComponent(normalized)}`,
       { credentials: "include", headers: { Accept: "application/json" } }
     );
   } catch (networkError) {

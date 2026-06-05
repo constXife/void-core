@@ -12,11 +12,10 @@ import { ChevronLeft } from "lucide-vue-next";
 
 import {
   fetchLatestPagespec,
-  fetchInventoryDashboardData,
+  fetchResolvedReadModel,
   resolveBridgeArtifacts
 } from "../../lib/customSurfaces/api.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
-import { adaptDashboardData } from "./adapter.js";
 import SurfaceRenderer from "./SurfaceRenderer.vue";
 
 const route = useRoute();
@@ -53,8 +52,12 @@ async function load() {
       return;
     }
     pageSpec.value = record.pagespec;
-    const dashboard = await fetchInventoryDashboardData(slice.value);
-    slotData.value = adaptDashboardData(dashboard);
+    // read_model слоты резолвятся server-side (ADR-0027 C3): backend отдаёт готовые
+    // per-slot датасеты + provenance. Берём payload каждого слота для SurfaceRenderer.
+    const resolved = await fetchResolvedReadModel(slice.value);
+    slotData.value = Object.fromEntries(
+      Object.entries(resolved?.slots || {}).map(([slotId, slot]) => [slotId, slot?.payload])
+    );
     // Bridge-артефакты — отдельный, некритичный путь: если резолв упал, не валим
     // весь render (inventory-блоки уже есть). Один broken bridge ≠ пустая страница.
     try {
