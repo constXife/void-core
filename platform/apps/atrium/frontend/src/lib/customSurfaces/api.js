@@ -216,15 +216,18 @@ export async function fetchPages() {
   return payload;
 }
 
-export async function fetchLatestPagespec(pageKind) {
+export async function fetchLatestPagespec(pageKind, entityId) {
   const normalized = String(pageKind || "").trim();
   if (!normalized) {
     throw new Error("pageKind is required");
   }
+  // ADR-0026 §3 W3: entityId → backend фолдит owner entity-overlay поверх global в каскаде.
+  const entity = String(entityId || "").trim();
+  const query = entity ? `?entityId=${encodeURIComponent(entity)}` : "";
   let response;
   try {
     response = await fetch(
-      `/atrium/custom-surfaces/pagespecs/${encodeURIComponent(normalized)}/latest`,
+      `/atrium/custom-surfaces/pagespecs/${encodeURIComponent(normalized)}/latest${query}`,
       { credentials: "include", headers: { Accept: "application/json" } }
     );
   } catch (networkError) {

@@ -48,7 +48,7 @@ async function load() {
   error.value = "";
   bridgeArtifacts.value = {};
   try {
-    const record = await fetchLatestPagespec(pageKind.value);
+    const record = await fetchLatestPagespec(pageKind.value, entityId.value);
     if (!record || !record.pagespec) {
       pageSpec.value = null;
       return;
