@@ -296,6 +296,14 @@ const onRejectSkill = (skillRunId) => {
   sessionsStore.rejectSkillRun(skillRunId);
 };
 
+const onApproveSurfacePatch = (messageId) => {
+  sessionsStore.approveSurfacePatch(messageId);
+};
+
+const onRejectSurfacePatch = (messageId) => {
+  sessionsStore.rejectSurfacePatch(messageId);
+};
+
 const onChangeLayout = ({ messageId, variant }) => {
   sessionsStore.changeMessageLayout(messageId, variant);
 };
@@ -571,6 +579,8 @@ function savePreferredTarget(value) {
           @choose-suggestion="onChooseSuggestion"
           @approve-skills="onApproveSkills"
           @reject-skill="onRejectSkill"
+          @approve-surface-patch="onApproveSurfacePatch"
+          @reject-surface-patch="onRejectSurfacePatch"
           @change-layout="onChangeLayout"
         />
 

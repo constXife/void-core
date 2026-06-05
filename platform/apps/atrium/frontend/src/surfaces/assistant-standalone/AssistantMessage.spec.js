@@ -8,6 +8,17 @@ const messages = {
   "assistant.message.awaitingApproval": "ожидает подтверждения",
   "assistant.message.approve": "Запускать",
   "assistant.message.reject": "Не запускать",
+  "assistant.message.surfacePatchSummary": "{pageKind} · изменений: {count}",
+  "assistant.message.surfacePatchApply": "Применить к {pageKind}",
+  "assistant.message.surfacePatchReject": "Отклонить",
+  "assistant.message.surfacePatchApplied": "Применено",
+  "assistant.message.surfacePatchRejected": "Отклонено",
+  "assistant.message.surfacePatchOpen": "Открыть страницу",
+  "assistant.message.surfacePatchOp.addBlock": "+ блок {block} в {region}",
+  "assistant.message.surfacePatchOp.removeBlock": "− блок {blockRef}",
+  "assistant.message.surfacePatchOp.setProps": "изменены свойства {blockRef}",
+  "assistant.message.surfacePatchOp.moveBlock": "{blockRef}: {fromRegion} → {toRegion}",
+  "assistant.message.surfacePatchOp.setLayout": "макет → {layout}",
   "assistant.message.changeLayout": "Изменить раскладку skill",
   "assistant.message.copy": "Скопировать сообщение",
   "assistant.message.copyCode": "Копировать",
@@ -326,6 +337,60 @@ describe("AssistantMessage", () => {
     await buttons[1].trigger("click");
 
     expect(wrapper.emitted("reject-skill")).toEqual([["skill-run-1"]]);
+  });
+
+  it("renders an awaiting surface patch proposal with summary, diff ops, and apply action", async () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Surface patch proposal",
+          message_kind: "surface_patch_proposal",
+          message_payload: {
+            status: "awaiting_approval",
+            pageKind: "dashboard",
+            diff: {
+              ops: [
+                {
+                  op: "addBlock",
+                  blockRef: "block-1",
+                  block: { type: "metric_card" },
+                  region: "main"
+                },
+                { op: "removeBlock", blockRef: "old-block" },
+                { op: "setProps", blockRef: "metric-1", props: { title: "MRR" } },
+                {
+                  op: "moveBlock",
+                  blockRef: "chart-1",
+                  fromRegion: "main",
+                  toRegion: "sidebar"
+                },
+                { op: "setLayout", layout: "compact" }
+              ]
+            }
+          },
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        t
+      }
+    });
+
+    const proposal = wrapper.find(".assistant-message__proposal");
+    expect(proposal.text()).toContain("dashboard · изменений: 5");
+    expect(proposal.text()).toContain("+ блок metric_card в main");
+    expect(proposal.text()).toContain("− блок old-block");
+    expect(proposal.text()).toContain("изменены свойства metric-1");
+    expect(proposal.text()).toContain("chart-1: main → sidebar");
+    expect(proposal.text()).toContain("макет → compact");
+    expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
+
+    const buttons = wrapper.findAll(".assistant-message__proposal-button");
+    expect(buttons[0].text()).toContain("Применить к dashboard");
+
+    await buttons[0].trigger("click");
+
+    expect(wrapper.emitted("approve-surface-patch")).toEqual([["message-1"]]);
   });
 
   it("renders blocks from multiple completed skill runs", () => {

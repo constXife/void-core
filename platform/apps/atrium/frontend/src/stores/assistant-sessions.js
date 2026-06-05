@@ -329,6 +329,14 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     await mutateSkillRun(skillRunId, "reject", {});
   };
 
+  const approveSurfacePatch = async (messageId) => {
+    return mutateSurfacePatch(messageId, "approve");
+  };
+
+  const rejectSurfacePatch = async (messageId) => {
+    return mutateSurfacePatch(messageId, "reject");
+  };
+
   const cancelSkillRun = async (skillRunId) => {
     await mutateSkillRun(skillRunId, "cancel");
   };
@@ -354,6 +362,26 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       ...(body ? { body: JSON.stringify(body) } : {})
     });
     if (reload) await reloadCurrent({ resumeActiveRun: false });
+    return payload;
+  };
+
+  const mutateSurfacePatch = async (messageId, action) => {
+    const normalizedId = String(messageId || "").trim();
+    if (!normalizedId) return null;
+    const payload = await fetchJson(
+      `/assistant/surface-patches/${encodeURIComponent(normalizedId)}/${action}`,
+      {
+        method: "POST",
+        body: JSON.stringify({})
+      }
+    );
+    const status = action === "approve" ? "approved" : "rejected";
+    patchMessagePayload(normalizedId, {
+      status,
+      pagespecId: payload?.pagespecId,
+      version: payload?.version,
+      renderPath: payload?.renderPath
+    });
     return payload;
   };
 
@@ -592,6 +620,23 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     );
   };
 
+  const patchMessagePayload = (id, payloadPatch) => {
+    currentMessages.value = currentMessages.value.map((message) => {
+      if (message.id !== id) return message;
+      const messagePayload =
+        message.message_payload && typeof message.message_payload === "object"
+          ? message.message_payload
+          : {};
+      return {
+        ...message,
+        message_payload: {
+          ...messagePayload,
+          ...payloadPatch
+        }
+      };
+    });
+  };
+
   const applyRunTimingPatch = (id, timings) => {
     if (!id || !timings) return;
     markMessage(id, { timings: mergeTimings(resolveMessageTimings(id), timings) });
@@ -689,6 +734,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     abort,
     approveSkillRun,
     approveSkillRuns,
+    approveSurfacePatch,
     canSend,
     cancelSkillRun,
     changeMessageLayout,
@@ -710,6 +756,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     deleteMessagePair,
     proposeSkillRun,
     rejectSkillRun,
+    rejectSurfacePatch,
     reloadCurrent,
     renameSession,
     restoreSession,
@@ -800,6 +847,10 @@ function normalizeMessageList(value) {
       role: String(entry?.role || ""),
       content: String(entry?.content || ""),
       message_kind: String(entry?.message_kind || "text"),
+      message_payload:
+        entry?.message_payload && typeof entry.message_payload === "object"
+          ? entry.message_payload
+          : {},
       skill_run_ids: Array.isArray(entry?.skill_run_ids) ? entry.skill_run_ids.map(String) : [],
       layout_config:
         entry?.layout_config && typeof entry.layout_config === "object" ? entry.layout_config : {},

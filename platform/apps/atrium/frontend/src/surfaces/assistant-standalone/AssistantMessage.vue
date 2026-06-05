@@ -31,6 +31,8 @@ const emit = defineEmits([
   "delete",
   "approve-skills",
   "reject-skill",
+  "approve-surface-patch",
+  "reject-surface-patch",
   "change-layout"
 ]);
 
@@ -62,6 +64,25 @@ const showRunSteps = computed(
   () => isAssistant.value && runSteps.value.length > 0 && !hasSkillBlocks.value
 );
 const isSkillProposal = computed(() => props.message.message_kind === "skill_proposal");
+const isSurfacePatchProposal = computed(
+  () => props.message.message_kind === "surface_patch_proposal"
+);
+const surfacePatchPayload = computed(() => props.message.message_payload || {});
+const surfacePatchOps = computed(() => {
+  const ops = surfacePatchPayload.value?.diff?.ops;
+  return Array.isArray(ops) ? ops : [];
+});
+const surfacePatchStatus = computed(() => String(surfacePatchPayload.value?.status || ""));
+const surfacePatchPageKind = computed(() => String(surfacePatchPayload.value?.pageKind || ""));
+const surfacePatchSummary = computed(() =>
+  t("assistant.message.surfacePatchSummary", {
+    pageKind: surfacePatchPageKind.value,
+    count: surfacePatchOps.value.length
+  })
+);
+const surfacePatchRenderPath = computed(
+  () => surfacePatchPayload.value?.renderPath || `/surfaces/${surfacePatchPageKind.value}`
+);
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
 // Если message содержит только один ArtifactLink block (mini layout), inline layout switcher
 // "Cards / Compact" функционально noop — backend всё равно эмитит ArtifactLink независимо
@@ -252,6 +273,48 @@ function proposalStatusLabel(status) {
   }
 }
 
+function surfacePatchOpLabel(operation) {
+  switch (operation?.op) {
+    case "addBlock":
+      return t("assistant.message.surfacePatchOp.addBlock", {
+        block: surfacePatchBlockLabel(operation),
+        region: String(operation.region || "")
+      });
+    case "removeBlock":
+      return t("assistant.message.surfacePatchOp.removeBlock", {
+        blockRef: String(operation.blockRef || "")
+      });
+    case "setProps":
+      return t("assistant.message.surfacePatchOp.setProps", {
+        blockRef: String(operation.blockRef || "")
+      });
+    case "moveBlock":
+      return t("assistant.message.surfacePatchOp.moveBlock", {
+        blockRef: String(operation.blockRef || ""),
+        fromRegion: String(operation.fromRegion || ""),
+        toRegion: String(operation.toRegion || "")
+      });
+    case "setLayout":
+      return t("assistant.message.surfacePatchOp.setLayout", {
+        layout: surfacePatchLayoutLabel(operation.layout)
+      });
+    default:
+      return "";
+  }
+}
+
+function surfacePatchBlockLabel(operation) {
+  const block = operation?.block;
+  if (block?.type) return String(block.type);
+  if (block?.kind) return String(block.kind);
+  return String(operation?.blockRef || "");
+}
+
+function surfacePatchLayoutLabel(layout) {
+  if (!layout || typeof layout !== "object") return String(layout || "");
+  return JSON.stringify(layout);
+}
+
 function stepLabel(step) {
   switch (step.key) {
     case "skill_proposal":
@@ -308,6 +371,14 @@ const onRejectSkill = () => {
   }
 };
 
+const onApproveSurfacePatch = () => {
+  emit("approve-surface-patch", props.message.id);
+};
+
+const onRejectSurfacePatch = () => {
+  emit("reject-surface-patch", props.message.id);
+};
+
 const onChangeLayout = () => {
   emit("change-layout", { messageId: props.message.id, variant: nextLayoutVariant.value });
 };
@@ -345,13 +416,13 @@ const onChangeLayout = () => {
           </li>
         </ul>
         <AssistantMarkdown
-          v-if="!isSkillProposal && !hasSkillBlocks && !isAssistant && (message.content || !isStreamingTail)"
+          v-if="!isSkillProposal && !isSurfacePatchProposal && !hasSkillBlocks && !isAssistant && (message.content || !isStreamingTail)"
           :content="message.content"
           :render-diagrams="false"
           :copy-code-label="t('assistant.message.copyCode')"
           :copied-code-label="t('assistant.message.copiedCode')"
         />
-        <template v-if="!isSkillProposal && !hasSkillBlocks && isAssistant && (hasRenderableContent || !isStreamingTail)">
+        <template v-if="!isSkillProposal && !isSurfacePatchProposal && !hasSkillBlocks && isAssistant && (hasRenderableContent || !isStreamingTail)">
           <template v-for="(segment, index) in contentSegments" :key="`${segment.kind}-${index}`">
             <AssistantMarkdown
               v-if="segment.kind === 'answer'"
@@ -374,6 +445,40 @@ const onChangeLayout = () => {
             </details>
           </template>
         </template>
+        <div v-if="isSurfacePatchProposal" class="assistant-message__proposal">
+          <div class="assistant-message__proposal-main">
+            <span class="assistant-message__proposal-title">{{ surfacePatchSummary }}</span>
+          </div>
+          <ul class="assistant-message__proposal-list">
+            <li v-for="(operation, index) in surfacePatchOps" :key="`${operation.op}-${index}`">
+              <span>{{ surfacePatchOpLabel(operation) }}</span>
+            </li>
+          </ul>
+          <div v-if="surfacePatchStatus === 'awaiting_approval'" class="assistant-message__proposal-actions">
+            <button type="button" class="assistant-message__proposal-button" @click="onApproveSurfacePatch">
+              <Check :size="14" />
+              <span>{{ t("assistant.message.surfacePatchApply", { pageKind: surfacePatchPageKind }) }}</span>
+            </button>
+            <button type="button" class="assistant-message__proposal-button" @click="onRejectSurfacePatch">
+              <X :size="14" />
+              <span>{{ t("assistant.message.surfacePatchReject") }}</span>
+            </button>
+          </div>
+          <div v-else-if="surfacePatchStatus === 'approved'" class="assistant-message__proposal-actions">
+            <span class="assistant-message__proposal-badge">
+              {{ t("assistant.message.surfacePatchApplied") }}
+            </span>
+            <a class="assistant-message__proposal-button" :href="surfacePatchRenderPath">
+              <Check :size="14" />
+              <span>{{ t("assistant.message.surfacePatchOpen") }}</span>
+            </a>
+          </div>
+          <div v-else-if="surfacePatchStatus === 'rejected'" class="assistant-message__proposal-actions">
+            <span class="assistant-message__proposal-badge">
+              {{ t("assistant.message.surfacePatchRejected") }}
+            </span>
+          </div>
+        </div>
         <div v-if="isSkillProposal" class="assistant-message__proposal">
           <div class="assistant-message__proposal-main">
             <span class="assistant-message__proposal-title">{{ proposalTitle }}</span>
