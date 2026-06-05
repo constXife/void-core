@@ -48,23 +48,35 @@ async function load() {
   error.value = "";
   bridgeArtifacts.value = {};
   try {
-    const record = await fetchLatestPagespec(pageKind.value, entityId.value);
+    // ADR-0026 §3 W4.3: на entity-странице read_model резолвится ПЕРВЫМ — он отдаёт entityKind
+    // (graph kind_ref), нужный get_latest для fold kind-overlay слоя каскада
+    // (vendorBase→global→kind→entity). foundation get_latest графа не видит, поэтому kind
+    // приходит параметром. resolved переиспользуется как slotData (без второго запроса).
+    let resolved = null;
+    let entityKind = "";
+    if (entityId.value) {
+      resolved = await fetchResolvedReadModel({ entityId: entityId.value });
+      entityKind = resolved?.entityKind || "";
+    }
+    const record = await fetchLatestPagespec(pageKind.value, entityId.value, entityKind);
     if (!record || !record.pagespec) {
       pageSpec.value = null;
       return;
     }
     pageSpec.value = record.pagespec;
     // read_model слоты резолвятся server-side (ADR-0027 C3): backend отдаёт готовые
-    // per-slot датасеты + provenance. Берём payload каждого слота для SurfaceRenderer.
-    const resolved = await fetchResolvedReadModel({ slice: slice.value, entityId: entityId.value });
+    // per-slot датасеты + provenance. Overview-страница (без entityId) резолвит по slice здесь.
+    if (!resolved) {
+      resolved = await fetchResolvedReadModel({ slice: slice.value });
+    }
     slotData.value = Object.fromEntries(
       Object.entries(resolved?.slots || {}).map(([slotId, slot]) => [slotId, slot?.payload])
     );
     // Bridge-артефакты — отдельный, некритичный путь: если резолв упал, не валим
     // весь render (inventory-блоки уже есть). Один broken bridge ≠ пустая страница.
     try {
-      const resolved = await resolveBridgeArtifacts({ pageSpec: pageSpec.value });
-      bridgeArtifacts.value = resolved?.artifacts || {};
+      const bridge = await resolveBridgeArtifacts({ pageSpec: pageSpec.value });
+      bridgeArtifacts.value = bridge?.artifacts || {};
     } catch {
       bridgeArtifacts.value = {};
     }

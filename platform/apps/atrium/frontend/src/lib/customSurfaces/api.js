@@ -216,14 +216,20 @@ export async function fetchPages() {
   return payload;
 }
 
-export async function fetchLatestPagespec(pageKind, entityId) {
+export async function fetchLatestPagespec(pageKind, entityId, entityKind) {
   const normalized = String(pageKind || "").trim();
   if (!normalized) {
     throw new Error("pageKind is required");
   }
-  // ADR-0026 §3 W3: entityId → backend фолдит owner entity-overlay поверх global в каскаде.
+  // ADR-0026 §3 W3/W4.3: backend фолдит owner-оверлеи в каскаде global→kind→entity.
+  // entityId таргетит entity-слой; entityKind (graph kind_ref, резолвится из read-model) —
+  // kind-слой. Один entity-pageKind хостит много entityKind'ов, поэтому kind берётся из сущности.
+  const params = new URLSearchParams();
   const entity = String(entityId || "").trim();
-  const query = entity ? `?entityId=${encodeURIComponent(entity)}` : "";
+  const kind = String(entityKind || "").trim();
+  if (entity) params.set("entityId", entity);
+  if (kind) params.set("entityKind", kind);
+  const query = params.toString() ? `?${params.toString()}` : "";
   let response;
   try {
     response = await fetch(
