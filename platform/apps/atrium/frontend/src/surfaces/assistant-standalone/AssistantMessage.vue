@@ -12,6 +12,7 @@ import {
 } from "lucide-vue-next";
 import PlatformUserAvatar from "../../platform/components/PlatformUserAvatar.vue";
 import { hasResolvedPlatformAccount } from "../../platform/account.js";
+import { surfaceRenderHref } from "../../lib/surfaceOrigin.js";
 import AssistantMarkdown from "./AssistantMarkdown.vue";
 import BlockRenderer from "./blocks/BlockRenderer.vue";
 
@@ -80,8 +81,12 @@ const surfacePatchSummary = computed(() =>
     count: surfacePatchOps.value.length
   })
 );
-const surfacePatchRenderPath = computed(
-  () => surfacePatchPayload.value?.renderPath || `/surfaces/${surfacePatchPageKind.value}`
+const surfacePatchRenderPath = computed(() =>
+  // Render живёт на выделенном Surface-origin (ADR-0026 Phase 4), не на текущем
+  // (assistant) хосте; строим cross-host ссылку host-agnostic.
+  surfaceRenderHref(
+    surfacePatchPayload.value?.renderPath || `/surfaces/${surfacePatchPageKind.value}`
+  )
 );
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
 // Если message содержит только один ArtifactLink block (mini layout), inline layout switcher

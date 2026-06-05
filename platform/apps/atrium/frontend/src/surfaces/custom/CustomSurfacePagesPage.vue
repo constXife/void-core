@@ -7,9 +7,9 @@
 // Backend (GET /atrium/custom-surfaces/pages) уже делает union без потери данных и
 // проставляет renderPath; фронт только отображает и ведёт на renderPath (atrium host).
 import { computed, onMounted, ref } from "vue";
-import { RouterLink } from "vue-router";
 
 import { fetchPages } from "../../lib/customSurfaces/api.js";
+import { surfaceRenderHref } from "../../lib/surfaceOrigin.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 
 const appStore = useAtriumAppStore();
@@ -94,9 +94,9 @@ onMounted(load);
             :datetime="page.updatedAt"
           >{{ t("pages.list.updated_at", { date: formatDate(page.updatedAt) }) }}</time>
         </div>
-        <RouterLink class="pages-list__open" :to="page.renderPath">
+        <a class="pages-list__open" :href="surfaceRenderHref(page.renderPath)">
           {{ t("pages.list.open") }}
-        </RouterLink>
+        </a>
       </li>
     </ul>
 
