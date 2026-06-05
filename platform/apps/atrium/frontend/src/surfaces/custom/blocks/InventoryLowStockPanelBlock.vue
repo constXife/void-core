@@ -53,7 +53,7 @@ const rows = computed(() => {
   font-size: 12px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--text-muted, color-mix(in srgb, currentColor 65%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 65%, transparent));
 }
 
 .low-stock__list {
@@ -70,19 +70,19 @@ const rows = computed(() => {
   justify-content: space-between;
   gap: 8px;
   font-size: 13px;
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
 }
 
 .low-stock__status {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--text-muted, color-mix(in srgb, currentColor 60%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 60%, transparent));
 }
 
 .low-stock__empty {
   font-style: italic;
   font-size: 13px;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 </style>

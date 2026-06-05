@@ -54,6 +54,6 @@ const resolved = computed(() => props.bridgeArtifacts?.[props.block?.id] || {});
   border-radius: 10px;
   font-size: 12px;
   font-style: italic;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 </style>

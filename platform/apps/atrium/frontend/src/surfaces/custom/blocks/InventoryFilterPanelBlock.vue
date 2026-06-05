@@ -48,7 +48,7 @@ const filters = computed(() => {
   font-size: 12px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--text-muted, color-mix(in srgb, currentColor 65%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 65%, transparent));
 }
 
 .filter-panel__chips {
@@ -65,13 +65,13 @@ const filters = computed(() => {
   border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
   border-radius: 999px;
   font-size: 12px;
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
   background: color-mix(in srgb, currentColor 5%, transparent);
 }
 
 .filter-panel__empty {
   font-style: italic;
   font-size: 13px;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 </style>

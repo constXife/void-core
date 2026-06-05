@@ -62,17 +62,17 @@ const events = computed(() => {
 .data-timeline__time {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 
 .data-timeline__title {
   font-size: 13px;
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
 }
 
 .data-timeline__detail {
   font-size: 12px;
-  color: var(--text-muted, color-mix(in srgb, currentColor 65%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 65%, transparent));
 }
 
 .data-timeline__empty {
@@ -80,6 +80,6 @@ const events = computed(() => {
   text-align: center;
   font-style: italic;
   font-size: 13px;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 </style>

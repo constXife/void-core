@@ -52,6 +52,6 @@ const showCounts = computed(() => props.block?.props?.showCounts === true);
   text-align: center;
   font-style: italic;
   font-size: 13px;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 </style>

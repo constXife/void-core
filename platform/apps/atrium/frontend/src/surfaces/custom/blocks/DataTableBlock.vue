@@ -78,12 +78,12 @@ function cell(row, column) {
   font-size: 11px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--text-muted, color-mix(in srgb, currentColor 65%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 65%, transparent));
   background: color-mix(in srgb, currentColor 4%, transparent);
 }
 
 .data-table__table td {
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
 }
 
 .data-table__table tbody tr:last-child td {
@@ -95,7 +95,7 @@ function cell(row, column) {
   text-align: center;
   font-style: italic;
   font-size: 13px;
-  color: var(--text-muted, color-mix(in srgb, currentColor 55%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 55%, transparent));
 }
 
 /* Status badge — generic colour cues по типичным значениям статуса; неизвестные → neutral. */
@@ -107,7 +107,7 @@ function cell(row, column) {
   font-weight: 600;
   text-transform: capitalize;
   background: color-mix(in srgb, currentColor 12%, transparent);
-  color: var(--text-muted, color-mix(in srgb, currentColor 70%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 70%, transparent));
 }
 
 .data-table__status[data-status="ok"],

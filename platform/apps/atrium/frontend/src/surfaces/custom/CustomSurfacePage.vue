@@ -114,7 +114,7 @@ watch([pageKind, slice], load, { immediate: true });
   height: 100dvh;
   overflow-y: auto;
   background: var(--surface-base, #0f172a);
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
 }
 
 .surface-page__topbar {
@@ -139,7 +139,7 @@ watch([pageKind, slice], load, { immediate: true });
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 8px;
   background: transparent;
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -162,10 +162,10 @@ watch([pageKind, slice], load, { immediate: true });
   padding: 24px;
   text-align: center;
   font-size: 14px;
-  color: var(--text-muted, color-mix(in srgb, #ffffff 70%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 60%, transparent));
 }
 
 .surface-page__state--error {
-  color: var(--text-error, #fca5a5);
+  color: var(--color-red-500, #f85149);
 }
 </style>

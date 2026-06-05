@@ -43,7 +43,7 @@ const label = computed(
   font-size: 28px;
   font-weight: 700;
   line-height: 1.1;
-  color: var(--text-primary, #f8fafc);
+  color: var(--ink-primary, #f8fafc);
   font-variant-numeric: tabular-nums;
 }
 
@@ -51,6 +51,6 @@ const label = computed(
   font-size: 12px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--text-muted, color-mix(in srgb, currentColor 65%, transparent));
+  color: var(--ink-muted, color-mix(in srgb, currentColor 65%, transparent));
 }
 </style>
