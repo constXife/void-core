@@ -169,6 +169,45 @@ export async function fetchInventoryDashboardData(slice) {
   return payload;
 }
 
+/**
+ * Fetch owner-scoped список страниц (shipped catalog ∪ custom saved pagespecs).
+ * Источник для таба «Страницы». Backend сам делает union без потери данных и
+ * проставляет renderPath; фронт ничего не достраивает.
+ * @returns {Promise<{pages: Array<object>}>}
+ */
+export async function fetchPages() {
+  let response;
+  try {
+    response = await fetch("/atrium/custom-surfaces/pages", {
+      credentials: "include",
+      headers: { Accept: "application/json" }
+    });
+  } catch (networkError) {
+    throw new ApiCallError(`network error: ${networkError.message}`, {
+      status: 0,
+      code: "custom_surfaces_network_error"
+    });
+  }
+  const text = await response.text();
+  let payload = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch (err) {
+      throw new ApiCallError(`malformed response body: ${err.message}`, {
+        status: response.status,
+        code: "custom_surfaces_malformed_response"
+      });
+    }
+  }
+  if (!response.ok) {
+    const code = (payload && payload.error) || `http_${response.status}`;
+    const message = (payload && payload.message) || `request failed (${response.status})`;
+    throw new ApiCallError(message, { status: response.status, code });
+  }
+  return payload;
+}
+
 export async function fetchLatestPagespec(pageKind) {
   const normalized = String(pageKind || "").trim();
   if (!normalized) {

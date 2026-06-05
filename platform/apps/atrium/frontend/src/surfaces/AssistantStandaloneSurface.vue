@@ -5,6 +5,7 @@ import { storeToRefs } from "pinia";
 import AssistantSidebar from "./assistant-standalone/AssistantSidebar.vue";
 import AssistantConversation from "./assistant-standalone/AssistantConversation.vue";
 import ArtifactListPanel from "./artifact/ArtifactListPage.vue";
+import CustomSurfacePagesPanel from "./custom/CustomSurfacePagesPage.vue";
 import AssistantComposer from "./assistant-standalone/AssistantComposer.vue";
 import AssistantTopbar from "./assistant-standalone/AssistantTopbar.vue";
 import AssistantCapabilitiesPanel from "./assistant-standalone/AssistantCapabilitiesPanel.vue";
@@ -88,7 +89,10 @@ const TAB_DEFAULTS = {
   // artifact-list — top-level route (не внутри assistant host wrapper); клик по tab
   // выводит юзера в standalone ArtifactListPage. Возврат — browser back или клик
   // на другой tab (router.push снова приведёт в assistant host).
-  artifacts: { name: "artifact-list" }
+  artifacts: { name: "artifact-list" },
+  // pages — список страниц (shipped ∪ custom). Composer-экрана нет (ADR-0025 §1),
+  // авторинг переехал в чат; этот список — нормальная destination таба.
+  pages: { name: "custom-surface-pages" }
 };
 
 const activeTab = computed(() => {
@@ -96,6 +100,7 @@ const activeTab = computed(() => {
   if (name === "assistant-capabilities" || name === "assistant-capability-detail") return "capabilities";
   if (name.startsWith("assistant-routine")) return "routines";
   if (name === "artifact-list" || name === "artifact-detail") return "artifacts";
+  if (name === "custom-surface-pages") return "pages";
   return "chat";
 });
 
@@ -656,6 +661,14 @@ function savePreferredTarget(value) {
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
       >
         <ArtifactListPanel />
+      </section>
+
+      <!-- Pages tab — список страниц (shipped ∪ custom), destination для авторинга через чат. -->
+      <section
+        v-if="activeTab === 'pages'"
+        class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
+      >
+        <CustomSurfacePagesPanel />
       </section>
 
       <!-- Routine drawer (per D1) — overlay над Routines list. -->

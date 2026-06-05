@@ -125,6 +125,15 @@ const routes = [
           name: "artifact-list",
           component: AssistantProductRoute,
           meta: assistantAccountMeta
+        },
+        {
+          // Pages list — renders внутри AssistantStandaloneSurface как panel, активный
+          // tab «Страницы». Render отдельной страницы (/surfaces/:pageKind) остаётся
+          // top-level (custom-surface-render).
+          path: "/pages",
+          name: "custom-surface-pages",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
         }
       ]
     : [
