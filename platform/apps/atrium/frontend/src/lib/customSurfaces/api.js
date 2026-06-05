@@ -127,21 +127,28 @@ export function resolveBridgeArtifacts(params) {
  * @returns {Promise<object|null>} saved PageSpec record или null
  */
 /**
- * Resolve read_model data-slots для render-пути (ADR-0027 C3).
+ * Resolve read_model data-slots для render-пути (ADR-0027 C3 + ADR-0026 §3 W1).
  * Backend (connector-registry + server-side adapt) отдаёт per-slot датасеты с provenance,
  * поэтому браузер больше НЕ ходит в `/api/knowledge/...` напрямую.
- * @param {string} slice — inventory slice key (pantry/care/wardrobe/device/cookware)
+ * Overview-страница передаёт `slice`; entity-scoped detail-страница — `entityId` ($page.entityId).
+ * @param {{slice?: string, entityId?: string}} params
  * @returns {Promise<{slots: Record<string, {payload: object, provenance: object}>}>}
  */
-export async function fetchResolvedReadModel(slice) {
-  const normalized = String(slice || "").trim();
-  if (!normalized) {
-    throw new Error("slice is required");
+export async function fetchResolvedReadModel({ slice, entityId } = {}) {
+  const query = new URLSearchParams();
+  const ent = String(entityId || "").trim();
+  const sl = String(slice || "").trim();
+  if (ent) {
+    query.set("entityId", ent);
+  } else if (sl) {
+    query.set("slice", sl);
+  } else {
+    throw new Error("slice or entityId is required");
   }
   let response;
   try {
     response = await fetch(
-      `/atrium/custom-surfaces/resolve-read-model?slice=${encodeURIComponent(normalized)}`,
+      `/atrium/custom-surfaces/resolve-read-model?${query.toString()}`,
       { credentials: "include", headers: { Accept: "application/json" } }
     );
   } catch (networkError) {

@@ -27,6 +27,8 @@ const DEFAULT_SLICE = "pantry";
 
 const pageKind = computed(() => String(route.params.pageKind || ""));
 const slice = computed(() => String(route.query.slice || DEFAULT_SLICE));
+// entity-scoped detail-страницы (ADR-0026 §3 W1): $page.entityId из query.
+const entityId = computed(() => String(route.query.entityId || ""));
 
 const pageSpec = ref(null);
 const slotData = ref({});
@@ -54,7 +56,7 @@ async function load() {
     pageSpec.value = record.pagespec;
     // read_model слоты резолвятся server-side (ADR-0027 C3): backend отдаёт готовые
     // per-slot датасеты + provenance. Берём payload каждого слота для SurfaceRenderer.
-    const resolved = await fetchResolvedReadModel(slice.value);
+    const resolved = await fetchResolvedReadModel({ slice: slice.value, entityId: entityId.value });
     slotData.value = Object.fromEntries(
       Object.entries(resolved?.slots || {}).map(([slotId, slot]) => [slotId, slot?.payload])
     );
@@ -74,7 +76,7 @@ async function load() {
   }
 }
 
-watch([pageKind, slice], load, { immediate: true });
+watch([pageKind, slice, entityId], load, { immediate: true });
 </script>
 
 <template>
