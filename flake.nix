@@ -218,7 +218,7 @@
                 enable = lib.mkEnableOption "Rauthy foundation integration";
                 image = lib.mkOption {
                   type = lib.types.str;
-                  default = "ghcr.io/sebadob/rauthy:0.34.1";
+                  default = "ghcr.io/sebadob/rauthy:0.35.2";
                   description = "OCI image used for the Rauthy container.";
                 };
                 envFile = lib.mkOption {

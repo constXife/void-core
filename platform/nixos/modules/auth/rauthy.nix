@@ -76,8 +76,8 @@ in {
     image = lib.mkOption {
       # governance-open-contract: OCI image references are intentionally free-form.
       type = lib.types.str;
-      default = "ghcr.io/sebadob/rauthy:0.34.1";
-      example = "ghcr.io/sebadob/rauthy:0.35.0";
+      default = "ghcr.io/sebadob/rauthy:0.35.2";
+      example = "ghcr.io/sebadob/rauthy:0.35.2";
       description = "OCI image used for the Rauthy container.";
     };
 
