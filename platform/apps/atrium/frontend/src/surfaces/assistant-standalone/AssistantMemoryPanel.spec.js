@@ -65,6 +65,21 @@ describe("AssistantMemoryPanel", () => {
     });
   });
 
+  it("does not render a date for non-RFC3339 created_at values", async () => {
+    // A bare kadath commit-seq ("170") parses as year 170 via Date(); the panel
+    // must hide the timestamp instead of rendering nonsense.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ notes: [memoryNote({ created_at: "170" })] }))
+    );
+
+    const wrapper = mountPanel();
+    await flushPromises();
+
+    expect(wrapper.find("time").text().trim()).toBe("");
+    expect(wrapper.text()).not.toContain("170 г.");
+  });
+
   it("renders the empty state", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ notes: [] })));
 

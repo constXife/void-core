@@ -118,6 +118,9 @@ const salienceLabel = (salience) => t(`assistant.memory.salience.${salience}`);
 
 function formatCreatedAt(value) {
   if (!value) return "";
+  // Backend sends RFC3339; anything else (e.g. a bare commit-seq number, which
+  // Date() happily parses as year 170) is not a date and must not render.
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(value)) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat(document.documentElement.lang || "en-US", {
