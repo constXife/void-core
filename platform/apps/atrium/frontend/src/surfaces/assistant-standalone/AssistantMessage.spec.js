@@ -6,14 +6,18 @@ const messages = {
   "assistant.message.proposalOne": "Предлагаю запустить {name}",
   "assistant.message.proposalBatch": "Предлагаю запустить batch: {names}",
   "assistant.message.awaitingApproval": "ожидает подтверждения",
+  "assistant.message.statusApproved": "подтверждено",
+  "assistant.message.statusRejected": "отклонено",
+  "assistant.message.statusCancelled": "отменено",
   "assistant.message.approve": "Запускать",
-  "assistant.message.reject": "Не запускать",
+  "assistant.message.reject": "Отклонить",
   "assistant.message.surfacePatchSummary": "{pageKind} · изменений: {count}",
   "assistant.message.surfacePatchApply": "Применить к {pageKind}",
   "assistant.message.surfacePatchReject": "Отклонить",
   "assistant.message.surfacePatchApplied": "Применено",
   "assistant.message.surfacePatchRejected": "Отклонено",
   "assistant.message.surfacePatchOpen": "Открыть страницу",
+  "assistant.message.surfacePatchHint": "Создаст новую версию страницы — потом можно открыть и доредактировать.",
   "assistant.message.surfacePatchOp.addBlock": "+ блок {block} в {region}",
   "assistant.message.surfacePatchOp.removeBlock": "− блок {blockRef}",
   "assistant.message.surfacePatchOp.setProps": "изменены свойства {blockRef}",
@@ -304,7 +308,10 @@ describe("AssistantMessage", () => {
 
     await wrapper.get(".assistant-message__proposal-button").trigger("click");
 
-    expect(wrapper.find(".assistant-message__proposal-list").text()).toContain("digest_github");
+    const listText = wrapper.find(".assistant-message__proposal-list").text();
+    expect(listText).toContain("GitHub trending digest");
+    expect(listText).toContain("ожидает подтверждения");
+    expect(listText).not.toContain("awaiting_approval");
     expect(wrapper.emitted("approve-skills")).toEqual([[["skill-run-1", "skill-run-2"]]]);
   });
 
@@ -330,8 +337,7 @@ describe("AssistantMessage", () => {
     const buttons = wrapper.findAll(".assistant-message__proposal-button");
     expect(buttons).toHaveLength(2);
     expect(buttons[0].text()).toContain("Запускать");
-    expect(buttons[1].text()).toContain("Не запускать");
-    expect(wrapper.text()).not.toContain("Отклонить");
+    expect(buttons[1].text()).toContain("Отклонить");
     expect(wrapper.text()).not.toContain("Отмена");
 
     await buttons[1].trigger("click");
@@ -383,6 +389,7 @@ describe("AssistantMessage", () => {
     expect(proposal.text()).toContain("изменены свойства metric-1");
     expect(proposal.text()).toContain("chart-1: main → sidebar");
     expect(proposal.text()).toContain("макет → compact");
+    expect(proposal.text()).toContain("Создаст новую версию страницы");
     expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
 
     const buttons = wrapper.findAll(".assistant-message__proposal-button");

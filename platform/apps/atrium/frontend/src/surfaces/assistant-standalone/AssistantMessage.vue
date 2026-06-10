@@ -273,6 +273,18 @@ function proposalStatusLabel(status) {
   switch (status) {
     case "awaiting_approval":
       return t("assistant.message.awaitingApproval");
+    case "approved":
+      return t("assistant.message.statusApproved");
+    case "running":
+      return t("assistant.step.status.running");
+    case "completed":
+      return t("assistant.step.status.completed");
+    case "failed":
+      return t("assistant.step.status.failed");
+    case "rejected":
+      return t("assistant.message.statusRejected");
+    case "cancelled":
+      return t("assistant.message.statusCancelled");
     default:
       return status;
   }
@@ -453,6 +465,10 @@ const onChangeLayout = () => {
         <div v-if="isSurfacePatchProposal" class="assistant-message__proposal">
           <div class="assistant-message__proposal-main">
             <span class="assistant-message__proposal-title">{{ surfacePatchSummary }}</span>
+            <span
+              v-if="surfacePatchStatus === 'awaiting_approval'"
+              class="assistant-message__proposal-meta"
+            >{{ t("assistant.message.surfacePatchHint") }}</span>
           </div>
           <ul class="assistant-message__proposal-list">
             <li v-for="(operation, index) in surfacePatchOps" :key="`${operation.op}-${index}`">
@@ -491,8 +507,8 @@ const onChangeLayout = () => {
           </div>
           <ul v-if="proposalSkillRuns.length > 1" class="assistant-message__proposal-list">
             <li v-for="skillRun in proposalSkillRuns" :key="skillRun.id">
-              <span>{{ skillRun.skill_id }}</span>
-              <span>{{ skillRun.status }}</span>
+              <span>{{ skillDisplayName(skillRun.skill_id) }}</span>
+              <span>{{ proposalStatusLabel(skillRun.status) }}</span>
             </li>
           </ul>
           <div v-if="canActOnProposal" class="assistant-message__proposal-actions">
