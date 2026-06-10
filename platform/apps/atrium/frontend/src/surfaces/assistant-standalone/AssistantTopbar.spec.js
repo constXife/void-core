@@ -7,6 +7,7 @@ const ruMessages = {
   "assistant.tabs.chat": "Чат",
   "assistant.tabs.capabilities": "Возможности",
   "assistant.tabs.routines": "Рутины",
+  "assistant.tabs.memory": "Память",
   "assistant.tabs.artifacts": "Артефакты",
   "assistant.tabs.pages": "Страницы"
 };
@@ -26,6 +27,6 @@ describe("AssistantTopbar", () => {
 
     expect(wrapper.find("nav").attributes("aria-label")).toBe("Разделы ассистента");
     expect(wrapper.findAll(".assistant-topbar__tab-label").map((node) => node.text()))
-      .toEqual(["Чат", "Возможности", "Рутины", "Артефакты", "Страницы"]);
+      .toEqual(["Чат", "Возможности", "Рутины", "Память", "Артефакты", "Страницы"]);
   });
 });

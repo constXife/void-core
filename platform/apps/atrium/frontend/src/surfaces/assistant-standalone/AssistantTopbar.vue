@@ -14,6 +14,7 @@ const tabs = computed(() => [
   { id: "chat", label: props.t("assistant.tabs.chat"), count: null, showCount: false },
   { id: "capabilities", label: props.t("assistant.tabs.capabilities"), count: props.capabilitiesCount, showCount: true },
   { id: "routines", label: props.t("assistant.tabs.routines"), count: props.routinesCount, showCount: true },
+  { id: "memory", label: props.t("assistant.tabs.memory"), count: null, showCount: false },
   // Artifacts tab без count — count fetch для list зашёл бы в backend на каждом render
   // существующих tabs и усложнил бы Surface; пока tab без badge, ArtifactListPage сама загружает items.
   { id: "artifacts", label: props.t("assistant.tabs.artifacts"), count: null, showCount: false },

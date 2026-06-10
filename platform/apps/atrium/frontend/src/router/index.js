@@ -100,6 +100,12 @@ const routes = [
           meta: { ...assistantAccountMeta, drawerMode: "edit" }
         },
         {
+          path: "/memory",
+          name: "assistant-memory",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
+        {
           path: "/runs/:id",
           name: "assistant-run-report",
           component: AssistantRunReportRoute,
@@ -156,6 +162,16 @@ const routes = [
     component: AssistantProductRoute,
     meta: assistantAccountMeta
   },
+  ...(!assistantHost
+    ? [
+        {
+          path: "/assistant/memory",
+          name: "assistant-memory",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        }
+      ]
+    : []),
   {
     path: "/space/:spaceSlug",
     component: AppLayout,
