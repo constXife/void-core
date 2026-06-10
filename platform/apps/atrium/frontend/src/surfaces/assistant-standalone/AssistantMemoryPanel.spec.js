@@ -80,6 +80,43 @@ describe("AssistantMemoryPanel", () => {
     expect(wrapper.text()).not.toContain("170 г.");
   });
 
+  it("renders about chips and skips incomplete about entries", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          notes: [
+            memoryNote({
+              about: [
+                { instance_id: "bee-device", kind_ref: "living:device", title: "bee" },
+                { instance_id: "untitled", kind_ref: "kernel:place", title: "" }
+              ]
+            })
+          ]
+        })
+      )
+    );
+
+    const wrapper = mountPanel();
+    await flushPromises();
+
+    const chips = wrapper.findAll('[data-test="memory-about-chip"]');
+    expect(chips).toHaveLength(1);
+    expect(chips[0].text()).toBe("bee");
+  });
+
+  it("renders no about chips when the field is absent", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ notes: [memoryNote()] }))
+    );
+
+    const wrapper = mountPanel();
+    await flushPromises();
+
+    expect(wrapper.findAll('[data-test="memory-about-chip"]')).toHaveLength(0);
+  });
+
   it("renders the empty state", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ notes: [] })));
 

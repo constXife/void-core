@@ -2702,7 +2702,8 @@
 }
 
 .assistant-memory-note__chip,
-.assistant-memory-note__salience {
+.assistant-memory-note__salience,
+.assistant-memory-note__about {
   display: inline-flex;
   align-items: center;
   min-height: 1.35rem;
@@ -2713,6 +2714,11 @@
   color: var(--ink-secondary);
   font-size: var(--text-2xs, 10px);
   font-weight: 700;
+}
+
+.assistant-memory-note__about {
+  border-color: color-mix(in srgb, var(--accent-cyan) 38%, var(--border-default));
+  color: color-mix(in srgb, var(--accent-cyan) 70%, var(--ink-primary));
 }
 
 .assistant-memory-note__salience[data-salience="high"] {

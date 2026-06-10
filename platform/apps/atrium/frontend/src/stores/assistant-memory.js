@@ -133,8 +133,26 @@ function normalizeNote(value) {
     category: String(value.category || ""),
     salience: String(value.salience || ""),
     source_session_id: value.source_session_id ? String(value.source_session_id) : null,
-    created_at: value.created_at ? String(value.created_at) : null
+    created_at: value.created_at ? String(value.created_at) : null,
+    about: normalizeAboutList(value.about)
   };
+}
+
+function normalizeAboutList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entity) => {
+      if (!entity || typeof entity !== "object") return null;
+      const instanceId = String(entity.instance_id || "");
+      const title = String(entity.title || "").trim();
+      if (!instanceId || !title) return null;
+      return {
+        instance_id: instanceId,
+        kind_ref: String(entity.kind_ref || ""),
+        title
+      };
+    })
+    .filter(Boolean);
 }
 
 function normalizeErrorMessage(caught) {

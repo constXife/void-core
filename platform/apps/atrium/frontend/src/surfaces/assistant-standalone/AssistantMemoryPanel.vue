@@ -116,6 +116,11 @@ const requestDelete = async (note) => {
 const categoryLabel = (category) => t(`assistant.memory.category.${category}`);
 const salienceLabel = (salience) => t(`assistant.memory.salience.${salience}`);
 
+const noteAbout = (note) =>
+  (Array.isArray(note.about) ? note.about : []).filter(
+    (entity) => entity && entity.instance_id && entity.title
+  );
+
 function formatCreatedAt(value) {
   if (!value) return "";
   // Backend sends RFC3339; anything else (e.g. a bare commit-seq number, which
@@ -266,6 +271,15 @@ onMounted(loadNotes);
                 <span class="assistant-memory-note__chip">{{ categoryLabel(note.category) }}</span>
                 <span class="assistant-memory-note__salience" :data-salience="note.salience">
                   {{ salienceLabel(note.salience) }}
+                </span>
+                <span
+                  v-for="entity in noteAbout(note)"
+                  :key="entity.instance_id"
+                  class="assistant-memory-note__about"
+                  :title="t('assistant.memory.aboutEntity', { title: entity.title })"
+                  data-test="memory-about-chip"
+                >
+                  {{ entity.title }}
                 </span>
                 <time v-if="note.created_at" :datetime="note.created_at">
                   {{ formatCreatedAt(note.created_at) }}
