@@ -28,9 +28,27 @@ const emit = defineEmits([
 ]);
 
 const trashOpen = ref(false);
+const searchQuery = ref("");
 const t = (key, vars = {}) => props.t(key, vars);
 
 const isEmpty = computed(() => !props.loading && props.groups.length === 0);
+const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase());
+const filteredGroups = computed(() => {
+  if (!normalizedSearchQuery.value) return props.groups;
+
+  return props.groups
+    .map((group) => ({
+      ...group,
+      // Untitled sessions have no title to match against, so they never match a query.
+      items: group.items.filter((session) =>
+        (session.title || "").toLowerCase().includes(normalizedSearchQuery.value)
+      )
+    }))
+    .filter((group) => group.items.length > 0);
+});
+const searchHasNoResults = computed(
+  () => !props.loading && normalizedSearchQuery.value && filteredGroups.value.length === 0
+);
 
 const toggleTrash = () => {
   trashOpen.value = !trashOpen.value;
@@ -88,6 +106,15 @@ const toggleTrash = () => {
         <Plus :size="14" />
         <span class="assistant-sidebar__new-label">{{ t("assistant.sidebar.newChat") }}</span>
       </button>
+      <input
+        v-if="!collapsed"
+        v-model="searchQuery"
+        type="search"
+        class="assistant-sidebar__search"
+        :placeholder="t('assistant.sidebar.searchPlaceholder')"
+        :aria-label="t('assistant.sidebar.searchPlaceholder')"
+        @keydown.escape="searchQuery = ''"
+      />
     </div>
 
     <!-- Chat mode: history list + trash -->
@@ -99,9 +126,12 @@ const toggleTrash = () => {
         <p v-else-if="isEmpty" class="assistant-sidebar__hint">
           {{ t("assistant.sidebar.emptyChats") }}
         </p>
+        <p v-else-if="searchHasNoResults" class="assistant-sidebar__hint">
+          {{ t("assistant.sidebar.searchEmpty") }}
+        </p>
 
         <div
-          v-for="group in groups"
+          v-for="group in filteredGroups"
           :key="group.id"
           class="assistant-sidebar__group"
         >

@@ -542,7 +542,16 @@ const onChangeLayout = () => {
         <span v-if="showCursor" class="assistant-message__cursor" aria-hidden="true" />
         <p v-if="message.error" class="assistant-message__error-line">
           <AlertCircle :size="14" />
-          <span>{{ message.content || "Assistant error" }}</span>
+          <span>{{ message.content }}</span>
+          <button
+            v-if="showRegenerate"
+            type="button"
+            class="assistant-message__error-retry"
+            @click="onRegenerate"
+          >
+            <RotateCcw :size="13" />
+            <span>{{ t("assistant.message.retry") }}</span>
+          </button>
         </p>
         <p v-else-if="message.stopped" class="assistant-message__stopped-line">
           {{ t("assistant.message.stopped") }}

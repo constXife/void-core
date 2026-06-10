@@ -82,7 +82,8 @@
 
 .assistant-sidebar__top {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.35rem;
   /* Отбивка от brand-полосы — теперь brand больше не несёт vertical padding. */
   margin-top: 0.6rem;
@@ -236,6 +237,31 @@
 
 .assistant-sidebar__new:hover {
   background: var(--glass-bg-hover);
+}
+
+.assistant-sidebar__search {
+  width: 100%;
+  min-width: 0;
+  height: 2.2rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--surface-base);
+  color: var(--ink-primary);
+  font-size: var(--text-sm, 13px);
+  outline: none;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-default, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-sidebar__search::placeholder {
+  color: var(--ink-muted);
+}
+
+.assistant-sidebar__search:focus {
+  border-color: color-mix(in srgb, var(--accent-purple) 48%, var(--border-default));
+  background: var(--surface-interactive, var(--glass-bg));
 }
 
 .assistant-sidebar__list {
@@ -947,6 +973,31 @@
 
 .assistant-message--stopped .assistant-message__stopped-line {
   color: var(--ink-muted);
+}
+
+.assistant-message__error-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.7rem;
+  padding: 0 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--status-warning) 38%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-default, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-default, ease),
+    color var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-message__error-retry:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--status-warning);
+  color: var(--ink-primary);
 }
 
 /* Stack-обёртка под body + footer, чтобы у user-сообщений мета жила

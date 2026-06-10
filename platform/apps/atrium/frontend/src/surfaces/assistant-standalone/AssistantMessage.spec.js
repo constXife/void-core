@@ -28,6 +28,7 @@ const messages = {
   "assistant.message.copyCode": "Копировать",
   "assistant.message.copiedCode": "Скопировано",
   "assistant.message.regenerate": "Сгенерировать заново",
+  "assistant.message.retry": "Повторить",
   "assistant.message.deletePair": "Удалить пару сообщений",
   "assistant.message.stopped": "Генерация остановлена.",
   "assistant.message.thinking": "Размышления",
@@ -95,6 +96,63 @@ describe("AssistantMessage", () => {
     await wrapper.get(".assistant-message__action--danger").trigger("click");
 
     expect(wrapper.emitted("delete")).toEqual([["message-1"]]);
+  });
+
+  it("shows retry on error messages when regenerate is available", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Provider failed",
+          error: true,
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        showRegenerate: true,
+        t
+      }
+    });
+
+    const retry = wrapper.find(".assistant-message__error-retry");
+    expect(retry.exists()).toBe(true);
+    expect(retry.text()).toContain("Повторить");
+  });
+
+  it("hides retry on error messages when regenerate is unavailable", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Provider failed",
+          error: true,
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        t
+      }
+    });
+
+    expect(wrapper.find(".assistant-message__error-retry").exists()).toBe(false);
+  });
+
+  it("emits regenerate from the error retry button", async () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Provider failed",
+          error: true,
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        showRegenerate: true,
+        t
+      }
+    });
+
+    await wrapper.get(".assistant-message__error-retry").trigger("click");
+
+    expect(wrapper.emitted("regenerate")).toEqual([[]]);
   });
 
   it("shows a visible streaming status before the first token", () => {
