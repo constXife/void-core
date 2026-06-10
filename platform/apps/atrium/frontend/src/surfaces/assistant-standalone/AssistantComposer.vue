@@ -63,6 +63,8 @@ watch(
 
 <template>
   <form class="assistant-composer" @submit.prevent="onSendClick">
+    <!-- Single visual block: textarea on top, toolbar row (model picker + send)
+         below it, so the composer is the bottommost element of the surface. -->
     <div class="assistant-composer__field">
       <textarea
         ref="textareaRef"
@@ -74,29 +76,31 @@ watch(
         @input="onInput"
         @keydown="onKeydown"
       />
-      <button
-        type="button"
-        class="assistant-composer__send"
-        :class="{ 'assistant-composer__send--stop': streaming }"
-        :disabled="disabled || (!streaming && !canSend)"
-        :aria-label="streaming ? t('assistant.composer.stop') : t('assistant.composer.send')"
-        @click="onSendClick"
-      >
-        <Transition name="assistant-composer__send-icon" mode="out-in">
-          <Square v-if="streaming" key="stop" :size="16" />
-          <ArrowUp v-else key="send" :size="16" />
-        </Transition>
-      </button>
-    </div>
-    <div v-if="targets.length" class="assistant-composer__hint">
-      <AssistantModelPicker
-        :targets="targets"
-        :selected-id="selectedTargetId"
-        :preferred-id="preferredTargetId"
-        :disabled="pickerDisabled"
-        :t="t"
-        @select="(id) => emit('select-target', id)"
-      />
+      <div class="assistant-composer__toolbar">
+        <AssistantModelPicker
+          v-if="targets.length"
+          :targets="targets"
+          :selected-id="selectedTargetId"
+          :preferred-id="preferredTargetId"
+          :disabled="pickerDisabled"
+          :t="t"
+          @select="(id) => emit('select-target', id)"
+        />
+        <span v-else aria-hidden="true" />
+        <button
+          type="button"
+          class="assistant-composer__send"
+          :class="{ 'assistant-composer__send--stop': streaming }"
+          :disabled="disabled || (!streaming && !canSend)"
+          :aria-label="streaming ? t('assistant.composer.stop') : t('assistant.composer.send')"
+          @click="onSendClick"
+        >
+          <Transition name="assistant-composer__send-icon" mode="out-in">
+            <Square v-if="streaming" key="stop" :size="16" />
+            <ArrowUp v-else key="send" :size="16" />
+          </Transition>
+        </button>
+      </div>
     </div>
   </form>
 </template>
