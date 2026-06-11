@@ -7,6 +7,7 @@ import SecondaryGridBlock from "./SecondaryGridBlock.vue";
 import RailBlock from "./RailBlock.vue";
 import ArtifactLinkBlock from "./ArtifactLinkBlock.vue";
 import TableBlock from "./TableBlock.vue";
+import OpsResultBlock from "./OpsResultBlock.vue";
 import UnknownBlock from "./UnknownBlock.vue";
 
 defineProps({
@@ -36,6 +37,8 @@ function componentFor(block) {
       return ArtifactLinkBlock;
     case "table":
       return TableBlock;
+    case "ops_result":
+      return OpsResultBlock;
     default:
       return UnknownBlock;
   }
