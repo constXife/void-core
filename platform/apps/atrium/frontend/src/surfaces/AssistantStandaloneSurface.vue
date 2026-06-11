@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import AssistantSidebar from "./assistant-standalone/AssistantSidebar.vue";
@@ -430,10 +430,17 @@ onMounted(async () => {
   await coreStore.loadModels({ force: true });
   await sessionsStore.loadSessions();
   await syncFromRoute();
+  // Realtime-канал уровня пользователя: сообщения/статусы/апрувы из других
+  // вкладок, устройств и routines применяются без reload страницы.
+  sessionsStore.connectUserEvents();
   // Подгружаем routines + skills в фоне, чтобы counts в tab badges были корректными
   // ещё до перехода в Capabilities/Routines tab.
   skillsStore.loadSkills({ locale: props.lang });
   routinesStore.loadInstances();
+});
+
+onBeforeUnmount(() => {
+  sessionsStore.disconnectUserEvents();
 });
 
 function loadSidebarPreference() {

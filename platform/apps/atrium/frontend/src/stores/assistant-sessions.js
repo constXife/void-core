@@ -5,6 +5,7 @@ import {
   createAssistantRun,
   readAssistantRunEvents
 } from "../lib/assistant-run-client.js";
+import { connectAssistantUserEvents } from "../lib/assistant-user-events-client.js";
 
 // Standalone Assistant surface использует серверные сессии: история, soft-delete,
 // streaming с persistent state. Frontend отправляет только новый user input;
@@ -43,6 +44,8 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
   let activeRunId = "";
   let activeLatencyTimer = null;
   let pendingMessageDeletionInternal = null;
+  let userEventsConnection = null;
+  let pendingCurrentReloadTimer = null;
 
   const groupedSessions = computed(() => groupSessionsByDate(sessions.value));
   const canSend = computed(() => !streaming.value && draft.value.trim().length > 0);
@@ -88,11 +91,15 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     await reloadCurrent();
   };
 
-  const reloadCurrent = async ({ resumeActiveRun = true } = {}) => {
+  // quiet: фоновое обновление по user event feed — без сброса loading/loaded
+  // флагов, чтобы открытый разговор не мигал спиннером.
+  const reloadCurrent = async ({ resumeActiveRun = true, quiet = false } = {}) => {
     if (!currentSessionId.value) return;
     let activeRun = null;
-    loadingCurrent.value = true;
-    currentLoaded.value = false;
+    if (!quiet) {
+      loadingCurrent.value = true;
+      currentLoaded.value = false;
+    }
     try {
       const payload = await fetchJson(`${SESSIONS_URL}/${currentSessionId.value}`);
       currentSession.value = normalizeSession(payload);
@@ -115,6 +122,78 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       resumeRun(activeRun);
     }
     return activeRun;
+  };
+
+  // ── user-scoped event feed ─────────────────────────────────────────────────
+  // Realtime-канал уровня пользователя (WS /assistant/events): новые сообщения,
+  // статусы runs и обновления сессий из других вкладок/устройств/routines
+  // применяются без reload страницы. Дельты собственного активного run сюда
+  // не относятся — они идут через per-run канал в send()/resumeRun().
+
+  const connectUserEvents = () => {
+    if (userEventsConnection) return;
+    userEventsConnection = connectAssistantUserEvents({ onEvent: applyUserEvent });
+  };
+
+  const disconnectUserEvents = () => {
+    if (pendingCurrentReloadTimer) {
+      window.clearTimeout(pendingCurrentReloadTimer);
+      pendingCurrentReloadTimer = null;
+    }
+    userEventsConnection?.close();
+    userEventsConnection = null;
+  };
+
+  const applyUserEvent = (frame) => {
+    const event = String(frame?.event || "");
+    if (event === "error") {
+      console.error("void-assistant: user event feed error", frame?.data);
+      return;
+    }
+    const sessionId = String(frame?.session_id || "");
+    if (!sessionId) return;
+    if (event === "session.updated") {
+      applySessionTitlePatch(sessionId, frame?.data);
+      return;
+    }
+    // message.created / run.status: сначала sidebar, затем открытый разговор.
+    const known = sessions.value.some((session) => session.id === sessionId);
+    if (!known) {
+      // Сессия, созданная с другого устройства или routine'ом.
+      loadSessions();
+    } else {
+      bumpSessionUpdatedAt(sessionId);
+    }
+    if (sessionId !== currentSessionId.value) return;
+    if (streaming.value) {
+      // Собственный активный run: стрим и финальный reloadCurrent уже покрывают.
+      return;
+    }
+    scheduleQuietCurrentReload();
+  };
+
+  // Дебаунс фонового refetch: пачка событий одного run (message.created ×2 +
+  // run.status) сливается в один GET сессии.
+  const scheduleQuietCurrentReload = () => {
+    if (pendingCurrentReloadTimer) return;
+    pendingCurrentReloadTimer = window.setTimeout(() => {
+      pendingCurrentReloadTimer = null;
+      // resumeActiveRun: true — чужой активный run в открытой сессии начнёт
+      // стримиться сюда же через обычный resume-путь.
+      reloadCurrent({ quiet: true });
+    }, 200);
+  };
+
+  const applySessionTitlePatch = (sessionId, patch) => {
+    const title = String(patch?.title || "");
+    const titleSource = String(patch?.title_source || "");
+    if (!title) return;
+    sessions.value = sessions.value.map((session) =>
+      session.id === sessionId ? { ...session, title, title_source: titleSource } : session
+    );
+    if (currentSession.value?.id === sessionId) {
+      currentSession.value = { ...currentSession.value, title, title_source: titleSource };
+    }
   };
 
   const createSession = async ({ targetId } = {}) => {
@@ -732,10 +811,13 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
 
   return {
     abort,
+    applyUserEvent,
     approveSkillRun,
     approveSkillRuns,
     approveSurfacePatch,
     canSend,
+    connectUserEvents,
+    disconnectUserEvents,
     cancelSkillRun,
     changeMessageLayout,
     changeSessionTarget,

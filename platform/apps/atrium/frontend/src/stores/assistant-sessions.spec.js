@@ -572,6 +572,119 @@ describe("assistant sessions store", () => {
   });
 });
 
+describe("assistant sessions store user event feed", () => {
+  it("applies session.updated to sidebar and current session", () => {
+    const store = useAssistantSessionsStore();
+    store.sessions = [
+      { ...sessionPayload(), id: "session-1", title: "Old" },
+      { ...sessionPayload(), id: "session-2", title: "Other" }
+    ];
+    store.currentSessionId = "session-1";
+    store.currentSession = { ...sessionPayload(), id: "session-1", title: "Old" };
+
+    store.applyUserEvent({
+      id: 5,
+      event: "session.updated",
+      session_id: "session-1",
+      data: { title: "Renamed", title_source: "llm_chat" }
+    });
+
+    expect(store.sessions.find((session) => session.id === "session-1").title).toBe("Renamed");
+    expect(store.sessions.find((session) => session.id === "session-2").title).toBe("Other");
+    expect(store.currentSession.title).toBe("Renamed");
+    expect(store.currentSession.title_source).toBe("llm_chat");
+  });
+
+  it("reloads the open session quietly on foreign message.created", async () => {
+    vi.useFakeTimers();
+    const requests = [];
+    globalThis.fetch = vi.fn(async (url) => {
+      requests.push(String(url));
+      return jsonResponse({
+        ...sessionPayload(),
+        messages: [userMessage("hi"), assistantMessage("hello")],
+        active_run: null
+      });
+    });
+    const store = useAssistantSessionsStore();
+    store.sessions = [sessionPayload()];
+    store.currentSessionId = "session-1";
+    store.currentLoaded = true;
+
+    store.applyUserEvent({
+      id: 6,
+      event: "message.created",
+      session_id: "session-1",
+      data: { message_id: "m-9", role: "assistant", message_kind: "text" }
+    });
+    store.applyUserEvent({
+      id: 7,
+      event: "run.status",
+      session_id: "session-1",
+      data: { run_id: "r-1", status: "completed", assistant_message_id: "m-9" }
+    });
+
+    expect(requests).toEqual([]);
+    await vi.advanceTimersByTimeAsync(250);
+    // Дебаунс: пачка событий → один GET сессии.
+    expect(requests).toEqual(["/assistant/sessions/session-1"]);
+    expect(store.currentMessages).toHaveLength(2);
+    // quiet: открытый разговор не мигает спиннером.
+    expect(store.loadingCurrent).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("skips reload while own run is streaming", () => {
+    vi.useFakeTimers();
+    globalThis.fetch = vi.fn();
+    const store = useAssistantSessionsStore();
+    store.sessions = [sessionPayload()];
+    store.currentSessionId = "session-1";
+    store.streaming = true;
+
+    store.applyUserEvent({
+      id: 8,
+      event: "message.created",
+      session_id: "session-1",
+      data: { message_id: "m-1", role: "user", message_kind: "text" }
+    });
+
+    vi.advanceTimersByTime(1000);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("reloads the sessions list when an unknown session appears", () => {
+    const requests = [];
+    globalThis.fetch = vi.fn(async (url) => {
+      requests.push(String(url));
+      return jsonResponse({ sessions: [sessionPayload()] });
+    });
+    const store = useAssistantSessionsStore();
+    store.sessions = [];
+
+    store.applyUserEvent({
+      id: 9,
+      event: "message.created",
+      session_id: "session-brand-new",
+      data: { message_id: "m-1", role: "user", message_kind: "text" }
+    });
+
+    expect(requests).toEqual(["/assistant/sessions"]);
+  });
+
+  it("ignores error frames without touching the backend", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    globalThis.fetch = vi.fn();
+    const store = useAssistantSessionsStore();
+
+    store.applyUserEvent({ event: "error", data: { message: "stream failed" } });
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalled();
+  });
+});
+
 function sessionPayload() {
   return {
     id: "session-1",
