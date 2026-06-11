@@ -897,7 +897,12 @@ function normalizeRunStep(value) {
     key,
     status,
     skill_id: value.skill_id ? String(value.skill_id) : "",
-    skill_run_id: value.skill_run_id ? String(value.skill_run_id) : ""
+    skill_run_id: value.skill_run_id ? String(value.skill_run_id) : "",
+    notes_count: Number.isFinite(Number(value.notes_count)) ? Number(value.notes_count) : 0,
+    titles: Array.isArray(value.titles)
+      ? value.titles.filter((title) => typeof title === "string" && title.trim())
+      : [],
+    title: value.title ? String(value.title) : ""
   };
 }
 

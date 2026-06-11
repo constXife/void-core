@@ -391,7 +391,10 @@ describe("assistant sessions store", () => {
         key: "skill_run",
         status: "completed",
         skill_id: "digest_hackernews",
-        skill_run_id: "skill-run-1"
+        skill_run_id: "skill-run-1",
+        notes_count: 0,
+        titles: [],
+        title: ""
       }
     ]);
 
@@ -432,7 +435,10 @@ describe("assistant sessions store", () => {
         key: "skill_run",
         status: "completed",
         skill_id: "digest_hackernews",
-        skill_run_id: "skill-run-1"
+        skill_run_id: "skill-run-1",
+        notes_count: 0,
+        titles: [],
+        title: ""
       }
     ]);
   });

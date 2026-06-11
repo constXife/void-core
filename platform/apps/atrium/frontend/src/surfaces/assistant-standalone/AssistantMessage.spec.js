@@ -358,12 +358,37 @@ describe("AssistantMessage", () => {
     expect(steps[0].text()).toContain("Память: заметок в контексте — 5");
     expect(steps[1].text()).toContain("Запомнено: 2");
     expect(steps[2].text()).toContain("Чат назван «Домашний сервер»");
+    // Статус «готово» у завершённых activity-шагов не показывается — шум.
+    for (const step of steps) {
+      expect(step.text()).not.toContain("готово");
+    }
 
     const details = steps[1].find(".assistant-message__step-details");
     expect(details.exists()).toBe(true);
     expect(details.text()).toContain("Характеристики bee");
     expect(details.text()).toContain("Предпочтение по чаю");
     expect(steps[0].find(".assistant-message__step-details").exists()).toBe(false);
+  });
+
+  it("hides empty activity steps", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Ответ",
+          run_steps: [
+            { id: "memory-recall", key: "memory_recall", status: "completed", notes_count: 0 },
+            { id: "memory-extraction", key: "memory_extraction", status: "completed", notes_count: 0 },
+            { id: "session-title", key: "session_titled", status: "completed", title: "  " }
+          ],
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        t
+      }
+    });
+
+    expect(wrapper.findAll(".assistant-message__step")).toHaveLength(0);
   });
 
   it("renders skill blocks instead of markdown when a skill run is attached", () => {

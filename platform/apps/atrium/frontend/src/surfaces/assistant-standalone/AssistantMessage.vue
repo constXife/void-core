@@ -363,6 +363,22 @@ function stepDetails(step) {
     : [];
 }
 
+const ACTIVITY_STEP_KEYS = new Set(["memory_recall", "memory_extraction", "session_titled"]);
+
+// Служебные activity-шаги либо есть с данными, либо их незачем показывать;
+// «готово» у них — шум, статус важен только для running/failed.
+function stepVisible(step) {
+  if (step.key === "session_titled") return Boolean(String(step.title || "").trim());
+  if (step.key === "memory_recall" || step.key === "memory_extraction") {
+    return stepCount(step) > 0;
+  }
+  return true;
+}
+
+function stepStatusVisible(step) {
+  return step.status !== "completed" || !ACTIVITY_STEP_KEYS.has(step.key);
+}
+
 function stepStatusLabel(status) {
   switch (status) {
     case "running":
@@ -438,26 +454,27 @@ const onChangeLayout = () => {
           {{ narrationContent }}
         </p>
         <ul v-if="showRunSteps" class="assistant-message__steps" aria-live="polite">
-          <li
-            v-for="step in runSteps"
-            :key="step.id"
-            class="assistant-message__step"
-            :class="`assistant-message__step--${step.status}`"
-          >
-            <details v-if="stepDetails(step).length" class="assistant-message__step-details">
-              <summary class="assistant-message__step-summary" data-test="step-details-summary">
+          <template v-for="step in runSteps" :key="step.id">
+            <li
+              v-if="stepVisible(step)"
+              class="assistant-message__step"
+              :class="`assistant-message__step--${step.status}`"
+            >
+              <details v-if="stepDetails(step).length" class="assistant-message__step-details">
+                <summary class="assistant-message__step-summary" data-test="step-details-summary">
+                  <span>{{ stepLabel(step) }}</span>
+                  <span v-if="stepStatusVisible(step)">{{ stepStatusLabel(step.status) }}</span>
+                </summary>
+                <ul class="assistant-message__step-items">
+                  <li v-for="title in stepDetails(step)" :key="title">{{ title }}</li>
+                </ul>
+              </details>
+              <template v-else>
                 <span>{{ stepLabel(step) }}</span>
-                <span>{{ stepStatusLabel(step.status) }}</span>
-              </summary>
-              <ul class="assistant-message__step-items">
-                <li v-for="title in stepDetails(step)" :key="title">{{ title }}</li>
-              </ul>
-            </details>
-            <template v-else>
-              <span>{{ stepLabel(step) }}</span>
-              <span>{{ stepStatusLabel(step.status) }}</span>
-            </template>
-          </li>
+                <span v-if="stepStatusVisible(step)">{{ stepStatusLabel(step.status) }}</span>
+              </template>
+            </li>
+          </template>
         </ul>
         <AssistantMarkdown
           v-if="!isSkillProposal && !isSurfacePatchProposal && !hasSkillBlocks && !isAssistant && (message.content || !isStreamingTail)"
