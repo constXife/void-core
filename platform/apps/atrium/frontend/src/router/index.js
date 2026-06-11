@@ -6,6 +6,7 @@ import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
+import BreakGlassRoute from "../pages/BreakGlassRoute.vue";
 import ArtifactPage from "../surfaces/artifact/ArtifactPage.vue";
 import CustomSurfacePage from "../surfaces/custom/CustomSurfacePage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
@@ -139,6 +140,14 @@ const routes = [
           path: "/pages",
           name: "custom-surface-pages",
           component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
+        {
+          // Break-glass shell.rw (слайс 3). Отдельный standalone-экран (не таб чата) —
+          // визуально отделён, admin-only (gate на backend), требует свежий OIDC step-up.
+          path: "/breakglass",
+          name: "assistant-breakglass",
+          component: BreakGlassRoute,
           meta: assistantAccountMeta
         }
       ]
