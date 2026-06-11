@@ -877,8 +877,19 @@ function normalizeSkillRun(value) {
     skill_id: String(value.skill_id || ""),
     status: String(value.status || ""),
     error: value.error ? String(value.error) : "",
-    blocks
+    blocks,
+    display_name: normalizeSkillDisplayName(value.display_name)
   };
+}
+
+// Localized имя скилла с backend'а ({en, ru}) — для динамических ops-скиллов,
+// у которых нет статического имени во фронте.
+function normalizeSkillDisplayName(value) {
+  if (!value || typeof value !== "object") return null;
+  const en = typeof value.en === "string" ? value.en.trim() : "";
+  const ru = typeof value.ru === "string" ? value.ru.trim() : "";
+  if (!en && !ru) return null;
+  return { en, ru };
 }
 
 function normalizeSkillRunList(value) {
@@ -902,7 +913,9 @@ function normalizeRunStep(value) {
     titles: Array.isArray(value.titles)
       ? value.titles.filter((title) => typeof title === "string" && title.trim())
       : [],
-    title: value.title ? String(value.title) : ""
+    title: value.title ? String(value.title) : "",
+    // Однострочный результат ops-сенсора («kadath: active (running)») в skill_run шаге.
+    summary: value.summary ? String(value.summary) : ""
   };
 }
 

@@ -24,6 +24,7 @@ const props = defineProps({
   latencyTick: { type: Number, default: 0 },
   showRegenerate: { type: Boolean, default: false },
   showDelete: { type: Boolean, default: false },
+  lang: { type: String, default: "en" },
   t: { type: Function, required: true }
 });
 
@@ -109,7 +110,9 @@ const proposalSkillRuns = computed(() => {
 const proposalSkillIds = computed(() =>
   proposalSkillRuns.value.map((skillRun) => skillRun.skill_id || skillRun.id).filter(Boolean)
 );
-const proposalSkillNames = computed(() => proposalSkillIds.value.map(skillDisplayName));
+const proposalSkillNames = computed(() =>
+  proposalSkillRuns.value.map((skillRun) => skillDisplayName(skillRun.skill_id, skillRun.id))
+);
 const proposalTitle = computed(() => {
   if (proposalSkillNames.value.length === 0) return props.message.content;
   if (proposalSkillNames.value.length === 1) {
@@ -258,7 +261,19 @@ function splitThinkingSegments(content) {
   return segments.filter((segment) => segment.content.trim());
 }
 
-function skillDisplayName(skillId) {
+// Localized имя скилла приходит с backend'ом в skill_run.display_name (нужно для
+// динамических ops-скиллов, которых нет в статике); статический switch — fallback
+// для исторических записей без display_name.
+function skillDisplayName(skillId, skillRunId = "") {
+  const runs = proposalSkillRuns.value;
+  const run = skillRunId
+    ? runs.find((skillRun) => skillRun.id === skillRunId)
+    : runs.find((skillRun) => skillRun.skill_id === skillId);
+  const names = run?.display_name;
+  if (names && typeof names === "object") {
+    const name = props.lang === "ru" ? names.ru : names.en;
+    if (typeof name === "string" && name.trim()) return name.trim();
+  }
   switch (skillId) {
     case "digest_hackernews":
       return "Hacker News digest";
@@ -336,11 +351,11 @@ function stepLabel(step) {
   switch (step.key) {
     case "skill_proposal":
       return t("assistant.step.skillProposal", {
-        skill: skillDisplayName(step.skill_id || "")
+        skill: skillDisplayName(step.skill_id || "", step.skill_run_id || "")
       });
     case "skill_run":
       return t("assistant.step.skillRun", {
-        skill: skillDisplayName(step.skill_id || "")
+        skill: skillDisplayName(step.skill_id || "", step.skill_run_id || "")
       });
     case "memory_recall":
       return t("assistant.step.memoryRecall", { count: stepCount(step) });
@@ -358,6 +373,10 @@ function stepCount(step) {
 }
 
 function stepDetails(step) {
+  // summary — однострочный результат ops-сенсора («kadath: active (running)»).
+  if (typeof step.summary === "string" && step.summary.trim()) {
+    return [step.summary.trim()];
+  }
   return Array.isArray(step.titles)
     ? step.titles.filter((title) => typeof title === "string" && title.trim())
     : [];

@@ -13,6 +13,7 @@ const props = defineProps({
   hasSession: { type: Boolean, default: false },
   suggestions: { type: Array, default: () => [] },
   sessionKey: { type: String, default: "draft" },
+  lang: { type: String, default: "en" },
   t: { type: Function, required: true }
 });
 
@@ -140,6 +141,7 @@ watch(
               :show-delete="
                 !streaming && entry.message.role === 'assistant' && isDeletablePair(entry.message.id)
               "
+              :lang="lang"
               :t="t"
               @regenerate="emit('regenerate')"
               @delete="(id) => emit('delete-message', id)"

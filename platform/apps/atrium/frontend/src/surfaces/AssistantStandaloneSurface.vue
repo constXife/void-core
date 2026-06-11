@@ -581,6 +581,7 @@ function savePreferredTarget(value) {
           :has-session="Boolean(currentSession)"
           :suggestions="suggestions"
           :session-key="currentSessionId || 'draft'"
+          :lang="props.lang"
           :t="t"
           @regenerate="onRegenerate"
           @delete-message="onDeleteMessage"

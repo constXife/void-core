@@ -394,7 +394,8 @@ describe("assistant sessions store", () => {
         skill_run_id: "skill-run-1",
         notes_count: 0,
         titles: [],
-        title: ""
+        title: "",
+        summary: ""
       }
     ]);
 
@@ -438,7 +439,8 @@ describe("assistant sessions store", () => {
         skill_run_id: "skill-run-1",
         notes_count: 0,
         titles: [],
-        title: ""
+        title: "",
+        summary: ""
       }
     ]);
   });
@@ -610,6 +612,7 @@ function skillRunPayload(id = "skill-run-1", skillId = "") {
     skill_id: skillId,
     status: "",
     error: "",
+    display_name: null,
     blocks: [
       {
         type: "section_header",
