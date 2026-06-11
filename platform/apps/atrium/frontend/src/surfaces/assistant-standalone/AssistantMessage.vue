@@ -342,9 +342,25 @@ function stepLabel(step) {
       return t("assistant.step.skillRun", {
         skill: skillDisplayName(step.skill_id || "")
       });
+    case "memory_recall":
+      return t("assistant.step.memoryRecall", { count: stepCount(step) });
+    case "memory_extraction":
+      return t("assistant.step.memoryExtraction", { count: stepCount(step) });
+    case "session_titled":
+      return t("assistant.step.sessionTitled", { title: String(step.title || "") });
     default:
       return t("assistant.step.unknown");
   }
+}
+
+function stepCount(step) {
+  return Number.isFinite(Number(step.notes_count)) ? Number(step.notes_count) : 0;
+}
+
+function stepDetails(step) {
+  return Array.isArray(step.titles)
+    ? step.titles.filter((title) => typeof title === "string" && title.trim())
+    : [];
 }
 
 function stepStatusLabel(status) {
@@ -428,8 +444,19 @@ const onChangeLayout = () => {
             class="assistant-message__step"
             :class="`assistant-message__step--${step.status}`"
           >
-            <span>{{ stepLabel(step) }}</span>
-            <span>{{ stepStatusLabel(step.status) }}</span>
+            <details v-if="stepDetails(step).length" class="assistant-message__step-details">
+              <summary class="assistant-message__step-summary" data-test="step-details-summary">
+                <span>{{ stepLabel(step) }}</span>
+                <span>{{ stepStatusLabel(step.status) }}</span>
+              </summary>
+              <ul class="assistant-message__step-items">
+                <li v-for="title in stepDetails(step)" :key="title">{{ title }}</li>
+              </ul>
+            </details>
+            <template v-else>
+              <span>{{ stepLabel(step) }}</span>
+              <span>{{ stepStatusLabel(step.status) }}</span>
+            </template>
           </li>
         </ul>
         <AssistantMarkdown

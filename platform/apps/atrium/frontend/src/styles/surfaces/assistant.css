@@ -854,6 +854,41 @@
   color: var(--danger, #f85149);
 }
 
+.assistant-message__step:has(.assistant-message__step-details) {
+  display: block;
+  padding: 0;
+}
+
+.assistant-message__step-details {
+  width: 100%;
+}
+
+.assistant-message__step-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.75rem;
+  padding: 0 0.55rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.assistant-message__step-summary::-webkit-details-marker {
+  display: none;
+}
+
+.assistant-message__step-details[open] .assistant-message__step-summary {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.assistant-message__step-items {
+  margin: 0;
+  padding: 0.35rem 0.55rem 0.45rem 1.5rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
 .assistant-message__proposal {
   display: flex;
   flex-direction: column;

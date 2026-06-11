@@ -34,6 +34,9 @@ const messages = {
   "assistant.message.thinking": "Размышления",
   "assistant.step.skillProposal": "Подготовка {skill}",
   "assistant.step.skillRun": "Запуск {skill}",
+  "assistant.step.memoryRecall": "Память: заметок в контексте — {count}",
+  "assistant.step.memoryExtraction": "Запомнено: {count}",
+  "assistant.step.sessionTitled": "Чат назван «{title}»",
   "assistant.step.unknown": "Шаг ассистента",
   "assistant.step.status.running": "выполняется",
   "assistant.step.status.completed": "готово",
@@ -314,6 +317,53 @@ describe("AssistantMessage", () => {
     expect(wrapper.find(".assistant-message__step").text()).toContain("Запуск Hacker News digest");
     expect(wrapper.find(".assistant-message__step").text()).toContain("выполняется");
     expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
+  });
+
+  it("renders memory and titling activity steps with expandable note titles", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Ответ",
+          run_steps: [
+            {
+              id: "memory-recall",
+              key: "memory_recall",
+              status: "completed",
+              notes_count: 5
+            },
+            {
+              id: "memory-extraction",
+              key: "memory_extraction",
+              status: "completed",
+              notes_count: 2,
+              titles: ["Характеристики bee", "Предпочтение по чаю"]
+            },
+            {
+              id: "session-title",
+              key: "session_titled",
+              status: "completed",
+              title: "Домашний сервер"
+            }
+          ],
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        t
+      }
+    });
+
+    const steps = wrapper.findAll(".assistant-message__step");
+    expect(steps).toHaveLength(3);
+    expect(steps[0].text()).toContain("Память: заметок в контексте — 5");
+    expect(steps[1].text()).toContain("Запомнено: 2");
+    expect(steps[2].text()).toContain("Чат назван «Домашний сервер»");
+
+    const details = steps[1].find(".assistant-message__step-details");
+    expect(details.exists()).toBe(true);
+    expect(details.text()).toContain("Характеристики bee");
+    expect(details.text()).toContain("Предпочтение по чаю");
+    expect(steps[0].find(".assistant-message__step-details").exists()).toBe(false);
   });
 
   it("renders skill blocks instead of markdown when a skill run is attached", () => {
