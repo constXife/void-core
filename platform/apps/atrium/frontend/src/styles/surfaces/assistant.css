@@ -59,6 +59,22 @@
   .assistant-standalone--mobile-open .assistant-standalone__backdrop {
     display: block;
   }
+
+  /* Все табы в 375px не помещаются — средняя колонка сжимаемая
+     (minmax(0,1fr)), ряд табов скроллится горизонтально без скроллбара. */
+  .assistant-topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .assistant-topbar__tabs {
+    overflow-x: auto;
+    justify-content: flex-start;
+    scrollbar-width: none;
+  }
+
+  .assistant-topbar__tabs::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -484,6 +500,10 @@
   grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
+  /* Grid-итем: без min-width:0 колонку раздувает min-content потомков
+     (composer max-width: clamp(44rem,…) + ряд табов) — на телефоне main
+     становился ~775px и контент уезжал за экран. */
+  min-width: 0;
   overflow: hidden;
   position: relative;
 }
