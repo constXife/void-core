@@ -658,7 +658,9 @@
 
 .assistant-conversation__column {
   width: 100%;
-  max-width: clamp(44rem, 72vw, 70rem);
+  /* clamp нижней границей 44rem ШИРЕ телефонного вьюпорта — без внешнего
+     min() колонка вылезает за экран и центр уезжает вправо. */
+  max-width: min(clamp(44rem, 72vw, 70rem), 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1622,7 +1624,8 @@
   flex-direction: column;
   gap: 0.3rem;
   width: 100%;
-  max-width: clamp(44rem, 72vw, 70rem);
+  /* см. .assistant-conversation__column — 44rem шире телефонного вьюпорта. */
+  max-width: min(clamp(44rem, 72vw, 70rem), 100%);
   margin: 0 auto;
   padding: 0.6rem;
   border-radius: 14px;
