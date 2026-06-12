@@ -79,6 +79,19 @@ const sidebarCollapsed = ref(loadSidebarPreference());
 const sidebarWidth = ref(clampSidebarWidth(loadSidebarWidth()));
 const preferredTargetId = ref(loadPreferredTarget());
 
+// Narrow (phone/tablet-portrait) layout: sidebar становится off-canvas drawer
+// поверх беседы, а не вторая колонка. На десктопе `sidebarCollapsed` = icon-rail;
+// на narrow это отдельное состояние `mobileSidebarOpen` (по умолчанию закрыт —
+// телефон стартует на полноэкранной беседе). Брейкпоинт един с CSS (1024px).
+const NARROW_QUERY = "(max-width: 1024px)";
+const isNarrow = ref(false);
+const mobileSidebarOpen = ref(false);
+let narrowMedia = null;
+const onNarrowChange = (event) => {
+  isNarrow.value = event.matches;
+  if (!event.matches) mobileSidebarOpen.value = false;
+};
+
 // Tab state — derived from route, switching pushes default route per tab.
 // Per ASSISTANT_SURFACE_STRUCTURE.md D11: last route per tab — session-local Map, не localStorage.
 const tabRouteHistory = reactive(new Map());
@@ -135,6 +148,7 @@ const streamingStatusText = computed(() =>
 );
 
 const onTabChange = (tabId) => {
+  closeMobileSidebar();
   if (tabId === activeTab.value) return;
   const remembered = tabRouteHistory.get(tabId);
   if (remembered) {
@@ -232,7 +246,16 @@ let resizeStartX = 0;
 let resizeStartWidth = 0;
 
 const onSidebarToggle = () => {
+  if (isNarrow.value) {
+    mobileSidebarOpen.value = !mobileSidebarOpen.value;
+    return;
+  }
   sidebarCollapsed.value = !sidebarCollapsed.value;
+};
+
+// На narrow drawer закрывается после навигации, чтобы открылась беседа.
+const closeMobileSidebar = () => {
+  if (isNarrow.value) mobileSidebarOpen.value = false;
 };
 
 const onSidebarResizeStart = (event) => {
@@ -332,11 +355,13 @@ const onSelectTarget = async (targetId) => {
 };
 
 const onSelect = (id) => {
+  closeMobileSidebar();
   if (id === currentSessionId.value) return;
   router.push({ name: "assistant-chat", params: { id } });
 };
 
 const onNewChat = () => {
+  closeMobileSidebar();
   sessionsStore.selectSession("");
   if (route.name !== "assistant-home") {
     router.push({ name: "assistant-home" });
@@ -427,6 +452,11 @@ watch(
 );
 
 onMounted(async () => {
+  if (typeof window !== "undefined" && window.matchMedia) {
+    narrowMedia = window.matchMedia(NARROW_QUERY);
+    isNarrow.value = narrowMedia.matches;
+    narrowMedia.addEventListener("change", onNarrowChange);
+  }
   await coreStore.loadModels({ force: true });
   await sessionsStore.loadSessions();
   await syncFromRoute();
@@ -441,6 +471,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   sessionsStore.disconnectUserEvents();
+  if (narrowMedia) narrowMedia.removeEventListener("change", onNarrowChange);
 });
 
 function loadSidebarPreference() {
@@ -514,7 +545,10 @@ function savePreferredTarget(value) {
 <template>
   <section
     class="assistant-standalone"
-    :class="{ 'assistant-standalone--sidebar-collapsed': sidebarCollapsed }"
+    :class="{
+      'assistant-standalone--sidebar-collapsed': !isNarrow && sidebarCollapsed,
+      'assistant-standalone--mobile-open': isNarrow && mobileSidebarOpen
+    }"
     :style="sidebarStyle"
   >
     <AssistantSidebar
@@ -523,7 +557,7 @@ function savePreferredTarget(value) {
       :trashed-loaded="trashedLoaded"
       :active-id="currentSessionId"
       :loading="loadingSessions && sessions.length === 0"
-      :collapsed="sidebarCollapsed"
+      :collapsed="!isNarrow && sidebarCollapsed"
       :identity="props.identity"
       :active-tab="activeTab"
       :t="t"
@@ -560,13 +594,24 @@ function savePreferredTarget(value) {
       </template>
     </AssistantSidebar>
 
+    <!-- Backdrop drawer'а на narrow: тап вне сайдбара закрывает его. -->
+    <button
+      v-if="isNarrow && mobileSidebarOpen"
+      type="button"
+      class="assistant-standalone__backdrop"
+      :aria-label="t('assistant.sidebar.collapse')"
+      @click="mobileSidebarOpen = false"
+    />
+
     <main class="assistant-standalone__main">
       <AssistantTopbar
         :active-tab="activeTab"
         :t="t"
+        :show-menu="isNarrow"
         :capabilities-count="capabilitiesCount"
         :routines-count="routinesCount"
         @tab-change="onTabChange"
+        @toggle-sidebar="onSidebarToggle"
       >
         <template v-if="$slots['main-actions']" #actions>
           <slot name="main-actions" />
