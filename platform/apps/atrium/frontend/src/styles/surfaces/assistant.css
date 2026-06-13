@@ -184,51 +184,6 @@
   }
 }
 
-/* ---- Section-nav (drawer navigation on narrow) ---- */
-
-.assistant-sidebar__sections {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.4rem 0 0.6rem;
-  border-bottom: 1px solid var(--border-default);
-  margin-bottom: 0.4rem;
-}
-
-.assistant-sidebar__section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.6rem 0.55rem;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink-secondary);
-  font-size: 0.95rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.assistant-sidebar__section:hover {
-  background: var(--surface-raised);
-  color: var(--ink-primary);
-}
-
-.assistant-sidebar__section--active {
-  background: var(--surface-raised);
-  color: var(--ink-primary);
-  font-weight: 600;
-}
-
-.assistant-sidebar__section-count {
-  font-size: 0.75rem;
-  color: var(--ink-tertiary);
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  background: var(--surface-base);
-}
-
 /* ---- Collapsed sidebar (icons-only) ---- */
 
 .assistant-sidebar--collapsed {
@@ -573,25 +528,102 @@
   background: var(--surface-overlay, var(--surface-raised));
 }
 
-/* Заголовок активного раздела: скрыт на десктопе (там ряд табов), показан
-   на narrow. Медиа идёт сразу после базового скрытия — побеждает по порядку. */
-.assistant-topbar__title {
+/* Dropdown разделов (narrow): отдельная от drawer-истории навигация.
+   Скрыт на десктопе (там ряд табов); медиа-показ идёт сразу после базового
+   скрытия — побеждает по порядку (source-order грабли). */
+.assistant-topbar__section-select {
   display: none;
   grid-column: 2;
   align-self: center;
   justify-self: start;
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  .assistant-topbar__section-select {
+    display: block;
+  }
+}
+
+.assistant-topbar__section-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--ink-primary);
   font-weight: 600;
   font-size: 0.95rem;
-  color: var(--ink-primary);
+  cursor: pointer;
+}
+
+.assistant-topbar__section-trigger > span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-@media (max-width: 1024px) {
-  .assistant-topbar__title {
-    display: block;
-  }
+.assistant-topbar__section-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 50;
+  min-width: 13rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.assistant-topbar__section-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assistant-topbar__section-item:hover {
+  background: var(--surface-base);
+  color: var(--ink-primary);
+}
+
+.assistant-topbar__section-item--active {
+  color: var(--ink-primary);
+  font-weight: 600;
+}
+
+.assistant-topbar__section-item-count {
+  font-size: 0.75rem;
+  color: var(--ink-tertiary);
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-base);
+}
+
+/* Невидимый перехватчик клика вне меню — закрывает dropdown. */
+.assistant-topbar__section-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
 }
 
 .assistant-topbar__tabs {
