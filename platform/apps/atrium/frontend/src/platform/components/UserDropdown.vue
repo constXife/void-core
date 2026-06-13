@@ -57,6 +57,9 @@ const account = computed(() => resolvePlatformUserIdentity(props.user));
         @logout="emit('logout')"
       >
         <slot />
+        <template v-if="$slots['account-actions']" #account-actions>
+          <slot name="account-actions" />
+        </template>
       </PlatformUserDropdownPanel>
     </template>
   </PlatformDropdownAnchor>

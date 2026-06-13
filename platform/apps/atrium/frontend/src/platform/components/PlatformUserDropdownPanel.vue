@@ -104,6 +104,8 @@ const currentLanguageLabel = computed(() => String(props.currentLang || "ru").to
 
     <div class="platform-user-dropdown-panel__divider"></div>
 
+    <slot name="account-actions" />
+
     <a class="platform-user-dropdown-panel__action" :href="profileHref">
       <Settings :size="14" />
       {{ t("app.settings") }}

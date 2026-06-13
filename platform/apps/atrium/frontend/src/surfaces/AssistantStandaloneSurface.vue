@@ -143,13 +143,18 @@ const sectionTabs = computed(() => [
   { id: "capabilities", label: t("assistant.tabs.capabilities"), count: capabilitiesCount.value, showCount: true },
   { id: "routines", label: t("assistant.tabs.routines"), count: routinesCount.value, showCount: true },
   { id: "memory", label: t("assistant.tabs.memory"), count: null, showCount: false },
-  { id: "devices", label: t("assistant.tabs.devices"), count: null, showCount: false },
+  // devices — account-раздел (ADR-0032 §5a), не раздел чата: в ряду табов/dropdown
+  // его НЕТ, вход — из account-меню под аватаром; роут/панель ниже сохранены.
   { id: "artifacts", label: t("assistant.tabs.artifacts"), count: null, showCount: false },
   { id: "pages", label: t("assistant.tabs.pages"), count: null, showCount: false }
 ]);
-const activeTabLabel = computed(
-  () => sectionTabs.value.find((tab) => tab.id === activeTab.value)?.label || ""
-);
+const activeTabLabel = computed(() => {
+  const inTabs = sectionTabs.value.find((tab) => tab.id === activeTab.value)?.label;
+  if (inTabs) return inTabs;
+  // Account-разделы вне ряда табов (devices) — заголовок для narrow-топбара.
+  if (activeTab.value === "devices") return t("assistant.tabs.devices");
+  return "";
+});
 const suggestions = computed(() => [
   t("assistant.suggestion.explainCode"),
   t("assistant.suggestion.generateIdea"),
