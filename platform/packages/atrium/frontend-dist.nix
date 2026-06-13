@@ -27,8 +27,7 @@
     outputHash =
       {
         "aarch64-darwin" = "sha256-Q0Rr2Yb8Vjc/srZbUuuXatD2R80heD1qLlikV4B0uiQ=";
-        # TODO: linux-хэш выдаст rebuild на bee (desktop builder), вписать got:.
-        "x86_64-linux" = pkgs.lib.fakeHash;
+        "x86_64-linux" = "sha256-YNPjiZFQgRQkMlpZyDBFLhp38//0czgCVdvKx9atuTM=";
       }
       .${
         pkgs.stdenv.hostPlatform.system
