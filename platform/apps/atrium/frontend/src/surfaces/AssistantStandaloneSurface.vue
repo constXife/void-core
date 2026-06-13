@@ -131,6 +131,21 @@ const {
 } = storeToRefs(routinesStore);
 const capabilitiesCount = computed(() => (skillsCount.value > 0 ? skillsCount.value : null));
 const routinesCount = computed(() => (routinesLoaded.value ? instancesCount.value : null));
+
+// Единый источник табов-разделов для topbar (десктоп) и drawer-навигации
+// (narrow): на телефоне ряд табов не помещается, поэтому переключение
+// разделов переезжает в drawer, а topbar показывает только активный раздел.
+const sectionTabs = computed(() => [
+  { id: "chat", label: t("assistant.tabs.chat"), count: null, showCount: false },
+  { id: "capabilities", label: t("assistant.tabs.capabilities"), count: capabilitiesCount.value, showCount: true },
+  { id: "routines", label: t("assistant.tabs.routines"), count: routinesCount.value, showCount: true },
+  { id: "memory", label: t("assistant.tabs.memory"), count: null, showCount: false },
+  { id: "artifacts", label: t("assistant.tabs.artifacts"), count: null, showCount: false },
+  { id: "pages", label: t("assistant.tabs.pages"), count: null, showCount: false }
+]);
+const activeTabLabel = computed(
+  () => sectionTabs.value.find((tab) => tab.id === activeTab.value)?.label || ""
+);
 const suggestions = computed(() => [
   t("assistant.suggestion.explainCode"),
   t("assistant.suggestion.generateIdea"),
@@ -560,8 +575,11 @@ function savePreferredTarget(value) {
       :collapsed="!isNarrow && sidebarCollapsed"
       :identity="props.identity"
       :active-tab="activeTab"
+      :tabs="sectionTabs"
+      :show-section-nav="isNarrow"
       :t="t"
       @new-chat="onNewChat"
+      @tab-change="onTabChange"
       @select="onSelect"
       @rename="onRename"
       @delete="onDelete"
@@ -608,8 +626,8 @@ function savePreferredTarget(value) {
         :active-tab="activeTab"
         :t="t"
         :show-menu="isNarrow"
-        :capabilities-count="capabilitiesCount"
-        :routines-count="routinesCount"
+        :tabs="sectionTabs"
+        :active-tab-label="activeTabLabel"
         @tab-change="onTabChange"
         @toggle-sidebar="onSidebarToggle"
       >

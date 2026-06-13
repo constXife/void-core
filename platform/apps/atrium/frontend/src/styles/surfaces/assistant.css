@@ -59,22 +59,6 @@
   .assistant-standalone--mobile-open .assistant-standalone__backdrop {
     display: block;
   }
-
-  /* Все табы в 375px не помещаются — средняя колонка сжимаемая
-     (minmax(0,1fr)), ряд табов скроллится горизонтально без скроллбара. */
-  .assistant-topbar {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .assistant-topbar__tabs {
-    overflow-x: auto;
-    justify-content: flex-start;
-    scrollbar-width: none;
-  }
-
-  .assistant-topbar__tabs::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -198,6 +182,51 @@
   .assistant-sidebar__resize-handle {
     display: none;
   }
+}
+
+/* ---- Section-nav (drawer navigation on narrow) ---- */
+
+.assistant-sidebar__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0 0.6rem;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 0.4rem;
+}
+
+.assistant-sidebar__section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.55rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assistant-sidebar__section:hover {
+  background: var(--surface-raised);
+  color: var(--ink-primary);
+}
+
+.assistant-sidebar__section--active {
+  background: var(--surface-raised);
+  color: var(--ink-primary);
+  font-weight: 600;
+}
+
+.assistant-sidebar__section-count {
+  font-size: 0.75rem;
+  color: var(--ink-tertiary);
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-base);
 }
 
 /* ---- Collapsed sidebar (icons-only) ---- */
@@ -544,11 +573,46 @@
   background: var(--surface-overlay, var(--surface-raised));
 }
 
+/* Заголовок активного раздела: скрыт на десктопе (там ряд табов), показан
+   на narrow. Медиа идёт сразу после базового скрытия — побеждает по порядку. */
+.assistant-topbar__title {
+  display: none;
+  grid-column: 2;
+  align-self: center;
+  justify-self: start;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1024px) {
+  .assistant-topbar__title {
+    display: block;
+  }
+}
+
 .assistant-topbar__tabs {
   grid-column: 2;
   display: flex;
   align-items: stretch;
   gap: 0.1rem;
+}
+
+/* narrow: ряд табов не помещается → прячем, переключение разделов переехало
+   в drawer (section-nav), topbar показывает активный раздел заголовком.
+   Этот медиазапрос ИДЁТ ПОСЛЕ базовых .assistant-topbar/__tabs — иначе
+   source-order перебивает display:none (грабли, уже наступали). */
+@media (max-width: 1024px) {
+  .assistant-topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .assistant-topbar__tabs {
+    display: none;
+  }
 }
 
 .assistant-topbar__tab {

@@ -14,15 +14,21 @@ const ruMessages = {
 
 const t = (key) => ruMessages[key] || key;
 
+// Источник табов поднят в родитель (общий с drawer-навигацией); topbar
+// рендерит переданный список.
+const tabs = [
+  { id: "chat", label: t("assistant.tabs.chat"), count: null, showCount: false },
+  { id: "capabilities", label: t("assistant.tabs.capabilities"), count: 2, showCount: true },
+  { id: "routines", label: t("assistant.tabs.routines"), count: 4, showCount: true },
+  { id: "memory", label: t("assistant.tabs.memory"), count: null, showCount: false },
+  { id: "artifacts", label: t("assistant.tabs.artifacts"), count: null, showCount: false },
+  { id: "pages", label: t("assistant.tabs.pages"), count: null, showCount: false }
+];
+
 describe("AssistantTopbar", () => {
-  it("renders tab labels through the provided localization function", () => {
+  it("renders tab labels from the provided tabs prop", () => {
     const wrapper = mount(AssistantTopbar, {
-      props: {
-        activeTab: "chat",
-        t,
-        capabilitiesCount: 2,
-        routinesCount: 4
-      }
+      props: { activeTab: "chat", t, tabs }
     });
 
     expect(wrapper.find("nav").attributes("aria-label")).toBe("Разделы ассистента");

@@ -13,6 +13,9 @@ const props = defineProps({
   collapsed: { type: Boolean, default: false },
   identity: { type: Object, required: true },
   activeTab: { type: String, default: "chat" },
+  // Навигация по разделам в drawer — на narrow, где ряд табов topbar не влезает.
+  tabs: { type: Array, default: () => [] },
+  showSectionNav: { type: Boolean, default: false },
   t: { type: Function, required: true }
 });
 
@@ -24,7 +27,8 @@ const emit = defineEmits([
   "restore",
   "open-trash",
   "toggle-collapsed",
-  "resize-start"
+  "resize-start",
+  "tab-change"
 ]);
 
 const trashOpen = ref(false);
@@ -95,6 +99,26 @@ const toggleTrash = () => {
         </button>
       </template>
     </div>
+
+    <!-- Section-nav (narrow): переключение разделов переехало сюда из topbar.
+         На десктопе разделы живут в topbar, этот блок скрыт. -->
+    <nav v-if="showSectionNav" class="assistant-sidebar__sections" :aria-label="t('assistant.tabs.ariaLabel')">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        type="button"
+        class="assistant-sidebar__section"
+        :class="{ 'assistant-sidebar__section--active': tab.id === activeTab }"
+        :aria-current="tab.id === activeTab ? 'page' : undefined"
+        @click="emit('tab-change', tab.id)"
+      >
+        <span>{{ tab.label }}</span>
+        <span
+          v-if="tab.showCount && tab.count !== null"
+          class="assistant-sidebar__section-count"
+        >{{ tab.count }}</span>
+      </button>
+    </nav>
 
     <div v-if="activeTab === 'chat'" class="assistant-sidebar__top">
       <button

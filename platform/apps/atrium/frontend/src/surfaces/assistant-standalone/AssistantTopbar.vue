@@ -1,30 +1,20 @@
 <script setup>
-import { computed } from "vue";
 import { Menu } from "lucide-vue-next";
 
 const props = defineProps({
   activeTab: { type: String, required: true },
   t: { type: Function, required: true },
-  capabilitiesCount: { type: Number, default: null },
-  routinesCount: { type: Number, default: null },
+  // Источник табов поднят в родитель (общий с drawer-навигацией).
+  tabs: { type: Array, default: () => [] },
+  // Заголовок активного раздела — показывается вместо ряда табов на narrow,
+  // где переключение разделов переехало в drawer.
+  activeTabLabel: { type: String, default: "" },
   // На narrow показываем кнопку-гамбургер: единственный способ открыть
   // off-canvas sidebar, чьи own-toggle уехали за экран.
   showMenu: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(["tab-change", "toggle-sidebar"]);
-
-const tabs = computed(() => [
-  { id: "chat", label: props.t("assistant.tabs.chat"), count: null, showCount: false },
-  { id: "capabilities", label: props.t("assistant.tabs.capabilities"), count: props.capabilitiesCount, showCount: true },
-  { id: "routines", label: props.t("assistant.tabs.routines"), count: props.routinesCount, showCount: true },
-  { id: "memory", label: props.t("assistant.tabs.memory"), count: null, showCount: false },
-  // Artifacts tab без count — count fetch для list зашёл бы в backend на каждом render
-  // существующих tabs и усложнил бы Surface; пока tab без badge, ArtifactListPage сама загружает items.
-  { id: "artifacts", label: props.t("assistant.tabs.artifacts"), count: null, showCount: false },
-  // Pages tab без count — список грузится самой панелью, badge не нужен.
-  { id: "pages", label: props.t("assistant.tabs.pages"), count: null, showCount: false }
-]);
 
 const onClick = (tabId) => {
   if (tabId === props.activeTab) return;
@@ -44,6 +34,9 @@ const onClick = (tabId) => {
     >
       <Menu :size="18" />
     </button>
+    <!-- narrow: ряд табов не помещается → показываем только активный раздел,
+         переключение — в drawer (см. AssistantSidebar section-nav). -->
+    <span v-if="showMenu" class="assistant-topbar__title">{{ activeTabLabel }}</span>
     <div class="assistant-topbar__tabs">
       <button
         v-for="tab in tabs"
