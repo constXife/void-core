@@ -107,6 +107,12 @@ const routes = [
           meta: assistantAccountMeta
         },
         {
+          path: "/devices",
+          name: "assistant-devices",
+          component: AssistantProductRoute,
+          meta: assistantAccountMeta
+        },
+        {
           path: "/runs/:id",
           name: "assistant-run-report",
           component: AssistantRunReportRoute,

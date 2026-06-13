@@ -17,6 +17,7 @@
     "marked": "^18.0.3",
     "mermaid": "^11.14.0",
     "pinia": "^3.0.4",
+    "qrcode": "^1.5.4",
     "tinykeys": "^3.0.0",
     "vue-router": "4.5.1"
   },

@@ -11,6 +11,7 @@ import AssistantTopbar from "./assistant-standalone/AssistantTopbar.vue";
 import AssistantCapabilitiesPanel from "./assistant-standalone/AssistantCapabilitiesPanel.vue";
 import AssistantCapabilitiesSidebarFilters from "./assistant-standalone/AssistantCapabilitiesSidebarFilters.vue";
 import AssistantMemoryPanel from "./assistant-standalone/AssistantMemoryPanel.vue";
+import AssistantDevicesPanel from "./assistant-standalone/AssistantDevicesPanel.vue";
 import AssistantRoutinesPanel from "./assistant-standalone/AssistantRoutinesPanel.vue";
 import AssistantRoutinesSidebarFilters from "./assistant-standalone/AssistantRoutinesSidebarFilters.vue";
 import AssistantRoutineDrawer from "./assistant-standalone/AssistantRoutineDrawer.vue";
@@ -101,6 +102,7 @@ const TAB_DEFAULTS = {
   capabilities: { name: "assistant-capabilities" },
   routines: { name: "assistant-routines" },
   memory: { name: "assistant-memory" },
+  devices: { name: "assistant-devices" },
   // artifact-list — top-level route (не внутри assistant host wrapper); клик по tab
   // выводит юзера в standalone ArtifactListPage. Возврат — browser back или клик
   // на другой tab (router.push снова приведёт в assistant host).
@@ -115,6 +117,7 @@ const activeTab = computed(() => {
   if (name === "assistant-capabilities" || name === "assistant-capability-detail") return "capabilities";
   if (name.startsWith("assistant-routine")) return "routines";
   if (name === "assistant-memory") return "memory";
+  if (name === "assistant-devices") return "devices";
   if (name === "artifact-list" || name === "artifact-detail") return "artifacts";
   if (name === "custom-surface-pages") return "pages";
   return "chat";
@@ -140,6 +143,7 @@ const sectionTabs = computed(() => [
   { id: "capabilities", label: t("assistant.tabs.capabilities"), count: capabilitiesCount.value, showCount: true },
   { id: "routines", label: t("assistant.tabs.routines"), count: routinesCount.value, showCount: true },
   { id: "memory", label: t("assistant.tabs.memory"), count: null, showCount: false },
+  { id: "devices", label: t("assistant.tabs.devices"), count: null, showCount: false },
   { id: "artifacts", label: t("assistant.tabs.artifacts"), count: null, showCount: false },
   { id: "pages", label: t("assistant.tabs.pages"), count: null, showCount: false }
 ]);
@@ -732,6 +736,14 @@ function savePreferredTarget(value) {
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
       >
         <AssistantMemoryPanel :t="t" />
+      </section>
+
+      <!-- Devices tab — companion device registry + QR-pairing (ADR-0031). -->
+      <section
+        v-if="activeTab === 'devices'"
+        class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
+      >
+        <AssistantDevicesPanel :t="t" />
       </section>
 
       <!-- Artifacts tab — paginated список skill_run artifacts текущего юзера. -->
