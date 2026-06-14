@@ -1,18 +1,18 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ShieldCheck, TriangleAlert } from "lucide-vue-next";
+import { ShieldCheck, TriangleAlert, Smartphone } from "lucide-vue-next";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import {
-  elevateAdminGate,
-  redirectToAdminStepUp,
-  AdminStepUpRequiredError
+  requestAdminElevation,
+  waitForAdminElevation
 } from "../lib/admin-gate.js";
 
-// Interstitial admin authorization-gate (ADR-0034 slice b): вход в админку требует свежего
-// OIDC step-up. Экран объясняет необходимость re-auth и уводит на него; после возврата
-// (?stepped=1) молча конвертирует свежий re-auth в elevation и продолжает на исходный роут.
+// Interstitial admin authorization-gate (ADR-0034 slice b): вход в админку требует
+// подтверждения на enrolled-устройстве (device_factor — companion Face ID, ADR-0030).
+// Экран создаёт запрос, будит телефон, поллит status до выдачи elevation и продолжает
+// на исходный admin-роут. OIDC re-auth не используем (rauthy не форсирует).
 
 const route = useRoute();
 const router = useRouter();
@@ -20,10 +20,10 @@ const appStore = useAtriumAppStore();
 const { isAdmin } = storeToRefs(appStore);
 const t = (key, vars = {}) => appStore.t(key, vars);
 
-const NEXT_KEY = "atrium:admin-gate:next";
-
-const working = ref(false);
+// requesting | waiting | timeout | error
+const phase = ref("requesting");
 const error = ref("");
+let aborter = null;
 
 // Только внутренний admin-путь, иначе дефолт — гасим open-redirect.
 const safeNext = (value) => {
@@ -31,30 +31,37 @@ const safeNext = (value) => {
   return path.startsWith("/admin") && !path.startsWith("//") ? path : "/admin";
 };
 
-const onElevate = () => {
+const proceed = () => router.replace(safeNext(route.query?.next));
+
+const start = async () => {
   error.value = "";
-  sessionStorage.setItem(NEXT_KEY, safeNext(route.query?.next));
-  redirectToAdminStepUp();
+  phase.value = "requesting";
+  aborter = new AbortController();
+  try {
+    const result = await requestAdminElevation();
+    if (result?.elevated) {
+      await proceed();
+      return;
+    }
+    phase.value = "waiting";
+    const elevated = await waitForAdminElevation({ signal: aborter.signal });
+    if (elevated) {
+      await proceed();
+      return;
+    }
+    phase.value = "timeout";
+  } catch (reason) {
+    error.value = t("admin.gate.error", { message: reason?.message || String(reason) });
+    phase.value = "error";
+  }
 };
 
-onMounted(async () => {
-  if (String(route.query?.stepped || "") !== "1") return;
-  const next = safeNext(sessionStorage.getItem(NEXT_KEY));
-  sessionStorage.removeItem(NEXT_KEY);
-  working.value = true;
-  error.value = "";
-  try {
-    await elevateAdminGate();
-    await router.replace(next);
-  } catch (reason) {
-    // re-auth оказался несвежим (>120s) — не зацикливаемся, показываем кнопку повторить.
-    error.value =
-      reason instanceof AdminStepUpRequiredError
-        ? t("admin.gate.stepupStale")
-        : t("admin.gate.error", { message: reason?.message || String(reason) });
-  } finally {
-    working.value = false;
-  }
+onMounted(() => {
+  if (isAdmin.value) start();
+});
+
+onUnmounted(() => {
+  aborter?.abort();
 });
 </script>
 
@@ -73,20 +80,33 @@ onMounted(async () => {
 
         <template v-else>
           <p class="admin-elevate__intro">{{ t("admin.gate.description") }}</p>
-          <p class="admin-elevate__notice">{{ t("admin.gate.notice") }}</p>
 
-          <p v-if="error" class="admin-elevate__error">
+          <p
+            v-if="phase === 'requesting' || phase === 'waiting'"
+            class="admin-elevate__status"
+          >
+            <Smartphone :size="16" />
+            <span>
+              {{ phase === "requesting" ? t("admin.gate.requesting") : t("admin.gate.waiting") }}
+            </span>
+          </p>
+
+          <p v-else-if="phase === 'timeout'" class="admin-elevate__status admin-elevate__status--warn">
+            {{ t("admin.gate.timeout") }}
+          </p>
+
+          <p v-else-if="phase === 'error'" class="admin-elevate__status admin-elevate__status--err">
             <TriangleAlert :size="16" />
             <span>{{ error }}</span>
           </p>
 
           <button
+            v-if="phase === 'timeout' || phase === 'error'"
             class="admin-elevate__button"
             type="button"
-            :disabled="working"
-            @click="onElevate"
+            @click="start"
           >
-            {{ working ? t("admin.gate.working") : t("admin.gate.button") }}
+            {{ t("admin.gate.retry") }}
           </button>
         </template>
       </div>
@@ -161,19 +181,22 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
-.admin-elevate__notice {
+.admin-elevate__status {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: var(--ink-secondary, #94a3b8);
 }
 
-.admin-elevate__error {
-  display: flex;
-  gap: 0.5rem;
+.admin-elevate__status--warn {
+  color: #e6b800;
+}
+
+.admin-elevate__status--err {
   align-items: flex-start;
-  margin: 0;
   color: #f1857a;
-  font-size: 0.88rem;
   line-height: 1.4;
 }
 
@@ -187,10 +210,5 @@ onMounted(async () => {
   padding: 0.7rem 1.1rem;
   font-weight: 600;
   cursor: pointer;
-}
-
-.admin-elevate__button:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 </style>
