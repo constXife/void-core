@@ -27,14 +27,33 @@ const { t } = appStore;
 </template>
 
 <style scoped>
+/* Account-хаб = центрированная читаемая колонка в обычном потоке документа
+   (`.spaces-root` = min-h-screen + overflow-hidden → скроллит документ). Shell-chrome
+   — fixed overlay: хедер сверху (`position:fixed`, на ≤1024px стекается → выше) и
+   `.trust-footer-global` снизу (`position:fixed; bottom:0`). Поэтому верхний/нижний
+   отступы резервируют место под них, а не упираются в них. */
 .atrium-account {
   width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem) 4rem;
+  padding: 6rem clamp(1rem, 4vw, 2rem) 5rem;
   display: grid;
-  gap: 2.5rem;
+  gap: clamp(1.75rem, 4vw, 2.5rem);
   box-sizing: border-box;
+}
+
+/* Overlay-хедер на узких экранах стекается (center → order 3) и становится выше —
+   увеличиваем верхний clearance, чтобы заголовок не подлезал под него. */
+@media (max-width: 1024px) {
+  .atrium-account {
+    padding-top: 7.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .atrium-account {
+    padding-inline: 1rem;
+  }
 }
 
 .atrium-account__head {
@@ -58,26 +77,23 @@ const { t } = appStore;
 
 .atrium-account__sections {
   display: grid;
-  gap: 2.5rem;
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+  min-width: 0;
 }
 
 /* Панели переиспользуют визуал `assistant-devices__*`, но их собственное
    self-centering (max-width:48rem + margin:auto + padding) внутри уже центрированной
    колонки давало двойное центрирование и рассинхрон с заголовком. Нейтрализуем —
-   панель заполняет колонку account-хаба, выравниваясь с «Аккаунт». `min-width:0` —
-   чтобы длинный user-agent в сессии не распирал grid-колонку (min-content blowout). */
+   панель заполняет колонку account-хаба. `min-width:0` (тут и на секциях) гасит
+   min-content blowout от длинного user-agent в сессии. */
+.atrium-account__sections > * {
+  min-width: 0;
+}
+
 .atrium-account :deep(.assistant-devices) {
   max-width: none;
   min-width: 0;
   margin: 0;
   padding: 0;
-}
-
-.atrium-account__sections {
-  min-width: 0;
-}
-
-.atrium-account__sections > * {
-  min-width: 0;
 }
 </style>
