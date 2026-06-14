@@ -3,6 +3,7 @@ import AppLayout from "../layouts/AppLayout.vue";
 import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
+import AtriumAccountRoute from "../pages/AtriumAccountRoute.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
@@ -167,6 +168,20 @@ const routes = [
               path: "",
               name: "home",
               component: AtriumHomePage
+            }
+          ]
+        },
+        {
+          // Account-хаб (ADR-0032 §5a / ADR-0033 §7): «Устройства» + «Сессии» на
+          // atrium-поверхности. Только non-assistant host; assistant держит свой таб.
+          path: "/account",
+          component: AppLayout,
+          meta: { workspace: true, authRequired: true, accountRequired: true },
+          children: [
+            {
+              path: "",
+              name: "account",
+              component: AtriumAccountRoute
             }
           ]
         }

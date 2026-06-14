@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Gauge, UserCog } from "lucide-vue-next";
+import { Gauge, Smartphone, UserCog } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import PlatformSettingsRow from "../platform/components/PlatformSettingsRow.vue";
 import PlatformUserDropdownPanel from "../platform/components/PlatformUserDropdownPanel.vue";
@@ -65,6 +65,17 @@ const handleLogout = async () => {
       <span class="user-dropdown-v2__role" :class="{ 'user-dropdown-v2__role--admin': actualIsAdmin }">
         {{ effectiveRole }}
       </span>
+    </template>
+
+    <template #account-actions>
+      <RouterLink
+        class="user-dropdown-v2__account"
+        :to="{ name: 'account' }"
+        @click="showUserDropdown = false"
+      >
+        <Smartphone :size="14" />
+        {{ appStore.t("account.nav") }}
+      </RouterLink>
     </template>
 
     <PlatformSettingsRow
@@ -143,5 +154,21 @@ const handleLogout = async () => {
   color: color-mix(in srgb, var(--ink-secondary, #94a3b8) 80%, transparent);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.user-dropdown-v2__account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--ink-secondary, #94a3b8) 86%, transparent);
+  border-radius: 10px;
+  text-decoration: none;
+}
+
+.user-dropdown-v2__account:hover {
+  background: var(--glass-bg-hover, rgba(255, 255, 255, 0.08));
+  color: var(--ink-primary, #e6edf3);
 }
 </style>
