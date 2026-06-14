@@ -19,7 +19,6 @@ import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
 import AdminOverviewRoute from "../pages/admin/AdminOverviewRoute.vue";
 import AdminSpacesRoute from "../pages/admin/AdminSpacesRoute.vue";
 import { hasResolvedPlatformAccount } from "../platform/account.js";
-import { fetchAdminGateStatus } from "../lib/admin-gate.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 function isAssistantHost() {
@@ -353,19 +352,11 @@ export function createAtriumRouter(pinia) {
       }
     }
 
-    if (to.meta.adminOnly) {
-      if (!appStore.isAdmin) {
-        return appStore.resolveHomePath();
-      }
-      // Вход в админку (кроме самого interstitial) требует активного elevation-окна
-      // (ADR-0034 slice b) — admin-роль необходима, но недостаточна. Нет окна → interstitial
-      // с возвратом на исходный роут после свежего OIDC step-up.
-      if (!to.meta.adminElevateInterstitial) {
-        const elevated = await fetchAdminGateStatus();
-        if (!elevated) {
-          return { name: "admin-elevate", query: { next: to.fullPath } };
-        }
-      }
+    // Admin-gate enforcement (ADR-0034 slice b) временно снят: rauthy не форсирует OIDC
+    // re-auth (silent authorize/refresh), step-up переводится на device_factor. Пока —
+    // доступ по роли, как раньше.
+    if (to.meta.adminOnly && !appStore.isAdmin) {
+      return appStore.resolveHomePath();
     }
 
     return true;
