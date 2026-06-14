@@ -7,7 +7,7 @@
 const RECONNECT_BASE_DELAY_MS = 700;
 const RECONNECT_MAX_DELAY_MS = 15000;
 
-export function connectAssistantUserEvents({ onEvent, onStatus } = {}) {
+export function connectAssistantUserEvents({ onEvent, onStatus, path = "/assistant/events" } = {}) {
   let socket = null;
   let closed = false;
   let cursor = 0;
@@ -18,7 +18,7 @@ export function connectAssistantUserEvents({ onEvent, onStatus } = {}) {
     if (closed) return;
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const suffix = cursor > 0 ? `?after=${cursor}` : "";
-    socket = new WebSocket(`${protocol}://${window.location.host}/assistant/events${suffix}`);
+    socket = new WebSocket(`${protocol}://${window.location.host}${path}${suffix}`);
     socket.onopen = () => {
       attempts = 0;
       onStatus?.({ connected: true });

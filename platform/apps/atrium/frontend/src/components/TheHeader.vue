@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import AtriumSpaceSwitcher from "./AtriumSpaceSwitcher.vue";
 import UserDropdown from "./UserDropdown.vue";
+import NotificationCenter from "./NotificationCenter.vue";
 import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformHeaderBrand from "../platform/components/PlatformHeaderBrand.vue";
@@ -116,6 +117,8 @@ watch(me, () => {
         >
           <Sparkles :size="17" />
         </button>
+
+        <NotificationCenter v-if="hasAccount" />
 
         <PlatformAppsMenu current-product="atrium" :lang="currentLang" />
 

@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { Smartphone } from "lucide-vue-next";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformUserDropdown from "../platform/components/UserDropdown.vue";
+import NotificationCenter from "../components/NotificationCenter.vue";
 import { hasResolvedPlatformAccount } from "../platform/account.js";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import AssistantStandaloneSurface from "../surfaces/AssistantStandaloneSurface.vue";
@@ -74,6 +75,8 @@ const logout = async () => {
       :t="appStore.t"
     >
       <template #main-actions>
+        <NotificationCenter v-if="hasAccount" />
+
         <PlatformAppsMenu current-product="assistant" :lang="currentLang" />
 
         <PlatformUserDropdown
