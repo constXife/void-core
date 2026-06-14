@@ -17,7 +17,15 @@ export const commonMessages = {
     "product.atrium": "Atrium",
     "product.calendar": "Calendar",
     "product.inventory": "Inventory",
-    "product.finance": "Finance"
+    "product.finance": "Finance",
+    "feed.title": "Updates",
+    "feed.empty": "No updates yet.",
+    "feed.open": "Open",
+    "feed.event.approval": "Approval requested: {what}",
+    "feed.event.approvalStatus": "Approval {status}",
+    "feed.event.message": "New message",
+    "feed.event.run": "Run {status}",
+    "feed.event.session": "Session updated"
   },
   ru: {
     "app.loading": "Загрузка",
@@ -37,6 +45,14 @@ export const commonMessages = {
     "product.atrium": "Atrium",
     "product.calendar": "Календарь",
     "product.inventory": "Инвентарь",
-    "product.finance": "Финансы"
+    "product.finance": "Финансы",
+    "feed.title": "Обновления",
+    "feed.empty": "Пока нет обновлений.",
+    "feed.open": "Открыть",
+    "feed.event.approval": "Запрос на подтверждение: {what}",
+    "feed.event.approvalStatus": "Подтверждение: {status}",
+    "feed.event.message": "Новое сообщение",
+    "feed.event.run": "Прогон: {status}",
+    "feed.event.session": "Сессия обновлена"
   }
 };
