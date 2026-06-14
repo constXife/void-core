@@ -14,31 +14,38 @@ const { t } = appStore;
 
 <template>
   <div class="atrium-account">
-    <header class="atrium-account__head">
-      <h1 class="atrium-account__title">{{ t("account.title") }}</h1>
-      <p class="atrium-account__intro">{{ t("account.intro") }}</p>
-    </header>
+    <div class="atrium-account__inner">
+      <header class="atrium-account__head">
+        <h1 class="atrium-account__title">{{ t("account.title") }}</h1>
+        <p class="atrium-account__intro">{{ t("account.intro") }}</p>
+      </header>
 
-    <div class="atrium-account__sections">
-      <AssistantDevicesPanel :t="t" />
-      <AtriumSessionsPanel :t="t" />
+      <div class="atrium-account__sections">
+        <AssistantDevicesPanel :t="t" />
+        <AtriumSessionsPanel :t="t" />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Account-хаб = центрированная читаемая колонка в обычном потоке документа
-   (`.spaces-root` = min-h-screen + overflow-hidden → скроллит документ). Shell-chrome
-   — fixed overlay: хедер сверху (`position:fixed`, на ≤1024px стекается → выше) и
-   `.trust-footer-global` снизу (`position:fixed; bottom:0`). Поэтому верхний/нижний
-   отступы резервируют место под них, а не упираются в них. */
+/* Account-хаб = СВОЙ вертикальный scroll-контейнер на высоту вьюпорта. Документ в
+   этом shell'е НЕ скроллит (`.spaces-root` = overflow-hidden, как у home `stage-scroll`),
+   поэтому страница обязана скроллиться сама, иначе контент клипается и налезает на
+   fixed-футер. Shell-chrome — fixed overlay поверх (z под ними): хедер сверху
+   (`position:fixed`, на ≤1024px стекается → выше) и `.trust-footer-global` снизу
+   (`position:fixed; bottom:0`). Верхний/нижний padding scroll-контейнера резервирует
+   место под них: заголовок не лезет под хедер, последняя карточка докручивается над
+   футером. */
 .atrium-account {
+  position: relative;
+  z-index: 10;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: 100%;
-  max-width: 48rem;
-  margin: 0 auto;
   padding: 6rem clamp(1rem, 4vw, 2rem) 5rem;
-  display: grid;
-  gap: clamp(1.75rem, 4vw, 2.5rem);
   box-sizing: border-box;
 }
 
@@ -54,6 +61,16 @@ const { t } = appStore;
   .atrium-account {
     padding-inline: 1rem;
   }
+}
+
+/* Центрированная читаемая колонка внутри scroll-контейнера. */
+.atrium-account__inner {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+  min-width: 0;
 }
 
 .atrium-account__head {
