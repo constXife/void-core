@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Gauge, Smartphone, UserCog } from "lucide-vue-next";
+import { Gauge, ShieldCheck, Smartphone, UserCog } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import PlatformSettingsRow from "../platform/components/PlatformSettingsRow.vue";
 import PlatformUserDropdownPanel from "../platform/components/PlatformUserDropdownPanel.vue";
@@ -75,6 +75,14 @@ const handleLogout = async () => {
       >
         <Smartphone :size="14" />
         {{ appStore.t("account.nav") }}
+      </RouterLink>
+      <RouterLink
+        class="user-dropdown-v2__account"
+        :to="{ name: 'approvals' }"
+        @click="showUserDropdown = false"
+      >
+        <ShieldCheck :size="14" />
+        {{ appStore.t("approvals.nav") }}
       </RouterLink>
     </template>
 

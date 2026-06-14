@@ -4,6 +4,7 @@ import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AtriumAccountRoute from "../pages/AtriumAccountRoute.vue";
+import AtriumApprovalsRoute from "../pages/AtriumApprovalsRoute.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
@@ -184,6 +185,19 @@ const routes = [
               path: "",
               name: "account",
               component: AtriumAccountRoute
+            }
+          ]
+        },
+        {
+          // История/очередь апрувов (ADR-0034): account-уровень на atrium-поверхности.
+          path: "/approvals",
+          component: AppLayout,
+          meta: { workspace: true, authRequired: true, accountRequired: true },
+          children: [
+            {
+              path: "",
+              name: "approvals",
+              component: AtriumApprovalsRoute
             }
           ]
         }
