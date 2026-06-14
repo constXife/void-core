@@ -1,77 +1,56 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { TriangleAlert, ChevronLeft, Terminal } from "lucide-vue-next";
+import { TriangleAlert, ChevronLeft, Terminal, Smartphone } from "lucide-vue-next";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
-import {
-  runBreakGlassShell,
-  redirectToStepUp,
-  StepUpRequiredError
-} from "../lib/assistant-breakglass.js";
+import { runBreakGlassShell, pollBreakGlassResult } from "../lib/assistant-breakglass.js";
 
-const route = useRoute();
 const appStore = useAtriumAppStore();
 const { isAdmin } = storeToRefs(appStore);
 const t = (key, vars = {}) => appStore.t(key, vars);
 
-const PENDING_KEY = "atrium:breakglass:pending";
-
+// idle | waiting | done
+const phase = ref("idle");
 const command = ref("");
-const running = ref(false);
 const result = ref(null);
 const error = ref("");
-const stepupRequired = ref(false);
+let aborter = null;
 
-// Запуск всегда идёт через свежий step-up: команда сохраняется, UI редиректит на re-auth,
-// и после возврата (?stepped=1) команда авто-подаётся в окне свежести (backend — 120s).
-const submit = async (cmd) => {
-  const value = String(cmd ?? command.value).trim();
-  if (!value) {
-    error.value = t("assistant.breakglass.empty");
-    return;
-  }
-  running.value = true;
-  error.value = "";
-  result.value = null;
-  stepupRequired.value = false;
-  try {
-    result.value = await runBreakGlassShell({ command: value });
-  } catch (reason) {
-    if (reason instanceof StepUpRequiredError) {
-      // Нет свежего re-auth → сохраняем команду и уходим на step-up; вернёмся и авто-подадим.
-      sessionStorage.setItem(PENDING_KEY, value);
-      redirectToStepUp();
-      return;
-    }
-    error.value = t("assistant.breakglass.error", { message: reason?.message || String(reason) });
-  } finally {
-    running.value = false;
-  }
-};
-
-const onRun = () => {
-  // Принудительно через step-up: сохраняем и уходим на re-auth (после возврата авто-подача).
+// Каждая команда — отдельный per-command device_factor approval: создаём request, ждём
+// подтверждения на телефоне (там видна ровно эта команда), затем поллим результат исполнения.
+const onRun = async () => {
   const value = command.value.trim();
   if (!value) {
     error.value = t("assistant.breakglass.empty");
     return;
   }
-  sessionStorage.setItem(PENDING_KEY, value);
-  redirectToStepUp();
+  phase.value = "waiting";
+  error.value = "";
+  result.value = null;
+  aborter = new AbortController();
+  try {
+    const created = await runBreakGlassShell({ command: value });
+    const record = await pollBreakGlassResult(created.request_id, { signal: aborter.signal });
+    if (record.status === "completed") {
+      result.value = record.result || {};
+      phase.value = "done";
+      return;
+    }
+    error.value =
+      record.status === "rejected"
+        ? t("assistant.breakglass.rejected")
+        : record.status === "expired"
+          ? t("assistant.breakglass.expired")
+          : t("assistant.breakglass.failed", { message: record.error || record.status });
+    phase.value = "idle";
+  } catch (reason) {
+    error.value = t("assistant.breakglass.error", { message: reason?.message || String(reason) });
+    phase.value = "idle";
+  }
 };
 
-onMounted(() => {
-  if (String(route.query?.stepped || "") === "1") {
-    const pending = sessionStorage.getItem(PENDING_KEY);
-    sessionStorage.removeItem(PENDING_KEY);
-    if (pending) {
-      command.value = pending;
-      submit(pending);
-    }
-  }
-});
+onUnmounted(() => aborter?.abort());
 
 const exitLabel = computed(() =>
   result.value ? t("assistant.breakglass.exit", { code: result.value.exit_code ?? "?" }) : ""
@@ -110,16 +89,24 @@ const exitLabel = computed(() =>
           rows="3"
           spellcheck="false"
           autocomplete="off"
+          :disabled="phase === 'waiting'"
           :placeholder="t('assistant.breakglass.commandPlaceholder')"
         ></textarea>
 
-        <p class="breakglass__notice">{{ t("assistant.breakglass.stepupNotice") }}</p>
-        <p v-if="stepupRequired" class="breakglass__notice breakglass__notice--warn">
-          {{ t("assistant.breakglass.stepupRequired") }}
+        <p class="breakglass__notice">{{ t("assistant.breakglass.deviceNotice") }}</p>
+
+        <p v-if="phase === 'waiting'" class="breakglass__notice breakglass__notice--wait">
+          <Smartphone :size="16" />
+          <span>{{ t("assistant.breakglass.waiting") }}</span>
         </p>
 
-        <button class="breakglass__run" type="button" :disabled="running" @click="onRun">
-          {{ running ? t("assistant.breakglass.running") : t("assistant.breakglass.run") }}
+        <button
+          class="breakglass__run"
+          type="button"
+          :disabled="phase === 'waiting'"
+          @click="onRun"
+        >
+          {{ phase === "waiting" ? t("assistant.breakglass.running") : t("assistant.breakglass.run") }}
         </button>
 
         <p v-if="error" class="breakglass__error">{{ error }}</p>
@@ -200,11 +187,14 @@ const exitLabel = computed(() =>
   resize: vertical;
 }
 .breakglass__notice {
+  display: flex;
+  gap: 8px;
+  align-items: center;
   font-size: 0.8rem;
   color: var(--text-2, #9aa0ab);
   margin: 8px 0 0;
 }
-.breakglass__notice--warn {
+.breakglass__notice--wait {
   color: #e6b800;
 }
 .breakglass__run {
