@@ -28,11 +28,13 @@ const { t } = appStore;
 
 <style scoped>
 .atrium-account {
-  max-width: 760px;
+  width: 100%;
+  max-width: 48rem;
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 4rem;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem) 4rem;
   display: grid;
-  gap: 2rem;
+  gap: 2.5rem;
+  box-sizing: border-box;
 }
 
 .atrium-account__head {
@@ -57,5 +59,15 @@ const { t } = appStore;
 .atrium-account__sections {
   display: grid;
   gap: 2.5rem;
+}
+
+/* Панели переиспользуют визуал `assistant-devices__*`, но их собственное
+   self-centering (max-width:48rem + margin:auto + padding) внутри уже центрированной
+   колонки давало двойное центрирование и рассинхрон с заголовком. Нейтрализуем —
+   панель заполняет колонку account-хаба, выравниваясь с «Аккаунт». */
+.atrium-account :deep(.assistant-devices) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 </style>
