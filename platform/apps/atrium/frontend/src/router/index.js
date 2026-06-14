@@ -8,6 +8,7 @@ import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
 import BreakGlassRoute from "../pages/BreakGlassRoute.vue";
+import AtriumAdminInterstitialRoute from "../pages/AtriumAdminInterstitialRoute.vue";
 import ArtifactPage from "../surfaces/artifact/ArtifactPage.vue";
 import CustomSurfacePage from "../surfaces/custom/CustomSurfacePage.vue";
 import AtriumLoginRoute from "../pages/AtriumLoginRoute.vue";
@@ -18,6 +19,7 @@ import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
 import AdminOverviewRoute from "../pages/admin/AdminOverviewRoute.vue";
 import AdminSpacesRoute from "../pages/admin/AdminSpacesRoute.vue";
 import { hasResolvedPlatformAccount } from "../platform/account.js";
+import { fetchAdminGateStatus } from "../lib/admin-gate.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 
 function isAssistantHost() {
@@ -233,6 +235,29 @@ const routes = [
     meta: { authRequired: true, accountRequired: true }
   },
   {
+    // Interstitial admin authorization-gate (ADR-0034 slice b): admin-by-role без активного
+    // elevation-окна попадает сюда; после свежего OIDC step-up → обратно на исходный admin-роут.
+    // НЕ под AdminLayout (страница для admin'а, который ещё не поднят); `adminElevateInterstitial`
+    // гасит elevation-redirect для самой этой страницы — иначе цикл. Определён до catch-all
+    // `/admin/:pathMatch` (статический сегмент ранжируется выше параметрического).
+    path: "/admin/elevate",
+    component: AppLayout,
+    meta: {
+      workspace: true,
+      authRequired: true,
+      accountRequired: true,
+      adminOnly: true,
+      adminElevateInterstitial: true
+    },
+    children: [
+      {
+        path: "",
+        name: "admin-elevate",
+        component: AtriumAdminInterstitialRoute
+      }
+    ]
+  },
+  {
     path: "/admin",
     component: AdminLayout,
     meta: { workspace: true, authRequired: true, adminOnly: true },
@@ -328,8 +353,19 @@ export function createAtriumRouter(pinia) {
       }
     }
 
-    if (to.meta.adminOnly && !appStore.isAdmin) {
-      return appStore.resolveHomePath();
+    if (to.meta.adminOnly) {
+      if (!appStore.isAdmin) {
+        return appStore.resolveHomePath();
+      }
+      // Вход в админку (кроме самого interstitial) требует активного elevation-окна
+      // (ADR-0034 slice b) — admin-роль необходима, но недостаточна. Нет окна → interstitial
+      // с возвратом на исходный роут после свежего OIDC step-up.
+      if (!to.meta.adminElevateInterstitial) {
+        const elevated = await fetchAdminGateStatus();
+        if (!elevated) {
+          return { name: "admin-elevate", query: { next: to.fullPath } };
+        }
+      }
     }
 
     return true;
