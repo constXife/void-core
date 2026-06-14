@@ -105,3 +105,18 @@ const onLogoutAll = async () => {
     </ul>
   </section>
 </template>
+
+<style scoped>
+/* user-agent бывает очень длинным — не даём ему распирать карточку (min-content
+   blowout) и обрезаем в одну строку; контекст даёт meta-строка (браузер · гео · время). */
+.assistant-devices__item-main {
+  min-width: 0;
+}
+
+.assistant-devices__item-name,
+.assistant-devices__item-platform {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
