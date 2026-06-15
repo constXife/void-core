@@ -122,12 +122,26 @@ const titleFor = (item) => {
 
 const isPendingApproval = (item) => item?.event === "approval.requested";
 
+// Companion-поверхность (Phase 3): шелл кладёт JS-читаемый marker-cookie при инжекте сессии.
+// В companion тап по апруву уводит на сентинел-схему — шелл перехватывает и поднимает нативную
+// карточку (WYSIWYS device_factor); в обычном браузере апрув device_factor не подтвердить из веба.
+const inCompanion =
+  typeof document !== "undefined" && document.cookie.split("; ").includes("void_companion=1");
+
 // Апрувы живут на atrium: на продукте «Открыть» уводит на atrium-страницу апрувов.
 const approvalsHref = computed(() =>
   props.domain ? `https://atrium.${props.domain}/approvals` : "/approvals"
 );
-const openApprovals = () => {
+
+const openApprovalItem = (item) => {
   open.value = false;
+  // Companion: тап → нативная карточка именно этого запроса (id из события).
+  const requestId = item?.data?.approval_request_id;
+  if (inCompanion && requestId) {
+    window.location.href = `voidcompanion://approval/${encodeURIComponent(requestId)}`;
+    return;
+  }
+  // SPA-хост (atrium/assistant) — in-app переход; продукт — cross-origin на atrium.
   if (props.openApproval) {
     props.openApproval();
     return;
@@ -157,7 +171,7 @@ const openApprovals = () => {
                 v-if="isPendingApproval(item)"
                 class="notif__item-action"
                 type="button"
-                @click="openApprovals"
+                @click="openApprovalItem(item)"
               >
                 {{ t("feed.open") }}
               </button>
