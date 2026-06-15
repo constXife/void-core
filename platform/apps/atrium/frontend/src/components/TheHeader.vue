@@ -2,9 +2,10 @@
 import { Activity, Sparkles } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import { computed, onBeforeUnmount, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import AtriumSpaceSwitcher from "./AtriumSpaceSwitcher.vue";
 import UserDropdown from "./UserDropdown.vue";
-import NotificationCenter from "./NotificationCenter.vue";
+import PlatformNotificationCenter from "../platform/components/PlatformNotificationCenter.vue";
 import PlatformHeaderFrame from "../platform/components/PlatformHeaderFrame.vue";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformHeaderBrand from "../platform/components/PlatformHeaderBrand.vue";
@@ -16,10 +17,13 @@ import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useAuthStore } from "../stores/auth.js";
 import { useUiStore } from "../stores/ui.js";
 
+const router = useRouter();
 const appStore = useAtriumAppStore();
 const assistantStore = useAssistantStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+
+const goApprovals = () => router.push({ name: "approvals" });
 
 const { userMenuRef } = storeToRefs(appStore);
 const { t } = appStore;
@@ -118,7 +122,7 @@ watch(me, () => {
           <Sparkles :size="17" />
         </button>
 
-        <NotificationCenter v-if="hasAccount" />
+        <PlatformNotificationCenter v-if="hasAccount" :t="t" :open-approval="goApprovals" />
 
         <PlatformAppsMenu current-product="atrium" :lang="currentLang" />
 

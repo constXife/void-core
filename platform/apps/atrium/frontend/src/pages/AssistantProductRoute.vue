@@ -5,7 +5,7 @@ import { useRouter } from "vue-router";
 import { Smartphone } from "lucide-vue-next";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformUserDropdown from "../platform/components/UserDropdown.vue";
-import NotificationCenter from "../components/NotificationCenter.vue";
+import PlatformNotificationCenter from "../platform/components/PlatformNotificationCenter.vue";
 import { hasResolvedPlatformAccount } from "../platform/account.js";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import AssistantStandaloneSurface from "../surfaces/AssistantStandaloneSurface.vue";
@@ -22,6 +22,7 @@ const uiStore = useUiStore();
 // Account-раздел «Устройства» (ADR-0032 §5a) — вход из меню под аватаром,
 // не из ряда табов чата.
 const goToDevices = () => router.push({ name: "assistant-devices" });
+const goApprovals = () => router.push({ name: "approvals" });
 
 const { actualRole, authEnabled, loginPageUrl, me } = storeToRefs(authStore);
 const { currentLang, languageLabels } = storeToRefs(uiStore);
@@ -75,7 +76,11 @@ const logout = async () => {
       :t="appStore.t"
     >
       <template #main-actions>
-        <NotificationCenter v-if="hasAccount" />
+        <PlatformNotificationCenter
+          v-if="hasAccount"
+          :t="appStore.t"
+          :open-approval="goApprovals"
+        />
 
         <PlatformAppsMenu current-product="assistant" :lang="currentLang" />
 

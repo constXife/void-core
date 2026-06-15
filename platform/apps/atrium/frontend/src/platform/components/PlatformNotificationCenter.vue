@@ -10,7 +10,10 @@ import { connectAssistantUserEvents } from "../../lib/assistant-user-events-clie
 
 const props = defineProps({
   t: { type: Function, required: true },
-  domain: { type: String, default: "" }
+  domain: { type: String, default: "" },
+  // SPA-хост (atrium) передаёт колбэк для in-app навигации на «Апрувы»; продукты не передают —
+  // тогда уход на atrium-страницу апрувов по `domain` (cross-origin).
+  openApproval: { type: Function, default: null }
 });
 
 const open = ref(false);
@@ -46,8 +49,9 @@ const loadRecent = async () => {
     const body = await callJson("/auth/events/recent");
     items.value = Array.isArray(body.events) ? body.events : []; // recent отдаёт newest-first
     lastSeenId.value = Number(body.last_seen_id || 0);
-  } catch {
-    // лента не критична — при ошибке остаётся пустой/прежней
+  } catch (error) {
+    // лента не критична — остаётся пустой/прежней, но ошибку не глотаем
+    console.error("void: notification feed recent load failed", error);
   }
 };
 
@@ -64,8 +68,9 @@ const markAllSeen = async () => {
       method: "POST",
       body: JSON.stringify({ up_to_id: maxId })
     });
-  } catch {
-    // best-effort; локальный курсор уже сдвинут
+  } catch (error) {
+    // best-effort; локальный курсор уже сдвинут, но ошибку не глотаем
+    console.error("void: notification feed mark-seen failed", error);
   }
 };
 
@@ -123,6 +128,10 @@ const approvalsHref = computed(() =>
 );
 const openApprovals = () => {
   open.value = false;
+  if (props.openApproval) {
+    props.openApproval();
+    return;
+  }
   window.location.href = approvalsHref.value;
 };
 </script>
