@@ -323,6 +323,21 @@ const composerTargetId = computed(() => {
 
 const composerDisabled = computed(() => loaded.value && !enabled.value);
 
+// Счётчик заполненности контекста: max — окно выбранной модели (если объявлено
+// в конфиге), N — prompt_tokens последнего turn'а текущей сессии (если провайдер
+// прислал usage). Оба None → композер счётчик не рисует.
+const contextWindow = computed(() => {
+  const target = targets.value.find((item) => item.id === composerTargetId.value);
+  return target && typeof target.context_window === "number" ? target.context_window : null;
+});
+const contextTokens = computed(() => {
+  const list = currentMessages.value;
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    if (typeof list[index].prompt_tokens === "number") return list[index].prompt_tokens;
+  }
+  return null;
+});
+
 const onChooseSuggestion = (text) => {
   draft.value = text;
 };
@@ -691,6 +706,8 @@ function savePreferredTarget(value) {
           :preferred-target-id="preferredTargetId"
           :picker-disabled="composerDisabled || streaming"
           :is-operator="isOperator"
+          :context-tokens="contextTokens"
+          :context-window="contextWindow"
           :disabled="composerDisabled"
           :t="t"
           @send="onSend"

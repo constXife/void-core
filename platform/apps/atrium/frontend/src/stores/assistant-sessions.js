@@ -971,6 +971,7 @@ function normalizeMessageList(value) {
       stopped: Boolean(entry?.stopped),
       error: Boolean(entry?.error),
       created_at: String(entry?.created_at || ""),
+      prompt_tokens: typeof entry?.prompt_tokens === "number" ? entry.prompt_tokens : null,
       run,
       timings: timingFromRunPayload(run)
     };

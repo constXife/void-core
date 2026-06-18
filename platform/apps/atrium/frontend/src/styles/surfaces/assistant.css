@@ -2047,6 +2047,40 @@
   gap: 0.5rem;
 }
 
+/* Right cluster: context meter + send, vertically centred (Goose-style). */
+.assistant-composer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.assistant-composer__context {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink-muted);
+  font-size: var(--text-2xs, 10px);
+}
+
+.assistant-composer__context-bar {
+  width: 2.6rem;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  overflow: hidden;
+}
+
+.assistant-composer__context-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-purple);
+}
+
+.assistant-composer__context-text {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* ---- Model picker ---- */
 
 .assistant-model-picker {

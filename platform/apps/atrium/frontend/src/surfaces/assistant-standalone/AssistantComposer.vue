@@ -12,8 +12,26 @@ const props = defineProps({
   preferredTargetId: { type: String, default: "" },
   pickerDisabled: { type: Boolean, default: false },
   isOperator: { type: Boolean, default: false },
+  // Заполненность контекста: tokens = prompt_tokens последнего turn'а, window =
+  // max-окно выбранной модели. Счётчик рисуется только когда известны оба.
+  contextTokens: { type: Number, default: null },
+  contextWindow: { type: Number, default: null },
   disabled: { type: Boolean, default: false },
   t: { type: Function, required: true }
+});
+
+const formatTokens = (value) => {
+  if (value >= 1_000_000) return `${Math.round(value / 100_000) / 10}M`.replace(".0", "");
+  if (value >= 1000) return `${Math.round(value / 1000)}k`;
+  return String(value);
+};
+
+const showContextMeter = computed(
+  () => typeof props.contextWindow === "number" && typeof props.contextTokens === "number"
+);
+const contextPercent = computed(() => {
+  if (!showContextMeter.value || props.contextWindow <= 0) return 0;
+  return Math.min(100, Math.round((props.contextTokens / props.contextWindow) * 100));
 });
 
 const emit = defineEmits(["update:modelValue", "send", "stop", "select-target"]);
@@ -89,19 +107,36 @@ watch(
           @select="(id) => emit('select-target', id)"
         />
         <span v-else aria-hidden="true" />
-        <button
-          type="button"
-          class="assistant-composer__send"
-          :class="{ 'assistant-composer__send--stop': streaming }"
-          :disabled="disabled || (!streaming && !canSend)"
-          :aria-label="streaming ? t('assistant.composer.stop') : t('assistant.composer.send')"
-          @click="onSendClick"
-        >
-          <Transition name="assistant-composer__send-icon" mode="out-in">
-            <Square v-if="streaming" key="stop" :size="16" />
-            <ArrowUp v-else key="send" :size="16" />
-          </Transition>
-        </button>
+        <div class="assistant-composer__actions">
+          <span
+            v-if="showContextMeter"
+            class="assistant-composer__context"
+            :title="t('assistant.composer.contextUsage')"
+          >
+            <span class="assistant-composer__context-bar">
+              <span
+                class="assistant-composer__context-fill"
+                :style="{ width: `${contextPercent}%` }"
+              />
+            </span>
+            <span class="assistant-composer__context-text">
+              {{ formatTokens(contextTokens) }} / {{ formatTokens(contextWindow) }}
+            </span>
+          </span>
+          <button
+            type="button"
+            class="assistant-composer__send"
+            :class="{ 'assistant-composer__send--stop': streaming }"
+            :disabled="disabled || (!streaming && !canSend)"
+            :aria-label="streaming ? t('assistant.composer.stop') : t('assistant.composer.send')"
+            @click="onSendClick"
+          >
+            <Transition name="assistant-composer__send-icon" mode="out-in">
+              <Square v-if="streaming" key="stop" :size="16" />
+              <ArrowUp v-else key="send" :size="16" />
+            </Transition>
+          </button>
+        </div>
       </div>
     </div>
   </form>
