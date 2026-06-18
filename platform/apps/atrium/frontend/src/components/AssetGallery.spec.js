@@ -9,7 +9,7 @@ describe("AssetGallery", () => {
         assets: [
           {
             asset_id: "a1",
-            url: "/api/inventory/assets/a1",
+            url: "/api/knowledge/v1/assets/a1/content",
             title: "Дрель",
             previewable: true
           }
@@ -18,7 +18,7 @@ describe("AssetGallery", () => {
     });
     const img = wrapper.find("img");
     expect(img.exists()).toBe(true);
-    expect(img.attributes("src")).toBe("/api/inventory/assets/a1");
+    expect(img.attributes("src")).toBe("/api/knowledge/v1/assets/a1/content");
     expect(img.attributes("alt")).toBe("Дрель");
   });
 
