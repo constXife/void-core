@@ -57,6 +57,16 @@ async function defaultDeleteJson(path, signal) {
   return text.trim() ? JSON.parse(text) : null;
 }
 
+// Standalone hard-удаление по asset_id (для галереи существующих фото, вне очереди
+// загрузчика). Тот же owner-scoped REST DELETE.
+export async function deleteKnowledgeAsset(assetId, { ownerSubjectId = "" } = {}) {
+  const base = `/api/knowledge/v1/assets/${encodeURIComponent(assetId)}`;
+  const path = ownerSubjectId
+    ? `${base}?owner_subject_id=${encodeURIComponent(ownerSubjectId)}`
+    : base;
+  return defaultDeleteJson(path);
+}
+
 // Дефолтный presigned PUT через XHR — единственный портабельный способ получить
 // upload-progress и отмену (xhr.upload.progress / xhr.abort) на июнь 2026.
 function defaultPutWithProgress({ url, method = "PUT", headers = {}, body, onProgress, signal }) {

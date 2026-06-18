@@ -18,6 +18,8 @@ import {
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import SurfaceRenderer from "./SurfaceRenderer.vue";
 import AssetUploader from "../../components/AssetUploader.vue";
+import AssetGallery from "../../components/AssetGallery.vue";
+import { deleteKnowledgeAsset } from "../../lib/useAssetUpload.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -89,6 +91,15 @@ async function load() {
   }
 }
 
+// Существующие фото сущности: read_model отдаёт их в payload entity-слота как `assets`
+// (generic-скан — не привязываемся к конкретному slot id).
+const entityAssets = computed(() => {
+  for (const payload of Object.values(slotData.value || {})) {
+    if (payload && Array.isArray(payload.assets)) return payload.assets;
+  }
+  return [];
+});
+
 watch([pageKind, slice, entityId], load, { immediate: true });
 
 // После заливки/удаления фото перерезолвить read_model, чтобы AssetGallery
@@ -103,6 +114,19 @@ async function onAssetMutated() {
   if (reloadPending) {
     reloadPending = false;
     await load();
+  }
+}
+
+// Удаление уже существующего фото из галереи: подтверждение → hard-delete → reload.
+async function onDeleteExistingAsset(asset) {
+  const assetId = asset?.asset_id;
+  if (!assetId) return;
+  if (!window.confirm(t("surface.asset.deleteConfirm"))) return;
+  try {
+    await deleteKnowledgeAsset(assetId);
+    await onAssetMutated();
+  } catch (err) {
+    error.value = err?.message || t("surface.upload.deleteError");
   }
 }
 </script>
@@ -145,6 +169,13 @@ async function onAssetMutated() {
          владеет stateful-контейнер, а не PageSpec-блок. -->
     <section v-if="pageSpec && entityId" class="surface-page__upload">
       <h2 class="surface-page__upload-title">{{ t("surface.upload.title") }}</h2>
+      <AssetGallery
+        v-if="entityAssets.length"
+        :assets="entityAssets"
+        :t="t"
+        :deletable="true"
+        @delete="onDeleteExistingAsset"
+      />
       <AssetUploader
         :attach-to-entity-id="entityId"
         :t="t"

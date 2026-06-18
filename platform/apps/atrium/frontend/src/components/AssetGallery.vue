@@ -5,14 +5,19 @@
 // + чипы для не-картинок. Источник данных (item-тулы / entity-assets read /
 // surface-slot) — забота вызывающего; компонент чисто презентационный.
 import { computed } from "vue";
-import { FileText } from "lucide-vue-next";
+import { FileText, Trash2 } from "lucide-vue-next";
 
 const props = defineProps({
   // [{ asset_id, url?, title?, previewable?, mime_type?, asset_type?, original_filename? }]
   assets: { type: Array, default: () => [] },
   // опциональный переводчик; fallback на сырые строки
-  t: { type: Function, default: null }
+  t: { type: Function, default: null },
+  // включает кнопку удаления на каждом asset'е; компонент остаётся презентационным —
+  // только эмитит `delete`, само удаление + подтверждение делает вызывающий.
+  deletable: { type: Boolean, default: false }
 });
+
+const emit = defineEmits(["delete"]);
 
 function contentUrl(asset) {
   if (asset.url) return String(asset.url);
@@ -37,7 +42,8 @@ const items = computed(() =>
         url,
         title: asset.title ? String(asset.title) : "",
         filename: asset.original_filename ? String(asset.original_filename) : "",
-        isImage: Boolean(isImage)
+        isImage: Boolean(isImage),
+        raw: asset
       };
     })
     .filter(Boolean)
@@ -47,30 +53,41 @@ const fileLabel = (item) =>
   item.title ||
   item.filename ||
   (props.t ? props.t("surface.asset.file") : "Файл");
+
+const deleteLabel = () => (props.t ? props.t("surface.asset.delete") : "Удалить");
 </script>
 
 <template>
   <div v-if="items.length" class="asset-gallery">
-    <a
-      v-for="item in items"
-      :key="item.key"
-      class="asset-gallery__item"
-      :class="item.isImage ? 'asset-gallery__thumb' : 'asset-gallery__file'"
-      :href="item.url"
-      target="_blank"
-      rel="noopener"
-    >
-      <img
-        v-if="item.isImage"
-        :src="item.url"
-        :alt="item.title || item.filename"
-        loading="lazy"
-      />
-      <template v-else>
-        <FileText :size="16" aria-hidden="true" />
-        <span>{{ fileLabel(item) }}</span>
-      </template>
-    </a>
+    <div v-for="item in items" :key="item.key" class="asset-gallery__cell">
+      <a
+        class="asset-gallery__item"
+        :class="item.isImage ? 'asset-gallery__thumb' : 'asset-gallery__file'"
+        :href="item.url"
+        target="_blank"
+        rel="noopener"
+      >
+        <img
+          v-if="item.isImage"
+          :src="item.url"
+          :alt="item.title || item.filename"
+          loading="lazy"
+        />
+        <template v-else>
+          <FileText :size="16" aria-hidden="true" />
+          <span>{{ fileLabel(item) }}</span>
+        </template>
+      </a>
+      <button
+        v-if="deletable"
+        type="button"
+        class="asset-gallery__delete"
+        :aria-label="deleteLabel()"
+        @click="emit('delete', item.raw)"
+      >
+        <Trash2 :size="13" />
+      </button>
+    </div>
   </div>
 </template>
 
@@ -80,6 +97,35 @@ const fileLabel = (item) =>
   flex-wrap: wrap;
   gap: 8px;
   margin: 0.4em 0;
+}
+.asset-gallery__cell {
+  position: relative;
+  display: inline-flex;
+}
+.asset-gallery__delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: color-mix(in srgb, #000 55%, transparent);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.asset-gallery__cell:hover .asset-gallery__delete,
+.asset-gallery__delete:focus-visible {
+  opacity: 1;
+}
+.asset-gallery__delete:hover {
+  background: var(--color-red-500, #ef4444);
 }
 .asset-gallery__thumb {
   display: block;

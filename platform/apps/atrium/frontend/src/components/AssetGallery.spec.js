@@ -52,4 +52,23 @@ describe("AssetGallery", () => {
     const wrapper = mount(AssetGallery, { props: { assets: [] } });
     expect(wrapper.find(".asset-gallery").exists()).toBe(false);
   });
+
+  it("has no delete buttons by default", () => {
+    const wrapper = mount(AssetGallery, {
+      props: { assets: [{ asset_id: "a1", previewable: true }] }
+    });
+    expect(wrapper.find(".asset-gallery__delete").exists()).toBe(false);
+  });
+
+  it("emits delete with the raw asset when deletable", async () => {
+    const asset = { asset_id: "a1", title: "Дрель", previewable: true };
+    const wrapper = mount(AssetGallery, {
+      props: { assets: [asset], deletable: true }
+    });
+    const btn = wrapper.find(".asset-gallery__delete");
+    expect(btn.exists()).toBe(true);
+    await btn.trigger("click");
+    expect(wrapper.emitted("delete")).toBeTruthy();
+    expect(wrapper.emitted("delete")[0][0]).toMatchObject({ asset_id: "a1" });
+  });
 });
