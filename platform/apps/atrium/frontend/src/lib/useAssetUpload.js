@@ -23,7 +23,8 @@ const STATUS = Object.freeze({
   FINALIZING: "finalizing",
   DONE: "done",
   ERROR: "error",
-  CANCELED: "canceled"
+  CANCELED: "canceled",
+  DELETING: "deleting"
 });
 
 const ACTIVE_STATUSES = [STATUS.UPLOADING, STATUS.FINALIZING];
@@ -40,6 +41,17 @@ async function defaultPostJson(path, body, signal) {
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || res.statusText || `request_failed_${res.status}`);
+  }
+  const text = await res.text();
+  return text.trim() ? JSON.parse(text) : null;
+}
+
+// Дефолтное hard-удаление сохранённого asset'а (REST DELETE, owner-scoped на сервере).
+async function defaultDeleteJson(path, signal) {
+  const res = await fetch(path, { method: "DELETE", credentials: "include", signal });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || res.statusText || `delete_failed_${res.status}`);
   }
   const text = await res.text();
   return text.trim() ? JSON.parse(text) : null;
@@ -100,8 +112,10 @@ export function useAssetUpload(options = {}) {
     maxSize = 0,
     ownerSubjectId = "",
     onUploaded = null,
+    onDeleted = null,
     postJson = defaultPostJson,
     putWithProgress = defaultPutWithProgress,
+    deleteJson = defaultDeleteJson,
     createObjectURL = typeof URL !== "undefined" && URL.createObjectURL
       ? (file) => URL.createObjectURL(file)
       : () => "",
@@ -256,6 +270,28 @@ export function useAssetUpload(options = {}) {
     if (removed?.previewUrl) revokeObjectURL(removed.previewUrl);
   }
 
+  // Hard-удаление уже сохранённого (done) asset'а: DELETE на сервер, затем убираем
+  // строку. Осмысленно только для status=done (есть asset_id).
+  async function deleteAsset(id) {
+    const item = items.find((entry) => entry.id === id);
+    if (!item || item.status !== STATUS.DONE || !item.asset?.asset_id) return;
+    item.status = STATUS.DELETING;
+    item.error = "";
+    try {
+      const base = `/api/knowledge/v1/assets/${encodeURIComponent(item.asset.asset_id)}`;
+      const path = ownerSubjectId
+        ? `${base}?owner_subject_id=${encodeURIComponent(ownerSubjectId)}`
+        : base;
+      await deleteJson(path);
+      const deletedAsset = item.asset;
+      remove(id);
+      if (onDeleted) onDeleted(deletedAsset, item);
+    } catch (error) {
+      item.status = STATUS.DONE;
+      item.error = error?.message || String(error);
+    }
+  }
+
   // Освободить object-URL превью при размонтировании компонента.
   function dispose() {
     for (const controller of controllers.values()) controller.abort();
@@ -276,6 +312,7 @@ export function useAssetUpload(options = {}) {
     cancel,
     retry,
     remove,
+    deleteAsset,
     dispose
   };
 }

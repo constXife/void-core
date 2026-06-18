@@ -144,6 +144,43 @@ describe("useAssetUpload", () => {
     expect(upload.items[0].status).toBe(upload.STATUS.CANCELED);
   });
 
+  it("hard-deletes a finalized asset and drops the row", async () => {
+    const onDeleted = vi.fn();
+    const deleteJson = vi.fn(async () => ({ delete_mode: "hard-delete" }));
+    const { upload } = makeHarness({ onDeleted, deleteJson });
+
+    upload.enqueue([makeFile()]);
+    await flushPromises();
+    const item = upload.items[0];
+    expect(item.status).toBe(upload.STATUS.DONE);
+
+    await upload.deleteAsset(item.id);
+    await flushPromises();
+
+    expect(deleteJson).toHaveBeenCalledWith(
+      expect.stringContaining("/api/knowledge/v1/assets/as1")
+    );
+    expect(upload.items).toHaveLength(0);
+    expect(onDeleted).toHaveBeenCalled();
+  });
+
+  it("keeps the row on delete failure with an error", async () => {
+    const deleteJson = vi.fn(async () => {
+      throw new Error("nope");
+    });
+    const { upload } = makeHarness({ deleteJson });
+
+    upload.enqueue([makeFile()]);
+    await flushPromises();
+
+    await upload.deleteAsset(upload.items[0].id);
+    await flushPromises();
+
+    expect(upload.items).toHaveLength(1);
+    expect(upload.items[0].status).toBe(upload.STATUS.DONE);
+    expect(upload.items[0].error).toBe("nope");
+  });
+
   it("retries a failed upload", async () => {
     let attempt = 0;
     const putWithProgress = vi.fn(() => {

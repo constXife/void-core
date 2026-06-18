@@ -91,10 +91,10 @@ async function load() {
 
 watch([pageKind, slice, entityId], load, { immediate: true });
 
-// После заливки фото перерезолвить read_model, чтобы AssetGallery показал новый asset.
-// Coalesce: если load уже идёт, дозагрузим один раз после него (finalize уже персистнул).
+// После заливки/удаления фото перерезолвить read_model, чтобы AssetGallery
+// отразил изменение. Coalesce: если load уже идёт, дозагрузим один раз после него.
 let reloadPending = false;
-async function onUploaded() {
+async function onAssetMutated() {
   if (loading.value) {
     reloadPending = true;
     return;
@@ -145,7 +145,12 @@ async function onUploaded() {
          владеет stateful-контейнер, а не PageSpec-блок. -->
     <section v-if="pageSpec && entityId" class="surface-page__upload">
       <h2 class="surface-page__upload-title">{{ t("surface.upload.title") }}</h2>
-      <AssetUploader :attach-to-entity-id="entityId" :t="t" @uploaded="onUploaded" />
+      <AssetUploader
+        :attach-to-entity-id="entityId"
+        :t="t"
+        @uploaded="onAssetMutated"
+        @deleted="onAssetMutated"
+      />
     </section>
   </main>
 </template>

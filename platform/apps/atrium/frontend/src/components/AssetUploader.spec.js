@@ -101,4 +101,49 @@ describe("AssetUploader", () => {
     expect(emitted).toBeTruthy();
     expect(emitted[0][0]).toMatchObject({ asset_id: "as1", previewable: true });
   });
+
+  it("deletes a finalized asset and emits deleted", async () => {
+    global.fetch = vi.fn(async (path, options = {}) => {
+      if (options.method === "DELETE") {
+        return { ok: true, status: 200, text: async () => JSON.stringify({ delete_mode: "hard-delete" }) };
+      }
+      const body = path.includes("/finalize")
+        ? { asset_id: "as1", file: { mime_type: "image/png" }, finalized: { title: "photo.png" } }
+        : {
+            upload_intent: {
+              presigned_upload: { url: "https://garage.local/as1", method: "PUT", headers: {} }
+            },
+            finalize_request: { asset_id: "as1", original_filename: "photo.png" }
+          };
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) };
+    });
+    global.XMLHttpRequest = class {
+      constructor() {
+        this.upload = { addEventListener: () => {} };
+        this.status = 200;
+      }
+      open() {}
+      setRequestHeader() {}
+      addEventListener(event, cb) {
+        if (event === "load") this._load = cb;
+      }
+      send() {
+        this._load?.();
+      }
+    };
+
+    const wrapper = mount(AssetUploader, { props: { attachToEntityId: "item-1", t } });
+    const input = wrapper.find("input[type='file']");
+    Object.defineProperty(input.element, "files", { value: [makeFile()], writable: false });
+    await input.trigger("change");
+    await flushPromises();
+
+    const del = wrapper.find("[aria-label='surface.upload.delete']");
+    expect(del.exists()).toBe(true);
+    await del.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.emitted("deleted")).toBeTruthy();
+    expect(wrapper.find(".asset-uploader__item").exists()).toBe(false);
+  });
 });

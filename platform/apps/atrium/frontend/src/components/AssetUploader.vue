@@ -4,7 +4,7 @@
 // ЛЮБОЙ сущности (attach-to-entity-id), не inventory-specific. Логика заливки целиком
 // в useAssetUpload; здесь только UI и локализация.
 import { onBeforeUnmount, ref } from "vue";
-import { UploadCloud, X, RotateCcw, FileText } from "lucide-vue-next";
+import { UploadCloud, X, RotateCcw, FileText, Trash2 } from "lucide-vue-next";
 
 import { useAssetUpload } from "../lib/useAssetUpload.js";
 
@@ -20,7 +20,7 @@ const props = defineProps({
   t: { type: Function, required: true }
 });
 
-const emit = defineEmits(["uploaded"]);
+const emit = defineEmits(["uploaded", "deleted"]);
 
 const inputRef = ref(null);
 const dragging = ref(false);
@@ -30,7 +30,8 @@ const upload = useAssetUpload({
   relationRef: props.relationRef,
   maxSize: props.maxSize,
   concurrency: props.concurrency,
-  onUploaded: (asset) => emit("uploaded", asset)
+  onUploaded: (asset) => emit("uploaded", asset),
+  onDeleted: (asset) => emit("deleted", asset)
 });
 
 function openPicker() {
@@ -62,7 +63,10 @@ function statusLabel(item) {
   if (item.status === upload.STATUS.QUEUED) return props.t("surface.upload.queued");
   if (item.status === upload.STATUS.UPLOADING) return `${item.progress}%`;
   if (item.status === upload.STATUS.FINALIZING) return props.t("surface.upload.finalizing");
-  if (item.status === upload.STATUS.DONE) return props.t("surface.upload.done");
+  if (item.status === upload.STATUS.DELETING) return props.t("surface.upload.deleting");
+  if (item.status === upload.STATUS.DONE) {
+    return item.error ? props.t("surface.upload.deleteError") : props.t("surface.upload.done");
+  }
   if (item.status === upload.STATUS.CANCELED) return props.t("surface.upload.canceled");
   if (item.status === upload.STATUS.ERROR) {
     return item.error === "file_too_large"
@@ -147,6 +151,15 @@ onBeforeUnmount(() => upload.dispose());
           @click="upload.retry(item.id)"
         >
           <RotateCcw :size="15" />
+        </button>
+        <button
+          v-else-if="item.status === upload.STATUS.DONE"
+          type="button"
+          class="asset-uploader__action"
+          :aria-label="t('surface.upload.delete')"
+          @click="upload.deleteAsset(item.id)"
+        >
+          <Trash2 :size="15" />
         </button>
       </li>
     </ul>
