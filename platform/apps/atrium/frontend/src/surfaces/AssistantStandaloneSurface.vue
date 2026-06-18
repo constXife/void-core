@@ -55,6 +55,9 @@ const skillsStore = useAssistantSkillsStore();
 const routinesStore = useAssistantRoutinesStore();
 const t = (key, vars = {}) => props.t(key, vars);
 
+// Оператор (role === "admin") видит технический slug модели в пикере; резидент — нет.
+const isOperator = computed(() => (props.currentUser?.role || "") === "admin");
+
 const { enabled, loaded, targets, selectedTargetId } = storeToRefs(coreStore);
 const {
   sessions,
@@ -687,6 +690,7 @@ function savePreferredTarget(value) {
           :selected-target-id="composerTargetId"
           :preferred-target-id="preferredTargetId"
           :picker-disabled="composerDisabled || streaming"
+          :is-operator="isOperator"
           :disabled="composerDisabled"
           :t="t"
           @send="onSend"

@@ -11,6 +11,7 @@ const props = defineProps({
   selectedTargetId: { type: String, default: "" },
   preferredTargetId: { type: String, default: "" },
   pickerDisabled: { type: Boolean, default: false },
+  isOperator: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   t: { type: Function, required: true }
 });
@@ -83,6 +84,7 @@ watch(
           :selected-id="selectedTargetId"
           :preferred-id="preferredTargetId"
           :disabled="pickerDisabled"
+          :is-operator="isOperator"
           :t="t"
           @select="(id) => emit('select-target', id)"
         />
