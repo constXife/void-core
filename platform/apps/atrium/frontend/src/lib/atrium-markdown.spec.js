@@ -19,6 +19,15 @@ describe("atrium markdown sanitization", () => {
     expect(html).toContain("<a>click</a>");
   });
 
+  it("renders markdown image with an asset content url", () => {
+    const html = renderMarkdown(
+      "![Дрель](/api/knowledge/v1/assets/asset-1/content)"
+    );
+    expect(html).toContain("<img");
+    expect(html).toContain('src="/api/knowledge/v1/assets/asset-1/content"');
+    expect(html).toContain('alt="Дрель"');
+  });
+
   it("sanitizes raw html fragments", () => {
     const html = sanitizeHtml('<img src="x" onerror="alert(1)"><p>ok</p>');
     expect(html).toContain("<img src=\"x\">");
