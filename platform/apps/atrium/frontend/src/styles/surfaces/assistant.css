@@ -495,6 +495,24 @@
   gap: 0.55rem;
   padding-top: 0.4rem;
   scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.assistant-sidebar__list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.assistant-sidebar__list::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+.assistant-sidebar__list::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
+}
+
+.assistant-sidebar__list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .assistant-sidebar__group {
@@ -510,6 +528,10 @@
 }
 
 .assistant-sidebar__group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
   font-size: var(--text-2xs, 10px);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -517,6 +539,26 @@
   color: var(--ink-muted);
   padding: 0.35rem 0.6rem 0.15rem;
   margin: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: color var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-sidebar__group-title:hover {
+  color: var(--ink-secondary);
+}
+
+.assistant-sidebar__group-chevron {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  transition: transform var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+.assistant-sidebar__group--collapsed .assistant-sidebar__group-chevron {
+  transform: rotate(-90deg);
 }
 
 .assistant-sidebar__hint {

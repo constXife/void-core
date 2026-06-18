@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
-import { Plus, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-vue-next";
+import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-vue-next";
 import AssistantSidebarItem from "./AssistantSidebarItem.vue";
 import PlatformIdentityBrand from "../../platform/components/PlatformIdentityBrand.vue";
 
@@ -30,6 +30,17 @@ const emit = defineEmits([
 const trashOpen = ref(false);
 const searchQuery = ref("");
 const t = (key, vars = {}) => props.t(key, vars);
+
+// Сворачивание групп истории (LAST 7 DAYS и т.п.) — против длинного скролла.
+// По умолчанию все развёрнуты; храним только свёрнутые id.
+const collapsedGroups = ref(new Set());
+const isGroupCollapsed = (id) => collapsedGroups.value.has(id);
+const toggleGroup = (id) => {
+  const next = new Set(collapsedGroups.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  collapsedGroups.value = next;
+};
 
 const isEmpty = computed(() => !props.loading && props.groups.length === 0);
 const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase());
@@ -134,9 +145,24 @@ const toggleTrash = () => {
           v-for="group in filteredGroups"
           :key="group.id"
           class="assistant-sidebar__group"
+          :class="{ 'assistant-sidebar__group--collapsed': isGroupCollapsed(group.id) }"
         >
-          <h3 class="assistant-sidebar__group-title">{{ group.label }}</h3>
-          <TransitionGroup name="assistant-sidebar-row" tag="div" class="assistant-sidebar__group-items" appear>
+          <button
+            type="button"
+            class="assistant-sidebar__group-title"
+            :aria-expanded="!isGroupCollapsed(group.id)"
+            @click="toggleGroup(group.id)"
+          >
+            <ChevronDown :size="13" class="assistant-sidebar__group-chevron" />
+            <span>{{ group.label }}</span>
+          </button>
+          <TransitionGroup
+            v-show="!isGroupCollapsed(group.id)"
+            name="assistant-sidebar-row"
+            tag="div"
+            class="assistant-sidebar__group-items"
+            appear
+          >
             <AssistantSidebarItem
               v-for="session in group.items"
               :key="session.id"
