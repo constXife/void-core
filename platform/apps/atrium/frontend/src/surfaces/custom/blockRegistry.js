@@ -19,6 +19,7 @@ import DataTimelineBlock from "./blocks/DataTimelineBlock.vue";
 import InventoryStatsSummaryBlock from "./blocks/InventoryStatsSummaryBlock.vue";
 import InventoryLowStockPanelBlock from "./blocks/InventoryLowStockPanelBlock.vue";
 import InventoryFilterPanelBlock from "./blocks/InventoryFilterPanelBlock.vue";
+import AssetGalleryBlock from "./blocks/AssetGalleryBlock.vue";
 
 const REGISTRY = {
   // freeform.overview primitives
@@ -26,6 +27,8 @@ const REGISTRY = {
   "data.table": DataTableBlock,
   "data.tree": DataTreeBlock,
   "data.timeline": DataTimelineBlock,
+  // universal asset gallery — фото/файлы любой сущности из slot-датасета
+  "data.asset_gallery": AssetGalleryBlock,
   // inventory.overview product blocks — generic render над теми же slot-датасетами
   "inventory.stats_summary": InventoryStatsSummaryBlock,
   "inventory.items_table": DataTableBlock,
