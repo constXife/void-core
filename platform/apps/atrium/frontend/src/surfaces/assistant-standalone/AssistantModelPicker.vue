@@ -21,6 +21,14 @@ const rootRef = ref(null);
 const searchRef = ref(null);
 const t = (key, vars = {}) => props.t(key, vars);
 
+// Контекстное окно в компактном виде: 160000 → "160k", 1000000 → "1M".
+const formatContext = (tokens) => {
+  if (!tokens) return "";
+  if (tokens >= 1_000_000) return `${Math.round(tokens / 100_000) / 10}M`.replace(".0", "");
+  if (tokens >= 1000) return `${Math.round(tokens / 1000)}k`;
+  return String(tokens);
+};
+
 // Чистое имя модели для резидента: отбрасываем org-префикс (`deepseek-ai/…`),
 // т.к. для discovered-моделей label == id (slug), человекочитаемого имени нет.
 const displayName = (target) => {
@@ -200,12 +208,18 @@ onUnmounted(() => {
               class="assistant-model-picker__item-sub"
             >{{ target.model }}</span>
           </span>
-          <Star
-            v-if="target.id === preferredId"
-            :size="12"
-            class="assistant-model-picker__badge"
-            :aria-label="t('assistant.composer.defaultForNew')"
-          />
+          <span class="assistant-model-picker__item-meta">
+            <span
+              v-if="target.context_window"
+              class="assistant-model-picker__context"
+            >{{ formatContext(target.context_window) }}</span>
+            <Star
+              v-if="target.id === preferredId"
+              :size="12"
+              class="assistant-model-picker__badge"
+              :aria-label="t('assistant.composer.defaultForNew')"
+            />
+          </span>
         </button>
       </div>
     </div>
