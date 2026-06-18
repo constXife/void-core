@@ -338,6 +338,30 @@ const contextTokens = computed(() => {
   return null;
 });
 
+// Накопительная стоимость сессии (только оператору; ставки $/1M из конфига модели).
+// Оговорка: считаем по ставкам текущей выбранной модели — если в сессии меняли
+// модель, это приближение. null — не оператор / ставок нет / нет usage.
+const sessionCost = computed(() => {
+  if (!isOperator.value) return null;
+  const target = targets.value.find((item) => item.id === composerTargetId.value);
+  if (!target || typeof target.input_price !== "number" || typeof target.output_price !== "number") {
+    return null;
+  }
+  let cost = 0;
+  let sawUsage = false;
+  for (const message of currentMessages.value) {
+    if (typeof message.prompt_tokens === "number") {
+      cost += (message.prompt_tokens / 1_000_000) * target.input_price;
+      sawUsage = true;
+    }
+    if (typeof message.completion_tokens === "number") {
+      cost += (message.completion_tokens / 1_000_000) * target.output_price;
+      sawUsage = true;
+    }
+  }
+  return sawUsage ? cost : null;
+});
+
 const onChooseSuggestion = (text) => {
   draft.value = text;
 };
@@ -708,6 +732,7 @@ function savePreferredTarget(value) {
           :is-operator="isOperator"
           :context-tokens="contextTokens"
           :context-window="contextWindow"
+          :session-cost="sessionCost"
           :disabled="composerDisabled"
           :t="t"
           @send="onSend"

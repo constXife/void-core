@@ -16,6 +16,8 @@ const props = defineProps({
   // max-окно выбранной модели. Счётчик рисуется только когда известны оба.
   contextTokens: { type: Number, default: null },
   contextWindow: { type: Number, default: null },
+  // Накопительная стоимость сессии в долларах (operator-only); null — не показываем.
+  sessionCost: { type: Number, default: null },
   disabled: { type: Boolean, default: false },
   t: { type: Function, required: true }
 });
@@ -32,6 +34,12 @@ const showContextMeter = computed(
 const contextPercent = computed(() => {
   if (!showContextMeter.value || props.contextWindow <= 0) return 0;
   return Math.min(100, Math.round((props.contextTokens / props.contextWindow) * 100));
+});
+
+const formattedCost = computed(() => {
+  if (typeof props.sessionCost !== "number") return "";
+  const decimals = props.sessionCost > 0 && props.sessionCost < 0.1 ? 3 : 2;
+  return `$${props.sessionCost.toFixed(decimals)}`;
 });
 
 const emit = defineEmits(["update:modelValue", "send", "stop", "select-target"]);
@@ -108,6 +116,11 @@ watch(
         />
         <span v-else aria-hidden="true" />
         <div class="assistant-composer__actions">
+          <span
+            v-if="formattedCost"
+            class="assistant-composer__cost"
+            :title="t('assistant.composer.sessionCost')"
+          >{{ formattedCost }}</span>
           <span
             v-if="showContextMeter"
             class="assistant-composer__context"

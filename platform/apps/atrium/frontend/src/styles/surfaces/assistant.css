@@ -2081,6 +2081,13 @@
   white-space: nowrap;
 }
 
+.assistant-composer__cost {
+  font-size: var(--text-2xs, 10px);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* ---- Model picker ---- */
 
 .assistant-model-picker {
