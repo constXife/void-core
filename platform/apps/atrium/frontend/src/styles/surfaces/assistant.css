@@ -2074,6 +2074,20 @@
   display: block;
   height: 100%;
   background: var(--accent-purple);
+  transition: background var(--duration-fast, 150ms) var(--ease-default, ease);
+}
+
+/* Зоны заполнения окна: норма → внимание → близко к лимиту. */
+.assistant-composer__context-fill--low {
+  background: var(--accent-purple);
+}
+
+.assistant-composer__context-fill--mid {
+  background: #e0a83c;
+}
+
+.assistant-composer__context-fill--high {
+  background: var(--status-warning, #ef4444);
 }
 
 .assistant-composer__context-text {

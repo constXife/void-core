@@ -38,8 +38,16 @@ const contextPercent = computed(() => {
 
 const formattedCost = computed(() => {
   if (typeof props.sessionCost !== "number") return "";
-  const decimals = props.sessionCost > 0 && props.sessionCost < 0.1 ? 3 : 2;
-  return `$${props.sessionCost.toFixed(decimals)}`;
+  if (props.sessionCost > 0 && props.sessionCost < 0.01) return "< $0.01";
+  return `$${props.sessionCost.toFixed(2)}`;
+});
+
+// Бар — индикатор приближения к лимиту контекста, а не «сколько потрачено»:
+// нейтральный почти всегда, желтеет/краснеет ближе к заполнению окна.
+const contextZone = computed(() => {
+  if (contextPercent.value >= 90) return "high";
+  if (contextPercent.value >= 70) return "mid";
+  return "low";
 });
 
 const emit = defineEmits(["update:modelValue", "send", "stop", "select-target"]);
@@ -129,6 +137,7 @@ watch(
             <span class="assistant-composer__context-bar">
               <span
                 class="assistant-composer__context-fill"
+                :class="`assistant-composer__context-fill--${contextZone}`"
                 :style="{ width: `${contextPercent}%` }"
               />
             </span>
