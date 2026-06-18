@@ -37,16 +37,31 @@ const statusTone = (status) =>
 const subjectLabel = (type) =>
   type === "auth_gate" ? t("approvals.type.authGate") : t("approvals.type.toolApply");
 
-// Заголовок карточки: человекочитаемый operation из preview, иначе класс/тип.
-const titleOf = (item) =>
-  item?.preview?.operation || item?.consequence_class || subjectLabel(item?.subject_type);
+// Известные классы запросов с локализованным титулом и структурированной раскладкой
+// (бэкенд шлёт preview.kind как дискриминатор, а не инлайн-копи). Прочие — generic-путь.
+const KIND_TITLE = { sensitive_read: "approvals.kind.sensitive_read" };
+const isKnownKind = (item) => !!(item?.preview?.kind && KIND_TITLE[item.preview.kind]);
 
-// Детали preview как пары ключ-значение (preview.event либо сам preview без operation).
-const previewPairs = (preview) => {
+// Заголовок карточки: локализованный титул по kind, иначе operation/класс/тип.
+const titleOf = (item) => {
+  const kind = item?.preview?.kind;
+  if (kind && KIND_TITLE[kind]) return t(KIND_TITLE[kind]);
+  return item?.preview?.operation || item?.consequence_class || subjectLabel(item?.subject_type);
+};
+
+// Provenance/контекст для карточки.
+const clientOf = (item) => item?.preview?.client || null; // доверенная метка канала-инициатора
+const reasonOf = (item) => item?.preview?.reason || null; // UNTRUSTED — со слов запрашивающего
+
+// Детали preview как пары ключ-значение. Для известных kind структурированные поля
+// (client/reason/surface) показываются отдельными строками, поэтому generic-дамп пропускаем.
+const previewPairs = (item) => {
+  if (isKnownKind(item)) return [];
+  const preview = item?.preview;
   if (!preview || typeof preview !== "object") return [];
   const source = preview.event && typeof preview.event === "object" ? preview.event : preview;
   return Object.entries(source)
-    .filter(([key]) => key !== "operation")
+    .filter(([key]) => key !== "operation" && key !== "kind")
     .map(([key, value]) => [key, typeof value === "object" ? JSON.stringify(value) : String(value)]);
 };
 
@@ -134,9 +149,13 @@ const onReject = async (item) => {
             <p v-if="detailLoading" class="approvals__muted">{{ t("approvals.loading") }}</p>
             <template v-else>
               <dl class="approvals__kv">
-                <div v-for="[k, v] in previewPairs(item.preview)" :key="k" class="approvals__kv-row">
+                <div v-for="[k, v] in previewPairs(item)" :key="k" class="approvals__kv-row">
                   <dt>{{ k }}</dt>
                   <dd>{{ v }}</dd>
+                </div>
+                <div v-if="clientOf(item)" class="approvals__kv-row">
+                  <dt>{{ t("approvals.client") }}</dt>
+                  <dd>{{ clientOf(item) }}</dd>
                 </div>
                 <div class="approvals__kv-row">
                   <dt>{{ t("approvals.requester") }}</dt>
@@ -145,6 +164,10 @@ const onReject = async (item) => {
                 <div class="approvals__kv-row">
                   <dt>{{ t("approvals.method") }}</dt>
                   <dd>{{ item.requirement?.method }}</dd>
+                </div>
+                <div v-if="reasonOf(item)" class="approvals__kv-row approvals__kv-row--reason">
+                  <dt>{{ t("approvals.reason") }}</dt>
+                  <dd>{{ reasonOf(item) }}</dd>
                 </div>
               </dl>
 
