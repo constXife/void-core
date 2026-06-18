@@ -416,6 +416,14 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     return mutateSurfacePatch(messageId, "reject");
   };
 
+  const approveInventoryWrite = async (messageId) => {
+    return mutateInventoryWrite(messageId, "approve");
+  };
+
+  const rejectInventoryWrite = async (messageId) => {
+    return mutateInventoryWrite(messageId, "reject");
+  };
+
   const cancelSkillRun = async (skillRunId) => {
     await mutateSkillRun(skillRunId, "cancel");
   };
@@ -460,6 +468,24 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
       pagespecId: payload?.pagespecId,
       version: payload?.version,
       renderPath: payload?.renderPath
+    });
+    return payload;
+  };
+
+  const mutateInventoryWrite = async (messageId, action) => {
+    const normalizedId = String(messageId || "").trim();
+    if (!normalizedId) return null;
+    const payload = await fetchJson(
+      `/assistant/inventory-writes/${encodeURIComponent(normalizedId)}/${action}`,
+      {
+        method: "POST",
+        body: JSON.stringify({})
+      }
+    );
+    const status = action === "approve" ? "approved" : "rejected";
+    patchMessagePayload(normalizedId, {
+      status,
+      instanceId: payload?.instance_id
     });
     return payload;
   };
@@ -815,6 +841,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     approveSkillRun,
     approveSkillRuns,
     approveSurfacePatch,
+    approveInventoryWrite,
     canSend,
     connectUserEvents,
     disconnectUserEvents,
@@ -839,6 +866,7 @@ export const useAssistantSessionsStore = defineStore("void-assistant-sessions", 
     proposeSkillRun,
     rejectSkillRun,
     rejectSurfacePatch,
+    rejectInventoryWrite,
     reloadCurrent,
     renameSession,
     restoreSession,

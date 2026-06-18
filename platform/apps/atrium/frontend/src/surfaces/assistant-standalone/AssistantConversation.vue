@@ -61,6 +61,8 @@ const emit = defineEmits([
   "reject-skill",
   "approve-surface-patch",
   "reject-surface-patch",
+  "approve-inventory-write",
+  "reject-inventory-write",
   "change-layout"
 ]);
 
@@ -149,6 +151,8 @@ watch(
               @reject-skill="(id) => emit('reject-skill', id)"
               @approve-surface-patch="(id) => emit('approve-surface-patch', id)"
               @reject-surface-patch="(id) => emit('reject-surface-patch', id)"
+              @approve-inventory-write="(id) => emit('approve-inventory-write', id)"
+              @reject-inventory-write="(id) => emit('reject-inventory-write', id)"
               @change-layout="(payload) => emit('change-layout', payload)"
             />
           </template>

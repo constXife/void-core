@@ -359,6 +359,14 @@ const onRejectSurfacePatch = (messageId) => {
   sessionsStore.rejectSurfacePatch(messageId);
 };
 
+const onApproveInventoryWrite = (messageId) => {
+  sessionsStore.approveInventoryWrite(messageId);
+};
+
+const onRejectInventoryWrite = (messageId) => {
+  sessionsStore.rejectInventoryWrite(messageId);
+};
+
 const onChangeLayout = ({ messageId, variant }) => {
   sessionsStore.changeMessageLayout(messageId, variant);
 };
@@ -666,6 +674,8 @@ function savePreferredTarget(value) {
           @reject-skill="onRejectSkill"
           @approve-surface-patch="onApproveSurfacePatch"
           @reject-surface-patch="onRejectSurfacePatch"
+          @approve-inventory-write="onApproveInventoryWrite"
+          @reject-inventory-write="onRejectInventoryWrite"
           @change-layout="onChangeLayout"
         />
 

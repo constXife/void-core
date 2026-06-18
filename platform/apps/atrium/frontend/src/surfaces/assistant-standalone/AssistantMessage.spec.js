@@ -23,6 +23,12 @@ const messages = {
   "assistant.message.surfacePatchOp.setProps": "изменены свойства {blockRef}",
   "assistant.message.surfacePatchOp.moveBlock": "{blockRef}: {fromRegion} → {toRegion}",
   "assistant.message.surfacePatchOp.setLayout": "макет → {layout}",
+  "assistant.message.inventoryWriteSummary": "Добавить в инвентарь: {title}",
+  "assistant.message.inventoryWriteApply": "Подтвердить",
+  "assistant.message.inventoryWriteReject": "Отклонить",
+  "assistant.message.inventoryWriteApplied": "Добавлено",
+  "assistant.message.inventoryWriteRejected": "Отклонено",
+  "assistant.message.inventoryWriteHint": "Добавит в инвентарь только после вашего подтверждения.",
   "assistant.message.changeLayout": "Изменить раскладку skill",
   "assistant.message.copy": "Скопировать сообщение",
   "assistant.message.copyCode": "Копировать",
@@ -531,6 +537,48 @@ describe("AssistantMessage", () => {
     await buttons[0].trigger("click");
 
     expect(wrapper.emitted("approve-surface-patch")).toEqual([["message-1"]]);
+  });
+
+  it("renders an awaiting inventory write proposal with summary, details, and confirm action", async () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-2",
+          role: "assistant",
+          content: "Inventory write proposal",
+          message_kind: "inventory_write_proposal",
+          message_payload: {
+            status: "awaiting_approval",
+            applyToolId: "inventory.item.create.apply",
+            writePayload: {
+              slice: "pantry",
+              title: "Молоко",
+              class_key: "dairy"
+            },
+            diff: {
+              slice: { label: "Кладовая" },
+              item: { title: "Молоко" }
+            }
+          },
+          created_at: "2026-06-17T08:07:00Z"
+        },
+        t
+      }
+    });
+
+    const proposal = wrapper.find(".assistant-message__proposal");
+    expect(proposal.text()).toContain("Добавить в инвентарь: Молоко");
+    expect(proposal.text()).toContain("Кладовая · dairy");
+    expect(proposal.text()).toContain(
+      "Добавит в инвентарь только после вашего подтверждения"
+    );
+
+    const buttons = wrapper.findAll(".assistant-message__proposal-button");
+    expect(buttons[0].text()).toContain("Подтвердить");
+
+    await buttons[0].trigger("click");
+
+    expect(wrapper.emitted("approve-inventory-write")).toEqual([["message-2"]]);
   });
 
   it("renders blocks from multiple completed skill runs", () => {

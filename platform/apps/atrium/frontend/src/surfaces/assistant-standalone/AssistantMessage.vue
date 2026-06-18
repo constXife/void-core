@@ -35,6 +35,8 @@ const emit = defineEmits([
   "reject-skill",
   "approve-surface-patch",
   "reject-surface-patch",
+  "approve-inventory-write",
+  "reject-inventory-write",
   "change-layout"
 ]);
 
@@ -88,6 +90,36 @@ const surfacePatchRenderPath = computed(() =>
   surfaceRenderHref(
     surfacePatchPayload.value?.renderPath || `/surfaces/${surfacePatchPageKind.value}`
   )
+);
+const isInventoryWriteProposal = computed(
+  () => props.message.message_kind === "inventory_write_proposal"
+);
+const inventoryWritePayload = computed(() => props.message.message_payload || {});
+const inventoryWriteStatus = computed(() =>
+  String(inventoryWritePayload.value?.status || "")
+);
+const inventoryWriteTitle = computed(() => {
+  const payload = inventoryWritePayload.value || {};
+  return String(
+    payload.writePayload?.title ||
+      payload.diff?.item?.title ||
+      payload.diff?.item?.display_label ||
+      ""
+  );
+});
+const inventoryWriteDetails = computed(() => {
+  const payload = inventoryWritePayload.value || {};
+  const parts = [];
+  const sliceLabel = payload.diff?.slice?.label;
+  if (sliceLabel) parts.push(String(sliceLabel));
+  const classKey = payload.writePayload?.class_key;
+  if (classKey) parts.push(String(classKey));
+  const containmentKind = payload.writePayload?.containment_kind;
+  if (containmentKind) parts.push(String(containmentKind));
+  return parts.join(" · ");
+});
+const inventoryWriteSummary = computed(() =>
+  t("assistant.message.inventoryWriteSummary", { title: inventoryWriteTitle.value })
 );
 const isSkillResult = computed(() => props.message.message_kind === "skill_result");
 // Если message содержит только один ArtifactLink block (mini layout), inline layout switcher
@@ -447,6 +479,14 @@ const onRejectSurfacePatch = () => {
   emit("reject-surface-patch", props.message.id);
 };
 
+const onApproveInventoryWrite = () => {
+  emit("approve-inventory-write", props.message.id);
+};
+
+const onRejectInventoryWrite = () => {
+  emit("reject-inventory-write", props.message.id);
+};
+
 const onChangeLayout = () => {
   emit("change-layout", { messageId: props.message.id, variant: nextLayoutVariant.value });
 };
@@ -560,6 +600,38 @@ const onChangeLayout = () => {
           <div v-else-if="surfacePatchStatus === 'rejected'" class="assistant-message__proposal-actions">
             <span class="assistant-message__proposal-badge">
               {{ t("assistant.message.surfacePatchRejected") }}
+            </span>
+          </div>
+        </div>
+        <div v-if="isInventoryWriteProposal" class="assistant-message__proposal">
+          <div class="assistant-message__proposal-main">
+            <span class="assistant-message__proposal-title">{{ inventoryWriteSummary }}</span>
+            <span
+              v-if="inventoryWriteStatus === 'awaiting_approval'"
+              class="assistant-message__proposal-meta"
+            >{{ t("assistant.message.inventoryWriteHint") }}</span>
+          </div>
+          <ul v-if="inventoryWriteDetails" class="assistant-message__proposal-list">
+            <li><span>{{ inventoryWriteDetails }}</span></li>
+          </ul>
+          <div v-if="inventoryWriteStatus === 'awaiting_approval'" class="assistant-message__proposal-actions">
+            <button type="button" class="assistant-message__proposal-button" @click="onApproveInventoryWrite">
+              <Check :size="14" />
+              <span>{{ t("assistant.message.inventoryWriteApply") }}</span>
+            </button>
+            <button type="button" class="assistant-message__proposal-button" @click="onRejectInventoryWrite">
+              <X :size="14" />
+              <span>{{ t("assistant.message.inventoryWriteReject") }}</span>
+            </button>
+          </div>
+          <div v-else-if="inventoryWriteStatus === 'approved'" class="assistant-message__proposal-actions">
+            <span class="assistant-message__proposal-badge">
+              {{ t("assistant.message.inventoryWriteApplied") }}
+            </span>
+          </div>
+          <div v-else-if="inventoryWriteStatus === 'rejected'" class="assistant-message__proposal-actions">
+            <span class="assistant-message__proposal-badge">
+              {{ t("assistant.message.inventoryWriteRejected") }}
             </span>
           </div>
         </div>
