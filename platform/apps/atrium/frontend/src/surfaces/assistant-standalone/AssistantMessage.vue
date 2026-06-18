@@ -116,6 +116,8 @@ const inventoryWriteDetails = computed(() => {
   if (classKey) parts.push(String(classKey));
   const containmentKind = payload.writePayload?.containment_kind;
   if (containmentKind) parts.push(String(containmentKind));
+  const locationType = payload.writePayload?.location_type;
+  if (locationType) parts.push(String(locationType));
   return parts.join(" · ");
 });
 const inventoryWriteSummary = computed(() =>
