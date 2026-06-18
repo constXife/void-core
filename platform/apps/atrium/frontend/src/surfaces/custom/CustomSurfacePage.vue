@@ -17,6 +17,7 @@ import {
 } from "../../lib/customSurfaces/api.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import SurfaceRenderer from "./SurfaceRenderer.vue";
+import AssetUploader from "../../components/AssetUploader.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -89,6 +90,21 @@ async function load() {
 }
 
 watch([pageKind, slice, entityId], load, { immediate: true });
+
+// После заливки фото перерезолвить read_model, чтобы AssetGallery показал новый asset.
+// Coalesce: если load уже идёт, дозагрузим один раз после него (finalize уже персистнул).
+let reloadPending = false;
+async function onUploaded() {
+  if (loading.value) {
+    reloadPending = true;
+    return;
+  }
+  await load();
+  if (reloadPending) {
+    reloadPending = false;
+    await load();
+  }
+}
 </script>
 
 <template>
@@ -123,6 +139,14 @@ watch([pageKind, slice, entityId], load, { immediate: true });
       :bridge-artifacts="bridgeArtifacts"
       :t="t"
     />
+
+    <!-- Action-зона entity-страницы: загрузка фото/файлов к сущности (kernel:has-asset).
+         Вне read-only SurfaceRenderer (ADR-0026 § render read-only): write-аффорданс
+         владеет stateful-контейнер, а не PageSpec-блок. -->
+    <section v-if="pageSpec && entityId" class="surface-page__upload">
+      <h2 class="surface-page__upload-title">{{ t("surface.upload.title") }}</h2>
+      <AssetUploader :attach-to-entity-id="entityId" :t="t" @uploaded="onUploaded" />
+    </section>
   </main>
 </template>
 
@@ -184,5 +208,18 @@ watch([pageKind, slice, entityId], load, { immediate: true });
 
 .surface-page__state--error {
   color: var(--color-red-500, #f85149);
+}
+
+.surface-page__upload {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+}
+
+.surface-page__upload-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-muted, color-mix(in srgb, currentColor 70%, transparent));
 }
 </style>
