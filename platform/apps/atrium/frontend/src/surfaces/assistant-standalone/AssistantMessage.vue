@@ -391,8 +391,6 @@ function stepLabel(step) {
       return t("assistant.step.skillRun", {
         skill: skillDisplayName(step.skill_id || "", step.skill_run_id || "")
       });
-    case "memory_recall":
-      return t("assistant.step.memoryRecall", { count: stepCount(step) });
     case "memory_extraction":
       return t("assistant.step.memoryExtraction", { count: stepCount(step) });
     case "session_titled":
@@ -416,15 +414,16 @@ function stepDetails(step) {
     : [];
 }
 
-const ACTIVITY_STEP_KEYS = new Set(["memory_recall", "memory_extraction", "session_titled"]);
+const ACTIVITY_STEP_KEYS = new Set(["memory_extraction", "session_titled"]);
 
 // Служебные activity-шаги либо есть с данными, либо их незачем показывать;
 // «готово» у них — шум, статус важен только для running/failed.
 function stepVisible(step) {
   if (step.key === "session_titled") return Boolean(String(step.title || "").trim());
-  if (step.key === "memory_recall" || step.key === "memory_extraction") {
-    return stepCount(step) > 0;
-  }
+  // memory_recall — фоновая подгрузка контекста, не действие: чип убран (бэкенд больше
+  // не эмитит; исторические шаги тоже скрываем для консистентности).
+  if (step.key === "memory_recall") return false;
+  if (step.key === "memory_extraction") return stepCount(step) > 0;
   return true;
 }
 

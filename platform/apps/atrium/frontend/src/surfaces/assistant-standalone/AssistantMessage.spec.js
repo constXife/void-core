@@ -40,7 +40,6 @@ const messages = {
   "assistant.message.thinking": "Размышления",
   "assistant.step.skillProposal": "Подготовка {skill}",
   "assistant.step.skillRun": "Запуск {skill}",
-  "assistant.step.memoryRecall": "Память: заметок в контексте — {count}",
   "assistant.step.memoryExtraction": "Запомнено: {count}",
   "assistant.step.sessionTitled": "Чат назван «{title}»",
   "assistant.step.unknown": "Шаг ассистента",
@@ -325,7 +324,7 @@ describe("AssistantMessage", () => {
     expect(wrapper.findComponent({ name: "AssistantMarkdown" }).exists()).toBe(false);
   });
 
-  it("renders memory and titling activity steps with expandable note titles", () => {
+  it("hides background memory recall, renders extraction and titling steps", () => {
     const wrapper = mount(AssistantMessage, {
       props: {
         message: {
@@ -360,20 +359,21 @@ describe("AssistantMessage", () => {
     });
 
     const steps = wrapper.findAll(".assistant-message__step");
-    expect(steps).toHaveLength(3);
-    expect(steps[0].text()).toContain("Память: заметок в контексте — 5");
-    expect(steps[1].text()).toContain("Запомнено: 2");
-    expect(steps[2].text()).toContain("Чат назван «Домашний сервер»");
+    // memory_recall — фоновая подгрузка, скрыта; видимы extraction + titling.
+    expect(steps).toHaveLength(2);
+    const allText = wrapper.text();
+    expect(allText).not.toContain("заметок в контексте");
+    expect(steps[0].text()).toContain("Запомнено: 2");
+    expect(steps[1].text()).toContain("Чат назван «Домашний сервер»");
     // Статус «готово» у завершённых activity-шагов не показывается — шум.
     for (const step of steps) {
       expect(step.text()).not.toContain("готово");
     }
 
-    const details = steps[1].find(".assistant-message__step-details");
+    const details = steps[0].find(".assistant-message__step-details");
     expect(details.exists()).toBe(true);
     expect(details.text()).toContain("Характеристики bee");
     expect(details.text()).toContain("Предпочтение по чаю");
-    expect(steps[0].find(".assistant-message__step-details").exists()).toBe(false);
   });
 
   it("hides empty activity steps", () => {
