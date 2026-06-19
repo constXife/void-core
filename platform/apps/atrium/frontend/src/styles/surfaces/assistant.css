@@ -994,6 +994,10 @@
 .assistant-conversation {
   min-height: 0;
   overflow-y: auto;
+  /* Резервируем место под вертикальный скроллбар с обеих сторон: иначе при
+     появлении скроллбара во время стрима центрированная колонка прыгает влево
+     («съезжает вёрстка»). both-edges сохраняет симметричный центр. */
+  scrollbar-gutter: stable both-edges;
   padding: 1.5rem clamp(1rem, 3vw, 2.5rem) 1.25rem;
   scroll-behavior: smooth;
 }
