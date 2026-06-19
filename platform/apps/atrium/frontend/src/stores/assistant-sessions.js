@@ -1027,7 +1027,14 @@ function normalizeRunStep(value) {
       : [],
     title: value.title ? String(value.title) : "",
     // Однострочный результат ops-сенсора («kadath: active (running)») в skill_run шаге.
-    summary: value.summary ? String(value.summary) : ""
+    summary: value.summary ? String(value.summary) : "",
+    // memory_used: процитированные заметки (id+title) → ссылки на /memory.
+    notes: Array.isArray(value.notes)
+      ? value.notes
+          .filter((note) => note && typeof note === "object")
+          .map((note) => ({ id: String(note.id || ""), title: String(note.title || "") }))
+          .filter((note) => note.id && note.title)
+      : []
   };
 }
 

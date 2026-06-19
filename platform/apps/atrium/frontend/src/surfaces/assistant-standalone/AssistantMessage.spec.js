@@ -41,6 +41,7 @@ const messages = {
   "assistant.step.skillProposal": "Подготовка {skill}",
   "assistant.step.skillRun": "Запуск {skill}",
   "assistant.step.memoryExtraction": "Запомнено: {count}",
+  "assistant.step.memoryUsed": "Использована память:",
   "assistant.step.sessionTitled": "Чат назван «{title}»",
   "assistant.step.unknown": "Шаг ассистента",
   "assistant.step.status.running": "выполняется",
@@ -374,6 +375,50 @@ describe("AssistantMessage", () => {
     expect(details.exists()).toBe(true);
     expect(details.text()).toContain("Характеристики bee");
     expect(details.text()).toContain("Предпочтение по чаю");
+  });
+
+  it("renders memory_used step as links to cited notes", () => {
+    const wrapper = mount(AssistantMessage, {
+      props: {
+        message: {
+          id: "message-1",
+          role: "assistant",
+          content: "Учту это.",
+          run_steps: [
+            {
+              id: "memory-used",
+              key: "memory_used",
+              status: "completed",
+              notes: [
+                { id: "note-1", title: "Предпочтение по чаю" },
+                { id: "note-2", title: "" }
+              ]
+            }
+          ],
+          created_at: "2026-05-06T08:07:00Z"
+        },
+        t
+      },
+      global: {
+        stubs: {
+          RouterLink: {
+            name: "RouterLink",
+            props: ["to"],
+            template: '<a :data-to="JSON.stringify(to)"><slot /></a>'
+          }
+        }
+      }
+    });
+
+    const step = wrapper.find(".assistant-message__step");
+    expect(step.exists()).toBe(true);
+    expect(step.text()).toContain("Использована память:");
+    const links = wrapper.findAll('[data-test="memory-used-link"]');
+    // Заметка без title отброшена — остаётся одна валидная ссылка.
+    expect(links).toHaveLength(1);
+    expect(links[0].text()).toBe("Предпочтение по чаю");
+    expect(links[0].attributes("data-to")).toContain("note-1");
+    expect(step.text()).not.toContain("готово");
   });
 
   it("hides empty activity steps", () => {

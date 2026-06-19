@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAssistantMemoryStore } from "../../stores/assistant-memory.js";
 
@@ -13,6 +14,26 @@ const props = defineProps({
 const store = useAssistantMemoryStore();
 const { notes, loading, error } = storeToRefs(store);
 const t = (key, vars = {}) => props.t(key, vars);
+const route = useRoute();
+
+// Заметка, на которую привёл чип «Использована память» из чата (?note={id}).
+// Подсвечиваем её и подматываем в видимую область, когда список загружен.
+const highlightId = computed(() => String(route.query.note || "").trim());
+const noteRefs = new Map();
+
+const setNoteRef = (instanceId) => (element) => {
+  if (element) noteRefs.set(instanceId, element);
+  else noteRefs.delete(instanceId);
+};
+
+const scrollHighlightedIntoView = async () => {
+  if (!highlightId.value) return;
+  await nextTick();
+  const element = noteRefs.get(highlightId.value);
+  if (element) element.scrollIntoView({ block: "center", behavior: "smooth" });
+};
+
+watch([highlightId, notes], scrollHighlightedIntoView);
 
 const form = reactive({
   title: "",
@@ -137,7 +158,10 @@ function formatCreatedAt(value) {
   }).format(date);
 }
 
-onMounted(loadNotes);
+onMounted(async () => {
+  await loadNotes();
+  await scrollHighlightedIntoView();
+});
 </script>
 
 <template>
@@ -221,7 +245,13 @@ onMounted(loadNotes);
       </section>
 
       <div v-else class="assistant-memory__list">
-        <article v-for="note in notes" :key="note.instance_id" class="assistant-memory-note">
+        <article
+          v-for="note in notes"
+          :key="note.instance_id"
+          :ref="setNoteRef(note.instance_id)"
+          class="assistant-memory-note"
+          :class="{ 'assistant-memory-note--highlight': note.instance_id === highlightId }"
+        >
           <form
             v-if="editingId === note.instance_id"
             class="assistant-memory-note__edit"

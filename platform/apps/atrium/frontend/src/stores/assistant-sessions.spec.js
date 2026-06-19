@@ -395,7 +395,8 @@ describe("assistant sessions store", () => {
         notes_count: 0,
         titles: [],
         title: "",
-        summary: ""
+        summary: "",
+        notes: []
       }
     ]);
 
@@ -440,7 +441,8 @@ describe("assistant sessions store", () => {
         notes_count: 0,
         titles: [],
         title: "",
-        summary: ""
+        summary: "",
+        notes: []
       }
     ]);
   });

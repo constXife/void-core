@@ -320,6 +320,16 @@ function normalizeRunStep(value) {
     key,
     status,
     skill_id: value.skill_id ? String(value.skill_id) : "",
-    skill_run_id: value.skill_run_id ? String(value.skill_run_id) : ""
+    skill_run_id: value.skill_run_id ? String(value.skill_run_id) : "",
+    // memory_used: процитированные заметки (id+title) → ссылки на /memory.
+    notes: normalizeRunStepNotes(value.notes)
   };
+}
+
+function normalizeRunStepNotes(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((note) => note && typeof note === "object")
+    .map((note) => ({ id: String(note.id || ""), title: String(note.title || "") }))
+    .filter((note) => note.id && note.title);
 }

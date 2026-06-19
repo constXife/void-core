@@ -3,6 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import AssistantMemoryPanel from "./AssistantMemoryPanel.vue";
 
+// Панель читает ?note={id} через useRoute (подсветка процитированной заметки);
+// в unit-окружении роутера нет — отдаём пустой query.
+vi.mock("vue-router", () => ({
+  useRoute: () => ({ query: {} })
+}));
+
 const messages = {
   "assistant.memory.title": "Memory",
   "assistant.memory.intro": "What the assistant knows about you.",

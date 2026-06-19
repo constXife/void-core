@@ -393,6 +393,8 @@ function stepLabel(step) {
       });
     case "memory_extraction":
       return t("assistant.step.memoryExtraction", { count: stepCount(step) });
+    case "memory_used":
+      return t("assistant.step.memoryUsed");
     case "session_titled":
       return t("assistant.step.sessionTitled", { title: String(step.title || "") });
     default:
@@ -402,6 +404,14 @@ function stepLabel(step) {
 
 function stepCount(step) {
   return Number.isFinite(Number(step.notes_count)) ? Number(step.notes_count) : 0;
+}
+
+// memory_used: заметки, процитированные моделью (валидированы бэкендом против
+// recalled-set) — каждая ведёт ссылкой на свою карточку в /memory.
+function stepMemoryNotes(step) {
+  return Array.isArray(step.notes)
+    ? step.notes.filter((note) => note && note.id && note.title)
+    : [];
 }
 
 function stepDetails(step) {
@@ -414,7 +424,7 @@ function stepDetails(step) {
     : [];
 }
 
-const ACTIVITY_STEP_KEYS = new Set(["memory_extraction", "session_titled"]);
+const ACTIVITY_STEP_KEYS = new Set(["memory_extraction", "memory_used", "session_titled"]);
 
 // Служебные activity-шаги либо есть с данными, либо их незачем показывать;
 // «готово» у них — шум, статус важен только для running/failed.
@@ -424,6 +434,7 @@ function stepVisible(step) {
   // не эмитит; исторические шаги тоже скрываем для консистентности).
   if (step.key === "memory_recall") return false;
   if (step.key === "memory_extraction") return stepCount(step) > 0;
+  if (step.key === "memory_used") return stepMemoryNotes(step).length > 0;
   return true;
 }
 
@@ -520,7 +531,23 @@ const onChangeLayout = () => {
               class="assistant-message__step"
               :class="`assistant-message__step--${step.status}`"
             >
-              <details v-if="stepDetails(step).length" class="assistant-message__step-details">
+              <template v-if="step.key === 'memory_used'">
+                <span>{{ stepLabel(step) }}</span>
+                <span class="assistant-message__step-memory-links">
+                  <RouterLink
+                    v-for="note in stepMemoryNotes(step)"
+                    :key="note.id"
+                    :to="{ name: 'assistant-memory', query: { note: note.id } }"
+                    class="assistant-message__step-memory-link"
+                    :title="note.title"
+                    data-test="memory-used-link"
+                  >{{ note.title }}</RouterLink>
+                </span>
+              </template>
+              <details
+                v-else-if="stepDetails(step).length"
+                class="assistant-message__step-details"
+              >
                 <summary class="assistant-message__step-summary" data-test="step-details-summary">
                   <span>{{ stepLabel(step) }}</span>
                   <span v-if="stepStatusVisible(step)">{{ stepStatusLabel(step.status) }}</span>

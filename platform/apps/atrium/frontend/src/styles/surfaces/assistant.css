@@ -1292,6 +1292,30 @@
   gap: 0.2rem;
 }
 
+/* memory_used: ярлык + ссылки на процитированные заметки в одну строку с переносом. */
+.assistant-message__step-memory-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.assistant-message__step-memory-link {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--accent-purple);
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+}
+
+.assistant-message__step-memory-link:hover {
+  text-decoration: none;
+  opacity: 0.85;
+}
+
 .assistant-message__proposal {
   display: flex;
   flex-direction: column;
@@ -3060,6 +3084,12 @@
   border: 1px solid var(--border-default);
   border-radius: 8px;
   background: var(--surface-raised);
+}
+
+/* Заметка, на которую привёл чип «Использована память» из чата (?note={id}). */
+.assistant-memory-note--highlight {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 1px var(--accent-purple);
 }
 
 .assistant-memory__form {
