@@ -64,6 +64,27 @@ const onInput = (event) => {
   resize();
 };
 
+// Вставка из буфера часто тащит ведущие/хвостовые пустые строки и пробелы
+// (например при копировании из редактора). Обрезаем их у вставляемого фрагмента,
+// вставляя в текущую позицию каретки; если чистить нечего — отдаём дефолтную вставку.
+const onPaste = (event) => {
+  const node = textareaRef.value;
+  const pasted = event.clipboardData?.getData("text");
+  if (!node || typeof pasted !== "string") return;
+  const trimmed = pasted.replace(/^\s+/, "").replace(/\s+$/, "");
+  if (trimmed === pasted) return;
+  event.preventDefault();
+  const start = node.selectionStart ?? node.value.length;
+  const end = node.selectionEnd ?? node.value.length;
+  const next = node.value.slice(0, start) + trimmed + node.value.slice(end);
+  emit("update:modelValue", next);
+  nextTick(() => {
+    const caret = start + trimmed.length;
+    node.setSelectionRange(caret, caret);
+    resize();
+  });
+};
+
 const onKeydown = (event) => {
   if (event.key !== "Enter" || event.isComposing) return;
   if (event.shiftKey) return;
@@ -109,6 +130,7 @@ watch(
         :disabled="disabled"
         :value="modelValue"
         @input="onInput"
+        @paste="onPaste"
         @keydown="onKeydown"
       />
       <div class="assistant-composer__toolbar">
