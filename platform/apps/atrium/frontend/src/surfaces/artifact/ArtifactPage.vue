@@ -11,6 +11,7 @@ import { deleteAssistantSkillRun, readAssistantSkillRun } from "../../lib/assist
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 import DigestNewspaperRenderer from "./renderers/DigestNewspaperRenderer.vue";
 import DigestRunRenderer from "./renderers/DigestRunRenderer.vue";
+import TableRunRenderer from "./renderers/TableRunRenderer.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -73,6 +74,8 @@ function rendererFor(schema) {
       return DigestNewspaperRenderer;
     case "digest_run.v1":
       return DigestRunRenderer;
+    case "table.v1":
+      return TableRunRenderer;
     default:
       return null;
   }
