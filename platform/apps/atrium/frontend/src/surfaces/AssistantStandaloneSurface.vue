@@ -49,6 +49,13 @@ const SIDEBAR_DEFAULT_WIDTH = 280;
 
 const route = useRoute();
 const router = useRouter();
+
+// Канонический SSoT-хаб устройств — на atrium-хосте (/account). В ассистент-табе панель не
+// дублирует управление, а ведёт туда ссылкой; вне assistant-хоста ссылка не нужна (пусто).
+const devicesSsotHref = String(window.location.hostname || "").startsWith("assistant.")
+  ? `${window.location.origin.replace("://assistant.", "://atrium.")}/account`
+  : "";
+
 const coreStore = useAssistantStore();
 const sessionsStore = useAssistantSessionsStore();
 const skillsStore = useAssistantSkillsStore();
@@ -804,7 +811,7 @@ function savePreferredTarget(value) {
         v-if="activeTab === 'devices'"
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--full"
       >
-        <AssistantDevicesPanel :t="t" />
+        <AssistantDevicesPanel :t="t" :ssot-href="devicesSsotHref" />
       </section>
 
       <!-- Artifacts tab — paginated список skill_run artifacts текущего юзера. -->

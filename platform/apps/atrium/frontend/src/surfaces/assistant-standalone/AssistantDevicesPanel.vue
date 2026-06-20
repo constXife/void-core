@@ -5,7 +5,11 @@ import QRCode from "qrcode";
 import { useCompanionDevicesStore } from "../../stores/companion-devices.js";
 
 const props = defineProps({
-  t: { type: Function, required: true }
+  t: { type: Function, required: true },
+  // Канонический SSoT-хаб устройств (atrium /account). Когда задан (панель показана не
+  // на atrium-хосте, а в ассистент-табе) — управление device'ами не дублируется здесь, а
+  // ведёт по ссылке туда: ряды и «Добавить устройство» становятся переходом на ssotHref.
+  ssotHref: { type: String, default: "" }
 });
 const t = (key, vars = {}) => props.t(key, vars);
 
@@ -65,7 +69,15 @@ const onRevoke = (device) => {
   store.revokeDevice(device.id);
 };
 
-const onAddDevice = () => store.startPairing();
+// На ассистент-хосте «Добавить устройство» уводит в SSoT-хаб (там сам pairing-флоу);
+// на atrium /account (ssotHref пуст) — разворачивает локальную карточку привязки.
+const onAddDevice = () => {
+  if (props.ssotHref) {
+    window.location.assign(props.ssotHref);
+    return;
+  }
+  store.startPairing();
+};
 const onCancelPairing = () => store.stopPairing();
 const onConfirm = (grantId) => store.confirmPending(grantId);
 const onReject = (grantId) => store.rejectPending(grantId);
@@ -94,63 +106,13 @@ const onCopyCode = async () => {
 <template>
   <section class="assistant-devices">
     <header class="assistant-devices__head">
-      <div>
-        <h2 class="assistant-devices__title">{{ t("assistant.devices.title") }}</h2>
-        <p class="assistant-devices__intro">{{ t("assistant.devices.intro") }}</p>
-      </div>
-      <button v-if="!pairing" type="button" class="assistant-devices__add" @click="onAddDevice">
-        {{ t("assistant.devices.add") }}
-      </button>
+      <h2 class="assistant-devices__title">{{ t("assistant.devices.title") }}</h2>
+      <p class="assistant-devices__intro">{{ t("assistant.devices.intro") }}</p>
     </header>
 
     <p v-if="error" class="assistant-devices__error" role="alert">{{ error }}</p>
 
-    <!-- Pairing: QR + ожидание подтверждения -->
-    <div v-if="pairing" class="assistant-devices__pairing">
-      <div class="assistant-devices__qr-wrap">
-        <img v-if="qrImage" :src="qrImage" :alt="t('assistant.devices.scanHint')" class="assistant-devices__qr" />
-        <p class="assistant-devices__scan-hint">{{ t("assistant.devices.scanHint") }}</p>
-      </div>
-
-      <div v-if="pairing?.qrPayload" class="assistant-devices__code-wrap">
-        <p class="assistant-devices__code-hint">{{ t("assistant.devices.codeHint") }}</p>
-        <code class="assistant-devices__code">{{ pairing.qrPayload }}</code>
-        <button type="button" class="assistant-devices__copy" @click="onCopyCode">
-          {{ copied ? t("assistant.devices.copiedCode") : t("assistant.devices.copyCode") }}
-        </button>
-        <div v-if="!pending.length" class="assistant-devices__freshness">
-          <div class="assistant-devices__freshness-track">
-            <div class="assistant-devices__freshness-bar" :style="{ width: freshnessPct + '%' }"></div>
-          </div>
-          <span class="assistant-devices__freshness-text">
-            {{ t("assistant.devices.codeExpiresIn", { seconds: secondsLeft }) }}
-          </span>
-        </div>
-      </div>
-
-      <div v-if="pending.length" class="assistant-devices__requests">
-        <div v-for="req in pending" :key="req.grant_id" class="assistant-devices__request">
-          <span class="assistant-devices__request-label">
-            {{ t("assistant.devices.requestLabel", { name: req.display_name, platform: req.platform }) }}
-          </span>
-          <div class="assistant-devices__request-actions">
-            <button type="button" class="assistant-devices__confirm" @click="onConfirm(req.grant_id)">
-              {{ t("assistant.devices.confirm") }}
-            </button>
-            <button type="button" class="assistant-devices__reject" @click="onReject(req.grant_id)">
-              {{ t("assistant.devices.reject") }}
-            </button>
-          </div>
-        </div>
-      </div>
-      <p v-else class="assistant-devices__waiting">{{ t("assistant.devices.waiting") }}</p>
-
-      <button type="button" class="assistant-devices__cancel" @click="onCancelPairing">
-        {{ t("assistant.devices.cancelPairing") }}
-      </button>
-    </div>
-
-    <!-- Список устройств -->
+    <!-- Список устройств. Вне atrium-хоста (ssotHref задан) ряд — ссылка в SSoT-хаб. -->
     <p v-if="loading && devices.length === 0" class="assistant-devices__hint">
       {{ t("assistant.devices.loading") }}
     </p>
@@ -159,10 +121,15 @@ const onCopyCode = async () => {
     </p>
     <ul v-else class="assistant-devices__list">
       <li v-for="device in devices" :key="device.id" class="assistant-devices__item">
-        <div class="assistant-devices__item-main">
+        <component
+          :is="ssotHref ? 'a' : 'div'"
+          :href="ssotHref || undefined"
+          class="assistant-devices__item-main"
+          :class="{ 'assistant-devices__item-main--link': ssotHref }"
+        >
           <span class="assistant-devices__item-name">{{ deviceName(device) }}</span>
           <span class="assistant-devices__item-platform">{{ device.platform }}</span>
-        </div>
+        </component>
         <div class="assistant-devices__badges">
           <span v-if="device.has_session_key" class="assistant-devices__badge">
             {{ t("assistant.devices.badge.session") }}
@@ -176,5 +143,63 @@ const onCopyCode = async () => {
         </button>
       </li>
     </ul>
+
+    <!-- Низ: «Добавить устройство» внизу; карточка привязки разворачивается на месте кнопки. -->
+    <div class="assistant-devices__footer">
+      <transition name="assistant-devices__unfold">
+        <div v-if="pairing && !ssotHref" class="assistant-devices__pairing">
+          <div class="assistant-devices__qr-wrap">
+            <img v-if="qrImage" :src="qrImage" :alt="t('assistant.devices.scanHint')" class="assistant-devices__qr" />
+            <p class="assistant-devices__scan-hint">{{ t("assistant.devices.scanHint") }}</p>
+          </div>
+
+          <div v-if="pairing?.qrPayload" class="assistant-devices__code-wrap">
+            <p class="assistant-devices__code-hint">{{ t("assistant.devices.codeHint") }}</p>
+            <code class="assistant-devices__code">{{ pairing.qrPayload }}</code>
+            <button type="button" class="assistant-devices__copy" @click="onCopyCode">
+              {{ copied ? t("assistant.devices.copiedCode") : t("assistant.devices.copyCode") }}
+            </button>
+            <div v-if="!pending.length" class="assistant-devices__freshness">
+              <div class="assistant-devices__freshness-track">
+                <div class="assistant-devices__freshness-bar" :style="{ width: freshnessPct + '%' }"></div>
+              </div>
+              <span class="assistant-devices__freshness-text">
+                {{ t("assistant.devices.codeExpiresIn", { seconds: secondsLeft }) }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="pending.length" class="assistant-devices__requests">
+            <div v-for="req in pending" :key="req.grant_id" class="assistant-devices__request">
+              <span class="assistant-devices__request-label">
+                {{ t("assistant.devices.requestLabel", { name: req.display_name, platform: req.platform }) }}
+              </span>
+              <div class="assistant-devices__request-actions">
+                <button type="button" class="assistant-devices__confirm" @click="onConfirm(req.grant_id)">
+                  {{ t("assistant.devices.confirm") }}
+                </button>
+                <button type="button" class="assistant-devices__reject" @click="onReject(req.grant_id)">
+                  {{ t("assistant.devices.reject") }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <p v-else class="assistant-devices__waiting">{{ t("assistant.devices.waiting") }}</p>
+
+          <button type="button" class="assistant-devices__cancel" @click="onCancelPairing">
+            {{ t("assistant.devices.cancelPairing") }}
+          </button>
+        </div>
+      </transition>
+
+      <button
+        v-if="!pairing"
+        type="button"
+        class="assistant-devices__add assistant-devices__add--full"
+        @click="onAddDevice"
+      >
+        {{ t("assistant.devices.add") }}
+      </button>
+    </div>
   </section>
 </template>

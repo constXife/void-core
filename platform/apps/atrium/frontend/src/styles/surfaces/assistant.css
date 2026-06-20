@@ -197,9 +197,7 @@
 
 .assistant-devices__head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
 }
 
 .assistant-devices__title {
@@ -224,6 +222,52 @@
   cursor: pointer;
 }
 
+.assistant-devices__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Кнопка внизу — на всю ширину; на её месте разворачивается карточка привязки (unfold). */
+.assistant-devices__add--full {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.65rem 0.9rem;
+  font-weight: 600;
+}
+
+/* Ряд устройства как ссылка в SSoT-хаб (ассистент-таб, ssotHref задан). */
+.assistant-devices__item-main--link {
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.assistant-devices__item-main--link:hover {
+  background: var(--surface-base, rgba(255, 255, 255, 0.05));
+}
+
+/* Unfold карточки привязки на месте кнопки: высота + прозрачность. */
+.assistant-devices__unfold-enter-active,
+.assistant-devices__unfold-leave-active {
+  transition: max-height 0.28s ease, opacity 0.28s ease;
+  overflow: hidden;
+}
+
+.assistant-devices__unfold-enter-from,
+.assistant-devices__unfold-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.assistant-devices__unfold-enter-to,
+.assistant-devices__unfold-leave-from {
+  max-height: 640px;
+  opacity: 1;
+}
+
 .assistant-devices__error {
   color: var(--accent-danger, #ff6b6b);
   font-size: 0.88rem;
@@ -239,6 +283,13 @@
   border: 1px solid var(--border-default);
   border-radius: 12px;
   background: var(--surface-raised);
+}
+
+.assistant-devices__qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
 }
 
 .assistant-devices__qr {
