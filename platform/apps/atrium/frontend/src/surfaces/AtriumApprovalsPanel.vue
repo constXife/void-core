@@ -142,9 +142,9 @@ const onReject = async (item) => {
           <ChevronDown :size="16" class="approvals__chev" />
         </button>
 
-        <div v-if="expanded === item.id" class="approvals__detail">
-          <p v-if="detailLoading" class="approvals__muted">{{ t("approvals.loading") }}</p>
-          <template v-else>
+        <transition name="approvals__expand">
+          <div v-if="expanded === item.id" class="approvals__detail">
+            <!-- Preview доступен из item сразу — рендерим без ожидания fetch (без flicker). -->
             <dl class="approvals__kv">
               <div v-for="[k, v] in previewPairs(item)" :key="k" class="approvals__kv-row">
                 <dt>{{ k }}</dt>
@@ -168,6 +168,7 @@ const onReject = async (item) => {
               </div>
             </dl>
 
+            <!-- Только аудит-голоса требуют fetch — догружаются в свой слот (спиннер лишь тут). -->
             <div v-if="detail?.grants?.length" class="approvals__audit">
               <h3 class="approvals__audit-title">{{ t("approvals.audit") }}</h3>
               <div v-for="(g, i) in detail.grants" :key="i" class="approvals__audit-row">
@@ -176,6 +177,7 @@ const onReject = async (item) => {
                 · {{ g.created_at }}
               </div>
             </div>
+            <p v-else-if="detailLoading" class="approvals__muted">{{ t("approvals.loading") }}</p>
 
             <p v-if="item.error" class="approvals__error">{{ item.error }}</p>
 
@@ -194,8 +196,8 @@ const onReject = async (item) => {
                 {{ t("approvals.reject") }}
               </button>
             </div>
-          </template>
-        </div>
+          </div>
+        </transition>
       </li>
     </ul>
 
@@ -351,6 +353,22 @@ const onReject = async (item) => {
   border-top: 1px solid var(--border-1, #2a2c33);
   display: grid;
   gap: 0.75rem;
+}
+/* Плавное раскрытие карточки (max-height+opacity), чтобы не было резкого прыжка. */
+.approvals__expand-enter-active,
+.approvals__expand-leave-active {
+  transition: max-height 0.22s ease, opacity 0.22s ease;
+  overflow: hidden;
+}
+.approvals__expand-enter-from,
+.approvals__expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.approvals__expand-enter-to,
+.approvals__expand-leave-from {
+  max-height: 520px;
+  opacity: 1;
 }
 .approvals__kv {
   margin: 0;
