@@ -24,9 +24,12 @@ export const useApprovalsStore = defineStore("approvals", () => {
   const items = ref([]);
   const scope = ref("pending"); // pending | all
   const loading = ref(false);
+  const loadingMore = ref(false);
   const error = ref("");
   // Счётчики для индикаторов под-вкладок (сколько ожидает / в истории). best-effort.
   const counts = ref({ pending: 0, history: 0 });
+  // Offset следующей страницы истории (null = больше нет / scope=pending).
+  const nextOffset = ref(null);
 
   const load = async (nextScope = scope.value) => {
     scope.value = nextScope;
@@ -36,10 +39,27 @@ export const useApprovalsStore = defineStore("approvals", () => {
       const query = nextScope === "all" ? "?scope=all" : "";
       const body = await callJson(`/auth/approvals${query}`);
       items.value = Array.isArray(body.approvals) ? body.approvals : [];
+      nextOffset.value = nextScope === "all" ? (body.next_offset ?? null) : null;
     } catch (e) {
       error.value = String(e.message || e);
     } finally {
       loading.value = false;
+    }
+  };
+
+  // «Загрузить ещё» для истории: offset-страница, дописывается в конец списка.
+  const loadMore = async () => {
+    if (nextOffset.value == null || loadingMore.value) return;
+    loadingMore.value = true;
+    try {
+      const body = await callJson(`/auth/approvals?scope=all&offset=${nextOffset.value}`);
+      const more = Array.isArray(body.approvals) ? body.approvals : [];
+      items.value = [...items.value, ...more];
+      nextOffset.value = body.next_offset ?? null;
+    } catch (e) {
+      error.value = String(e.message || e);
+    } finally {
+      loadingMore.value = false;
     }
   };
 
@@ -64,5 +84,18 @@ export const useApprovalsStore = defineStore("approvals", () => {
     await refreshCounts();
   };
 
-  return { items, scope, loading, error, counts, load, loadDetail, reject, refreshCounts };
+  return {
+    items,
+    scope,
+    loading,
+    loadingMore,
+    error,
+    counts,
+    nextOffset,
+    load,
+    loadMore,
+    loadDetail,
+    reject,
+    refreshCounts
+  };
 });

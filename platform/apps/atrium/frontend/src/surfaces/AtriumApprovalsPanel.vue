@@ -13,7 +13,7 @@ const props = defineProps({
 const t = (key, vars = {}) => props.t(key, vars);
 
 const store = useApprovalsStore();
-const { items, scope, loading, error, counts } = storeToRefs(store);
+const { items, scope, loading, loadingMore, error, counts, nextOffset } = storeToRefs(store);
 
 const expanded = ref(null); // id раскрытой карточки
 const detail = ref(null);
@@ -198,6 +198,16 @@ const onReject = async (item) => {
         </div>
       </li>
     </ul>
+
+    <button
+      v-if="nextOffset != null"
+      type="button"
+      class="approvals__more"
+      :disabled="loadingMore"
+      @click="store.loadMore()"
+    >
+      {{ loadingMore ? t("approvals.loading") : t("approvals.loadMore") }}
+    </button>
   </section>
 </template>
 
@@ -396,6 +406,23 @@ const onReject = async (item) => {
   margin-left: auto;
 }
 .approvals__reject:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.approvals__more {
+  justify-self: start;
+  background: transparent;
+  border: 1px solid var(--border-1, #2a2c33);
+  color: var(--ink-secondary, #94a3b8);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.approvals__more:hover {
+  color: var(--ink-primary, #f8fafc);
+}
+.approvals__more:disabled {
   opacity: 0.6;
   cursor: default;
 }

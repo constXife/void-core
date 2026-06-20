@@ -19,6 +19,9 @@ const props = defineProps({
 const open = ref(false);
 const items = ref([]); // newest-first; кадры { id, event, session_id, data }
 const lastSeenId = ref(0);
+const nextCursor = ref(null); // id для следующей страницы истории (keyset), null = дальше пусто
+const loadingMore = ref(false);
+const expanded = ref(false); // догружали историю → не каппим живые prepend'ы (иначе срежет догрузку)
 let connection = null;
 
 const unreadCount = computed(
@@ -41,7 +44,8 @@ const upsert = (frame) => {
   const id = Number(frame?.id || 0);
   if (!id || items.value.some((item) => Number(item.id) === id)) return;
   items.value.unshift(frame);
-  if (items.value.length > 100) items.value.splice(100);
+  // Каппим живой prepend только пока историю не догружали — иначе splice срежет догрузку.
+  if (!expanded.value && items.value.length > 100) items.value.splice(100);
 };
 
 const loadRecent = async () => {
@@ -49,9 +53,30 @@ const loadRecent = async () => {
     const body = await callJson("/auth/events/recent");
     items.value = Array.isArray(body.events) ? body.events : []; // recent отдаёт newest-first
     lastSeenId.value = Number(body.last_seen_id || 0);
+    nextCursor.value = body.next_cursor ?? null;
   } catch (error) {
     // лента не критична — остаётся пустой/прежней, но ошибку не глотаем
     console.error("void: notification feed recent load failed", error);
+  }
+};
+
+// «Загрузить ещё»: keyset-страница старше курсора, дописывается в конец (старые внизу).
+const loadMore = async () => {
+  if (nextCursor.value == null || loadingMore.value) return;
+  loadingMore.value = true;
+  expanded.value = true;
+  try {
+    const body = await callJson(`/auth/events/recent?before=${nextCursor.value}&limit=50`);
+    const more = Array.isArray(body.events) ? body.events : [];
+    const known = new Set(items.value.map((item) => Number(item.id)));
+    for (const event of more) {
+      if (!known.has(Number(event.id))) items.value.push(event);
+    }
+    nextCursor.value = body.next_cursor ?? null;
+  } catch (error) {
+    console.error("void: notification feed load-more failed", error);
+  } finally {
+    loadingMore.value = false;
   }
 };
 
@@ -178,6 +203,15 @@ const openApprovalItem = (item) => {
             </div>
           </li>
         </ul>
+        <button
+          v-if="nextCursor != null"
+          type="button"
+          class="notif__more"
+          :disabled="loadingMore"
+          @click="loadMore"
+        >
+          {{ loadingMore ? t("feed.loading") : t("feed.loadMore") }}
+        </button>
       </div>
     </template>
   </div>
@@ -271,6 +305,24 @@ const openApprovalItem = (item) => {
   margin-top: 0.1rem;
   color: var(--ink-secondary, #94a3b8);
   flex: none;
+}
+.notif__more {
+  width: calc(100% - 1.2rem);
+  margin: 0.2rem 0.6rem 0.4rem;
+  background: transparent;
+  border: 1px solid var(--border-1, #2a2c33);
+  color: var(--ink-secondary, #94a3b8);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.notif__more:hover {
+  color: var(--ink-primary, #f8fafc);
+}
+.notif__more:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 .notif__item-main {
   min-width: 0;
