@@ -41,6 +41,23 @@ watch(
   }
 );
 
+// У части устройств display_name приходит "localhost" (клиент не передал имя хоста) —
+// показываем локализованный fallback по платформе.
+const deviceName = (device) => {
+  const raw = device?.display_name;
+  if (raw && raw.trim().toLowerCase() !== "localhost") {
+    return raw;
+  }
+  const platform = String(device?.platform || "").toLowerCase();
+  if (platform === "macos") {
+    return t("assistant.devices.fallback.macos");
+  }
+  if (platform === "ios") {
+    return t("assistant.devices.fallback.ios");
+  }
+  return t("assistant.devices.fallback.other");
+};
+
 const onRevoke = (device) => {
   if (!window.confirm(t("assistant.devices.revokeConfirm", { name: device.display_name }))) {
     return;
@@ -143,7 +160,7 @@ const onCopyCode = async () => {
     <ul v-else class="assistant-devices__list">
       <li v-for="device in devices" :key="device.id" class="assistant-devices__item">
         <div class="assistant-devices__item-main">
-          <span class="assistant-devices__item-name">{{ device.display_name }}</span>
+          <span class="assistant-devices__item-name">{{ deviceName(device) }}</span>
           <span class="assistant-devices__item-platform">{{ device.platform }}</span>
         </div>
         <div class="assistant-devices__badges">
