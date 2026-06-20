@@ -25,6 +25,8 @@ export const useApprovalsStore = defineStore("approvals", () => {
   const scope = ref("pending"); // pending | all
   const loading = ref(false);
   const error = ref("");
+  // Счётчики для индикаторов под-вкладок (сколько ожидает / в истории). best-effort.
+  const counts = ref({ pending: 0, history: 0 });
 
   const load = async (nextScope = scope.value) => {
     scope.value = nextScope;
@@ -41,13 +43,26 @@ export const useApprovalsStore = defineStore("approvals", () => {
     }
   };
 
+  // Один all-fetch даёт оба счётчика: pending = awaiting, history = остальные (терминальные).
+  const refreshCounts = async () => {
+    try {
+      const body = await callJson("/auth/approvals?scope=all");
+      const all = Array.isArray(body.approvals) ? body.approvals : [];
+      const pending = all.filter((a) => a.status === "awaiting_approval").length;
+      counts.value = { pending, history: all.length - pending };
+    } catch {
+      // Счётчики — индикатор, а не критичные данные: молча оставляем прежние.
+    }
+  };
+
   // Детали одного запроса + аудит-голоса (кто/метод/устройство/когда).
   const loadDetail = async (id) => callJson(`/auth/approvals/${id}`);
 
   const reject = async (id) => {
     await callJson(`/auth/approvals/${id}/reject`, { method: "POST" });
     await load(scope.value);
+    await refreshCounts();
   };
 
-  return { items, scope, loading, error, load, loadDetail, reject };
+  return { items, scope, loading, error, counts, load, loadDetail, reject, refreshCounts };
 });

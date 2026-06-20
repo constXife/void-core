@@ -13,14 +13,17 @@ const props = defineProps({
 const t = (key, vars = {}) => props.t(key, vars);
 
 const store = useApprovalsStore();
-const { items, scope, loading, error } = storeToRefs(store);
+const { items, scope, loading, error, counts } = storeToRefs(store);
 
 const expanded = ref(null); // id раскрытой карточки
 const detail = ref(null);
 const detailLoading = ref(false);
 const busy = ref("");
 
-onMounted(() => store.load("pending"));
+onMounted(() => {
+  store.load("pending");
+  store.refreshCounts(); // индикаторы под-вкладок
+});
 
 const TERMINAL = new Set(["completed", "failed", "rejected", "cancelled", "expired"]);
 const isPending = (s) => s === "awaiting_approval";
@@ -106,6 +109,7 @@ const onReject = async (item) => {
         @click="store.load('pending')"
       >
         {{ t("approvals.tab.pending") }}
+        <span v-if="counts.pending" class="approvals__tab-count">{{ counts.pending }}</span>
       </button>
       <button
         class="approvals__tab"
@@ -114,6 +118,7 @@ const onReject = async (item) => {
         @click="store.load('all')"
       >
         {{ t("approvals.tab.history") }}
+        <span v-if="counts.history" class="approvals__tab-count">{{ counts.history }}</span>
       </button>
     </div>
 
@@ -222,6 +227,9 @@ const onReject = async (item) => {
   gap: 0.5rem;
 }
 .approvals__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: transparent;
   border: 1px solid var(--border-1, #2a2c33);
   color: var(--ink-secondary, #94a3b8);
@@ -234,6 +242,17 @@ const onReject = async (item) => {
   background: var(--surface-2, #1b1d23);
   color: var(--ink-primary, #f8fafc);
   border-color: color-mix(in srgb, var(--accent, #5b8def) 50%, var(--border-1, #2a2c33));
+}
+.approvals__tab-count {
+  min-width: 1.15rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-secondary, #94a3b8) 22%, transparent);
+  color: var(--ink-primary, #f8fafc);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.25rem;
 }
 .approvals__muted {
   color: var(--ink-secondary, #94a3b8);
