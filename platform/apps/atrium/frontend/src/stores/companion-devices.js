@@ -31,7 +31,10 @@ export const useCompanionDevicesStore = defineStore("companion-devices", () => {
   // Pairing-сессия выдающей стороны.
   const pairing = ref(null); // { grantId, secret, qrPayload, expiresAt }
   const pending = ref([]); // claimed grants, ждущие подтверждения
+  const secondsLeft = ref(0); // до протухания текущего grant'а (для индикатора)
   let pollTimer = null;
+  let tickTimer = null;
+  let refreshing = false; // защита от перекрытия авто-рефрешей
 
   const loadDevices = async () => {
     loading.value = true;
@@ -53,23 +56,31 @@ export const useCompanionDevicesStore = defineStore("companion-devices", () => {
 
   const startPairing = async () => {
     error.value = "";
-    const body = await callJson("/companion/pairing/grant", { method: "POST" });
-    // QR несёт origin инсталляции + одноразовый secret — companion-сканер
-    // знает, куда идти, без ручного ввода адреса.
-    const qrPayload = JSON.stringify({ u: window.location.origin, s: body.secret });
-    pairing.value = {
-      grantId: body.grant_id,
-      secret: body.secret,
-      qrPayload,
-      expiresAt: body.expires_at
-    };
+    refreshing = true;
+    try {
+      const body = await callJson("/companion/pairing/grant", { method: "POST" });
+      // QR несёт origin инсталляции + одноразовый secret — companion-сканер
+      // знает, куда идти, без ручного ввода адреса.
+      const qrPayload = JSON.stringify({ u: window.location.origin, s: body.secret });
+      pairing.value = {
+        grantId: body.grant_id,
+        secret: body.secret,
+        qrPayload,
+        expiresAt: body.expires_at
+      };
+    } finally {
+      refreshing = false;
+    }
     startPolling();
+    startCountdown();
   };
 
   const stopPairing = () => {
     pairing.value = null;
     pending.value = [];
+    secondsLeft.value = 0;
     stopPolling();
+    stopCountdown();
   };
 
   const pollPending = async () => {
@@ -107,12 +118,44 @@ export const useCompanionDevicesStore = defineStore("companion-devices", () => {
     }
   }
 
+  function startCountdown() {
+    stopCountdown();
+    tickCountdown();
+    tickTimer = window.setInterval(tickCountdown, 1000);
+  }
+
+  function stopCountdown() {
+    if (tickTimer) {
+      window.clearInterval(tickTimer);
+      tickTimer = null;
+    }
+  }
+
+  // Grant короткоживущий (ADR-0031 §4, TTL ≤ 60с). Пока никто не claim'ит — обновляем
+  // код до протухания, чтобы оператору не приходилось пере-открывать «Добавить устройство».
+  // Если уже есть pending claim — НЕ рефрешим (новый grant оборвал бы активную привязку).
+  function tickCountdown() {
+    const expiresAt = pairing.value?.expiresAt;
+    if (!expiresAt) {
+      secondsLeft.value = 0;
+      return;
+    }
+    const left = Math.max(0, Math.round((new Date(expiresAt).getTime() - Date.now()) / 1000));
+    secondsLeft.value = left;
+    if (left <= 2 && pending.value.length === 0 && !refreshing) {
+      startPairing().catch((e) => {
+        error.value = String(e.message || e);
+      });
+    }
+  }
+
   return {
     devices,
     loading,
     error,
     pairing,
     pending,
+    secondsLeft,
     loadDevices,
     revokeDevice,
     startPairing,

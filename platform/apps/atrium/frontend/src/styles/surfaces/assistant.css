@@ -285,6 +285,36 @@
   user-select: all;
 }
 
+/* Индикатор свежести кода: тонкая полоска + текст обратного отсчёта (авто-рефреш). */
+.assistant-devices__freshness {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.assistant-devices__freshness-track {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.assistant-devices__freshness-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent-purple, var(--ink-secondary));
+  transition: width 1s linear;
+}
+
+.assistant-devices__freshness-text {
+  color: var(--ink-secondary);
+  font-size: 0.78rem;
+}
+
 .assistant-devices__requests {
   width: 100%;
   display: flex;

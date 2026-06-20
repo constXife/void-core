@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import QRCode from "qrcode";
 import { useCompanionDevicesStore } from "../../stores/companion-devices.js";
@@ -10,7 +10,10 @@ const props = defineProps({
 const t = (key, vars = {}) => props.t(key, vars);
 
 const store = useCompanionDevicesStore();
-const { devices, loading, error, pairing, pending } = storeToRefs(store);
+const { devices, loading, error, pairing, pending, secondsLeft } = storeToRefs(store);
+
+// Полоска свежести кода: grant живёт ≤ 60с (ADR-0031 §4), считаем относительно этого max.
+const freshnessPct = computed(() => Math.min(100, Math.max(0, (secondsLeft.value / 60) * 100)));
 
 const qrImage = ref("");
 
@@ -98,6 +101,14 @@ const onCopyCode = async () => {
         <button type="button" class="assistant-devices__copy" @click="onCopyCode">
           {{ copied ? t("assistant.devices.copiedCode") : t("assistant.devices.copyCode") }}
         </button>
+        <div v-if="!pending.length" class="assistant-devices__freshness">
+          <div class="assistant-devices__freshness-track">
+            <div class="assistant-devices__freshness-bar" :style="{ width: freshnessPct + '%' }"></div>
+          </div>
+          <span class="assistant-devices__freshness-text">
+            {{ t("assistant.devices.codeExpiresIn", { seconds: secondsLeft }) }}
+          </span>
+        </div>
       </div>
 
       <div v-if="pending.length" class="assistant-devices__requests">
