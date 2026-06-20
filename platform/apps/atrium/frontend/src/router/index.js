@@ -4,6 +4,7 @@ import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AtriumAccountRoute from "../pages/AtriumAccountRoute.vue";
+import AtriumActivityRoute from "../pages/AtriumActivityRoute.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
@@ -193,6 +194,20 @@ const routes = [
           path: "/approvals",
           name: "approvals",
           redirect: { name: "account", query: { tab: "approvals" } }
+        },
+        {
+          // Страница активности (лента обновлений): полный архив user-событий с фильтрами.
+          // Колокол в хедере уводит сюда ссылкой «Вся активность». Фильтр — в URL (?type=).
+          path: "/activity",
+          component: AppLayout,
+          meta: { workspace: true, authRequired: true, accountRequired: true },
+          children: [
+            {
+              path: "",
+              name: "activity",
+              component: AtriumActivityRoute
+            }
+          ]
         }
       ]),
   {

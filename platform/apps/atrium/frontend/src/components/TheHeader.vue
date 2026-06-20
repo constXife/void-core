@@ -24,6 +24,7 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const goApprovals = () => router.push({ name: "approvals" });
+const goActivity = () => router.push({ name: "activity" });
 
 const { userMenuRef } = storeToRefs(appStore);
 const { t } = appStore;
@@ -127,6 +128,7 @@ watch(me, () => {
           :t="t"
           :lang="currentLang"
           :open-approval="goApprovals"
+          :open-activity="goActivity"
         />
 
         <PlatformAppsMenu current-product="atrium" :lang="currentLang" />

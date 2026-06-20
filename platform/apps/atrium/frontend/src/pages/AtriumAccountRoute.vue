@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantDevicesPanel from "../surfaces/assistant-standalone/AssistantDevicesPanel.vue";
 import AtriumSessionsPanel from "../surfaces/AtriumSessionsPanel.vue";
@@ -10,15 +10,32 @@ import AtriumApprovalsPanel from "../surfaces/AtriumApprovalsPanel.vue";
 // Atrium account-хаб (ADR-0032 §5a / ADR-0033 §7 / ADR-0034): единый раздел профиля —
 // «Устройства» + «Сессии» + «Апрувы» во вкладках (одна кнопка в дропдауне ведёт сюда).
 // Панели переиспользованы (devices из assistant-standalone, sessions/approvals — atrium).
+// Активная вкладка — в URL (?tab=), чтобы deep-link и перезагрузка не сбрасывали вид.
 
 const appStore = useAtriumAppStore();
 const { t } = appStore;
 const { currentLang } = storeToRefs(appStore);
 const route = useRoute();
+const router = useRouter();
 
 const TABS = ["devices", "sessions", "approvals"];
-// Глубокая ссылка ?tab= (напр. редирект /approvals → /account?tab=approvals).
-const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : "devices");
+const tabFromRoute = () => (TABS.includes(route.query.tab) ? route.query.tab : "devices");
+const activeTab = ref(tabFromRoute());
+
+// Клик по вкладке = смена URL (replace: без новой записи в истории); под-параметры (scope и т.п.)
+// сбрасываются — верхняя вкладка задаёт чистый контекст.
+const selectTab = (tab) => {
+  if (tab === activeTab.value) return;
+  router.replace({ query: { tab } });
+};
+
+// Назад/вперёд и deep-link: ведём активную вкладку от URL.
+watch(
+  () => route.query.tab,
+  () => {
+    activeTab.value = tabFromRoute();
+  }
+);
 </script>
 
 <template>
@@ -36,7 +53,7 @@ const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : "device
           class="atrium-account__tab"
           :class="{ 'atrium-account__tab--active': activeTab === 'devices' }"
           :aria-selected="activeTab === 'devices'"
-          @click="activeTab = 'devices'"
+          @click="selectTab('devices')"
         >
           {{ t("account.tab.devices") }}
         </button>
@@ -46,7 +63,7 @@ const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : "device
           class="atrium-account__tab"
           :class="{ 'atrium-account__tab--active': activeTab === 'sessions' }"
           :aria-selected="activeTab === 'sessions'"
-          @click="activeTab = 'sessions'"
+          @click="selectTab('sessions')"
         >
           {{ t("account.tab.sessions") }}
         </button>
@@ -56,7 +73,7 @@ const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : "device
           class="atrium-account__tab"
           :class="{ 'atrium-account__tab--active': activeTab === 'approvals' }"
           :aria-selected="activeTab === 'approvals'"
-          @click="activeTab = 'approvals'"
+          @click="selectTab('approvals')"
         >
           {{ t("account.tab.approvals") }}
         </button>

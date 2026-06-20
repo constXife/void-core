@@ -23,6 +23,7 @@ const uiStore = useUiStore();
 // не из ряда табов чата.
 const goToDevices = () => router.push({ name: "assistant-devices" });
 const goApprovals = () => router.push({ name: "approvals" });
+const goActivity = () => router.push({ name: "activity" });
 
 const { actualRole, authEnabled, loginPageUrl, me } = storeToRefs(authStore);
 const { currentLang, languageLabels } = storeToRefs(uiStore);
@@ -81,6 +82,7 @@ const logout = async () => {
           :t="appStore.t"
           :lang="currentLang"
           :open-approval="goApprovals"
+          :open-activity="goActivity"
         />
 
         <PlatformAppsMenu current-product="assistant" :lang="currentLang" />

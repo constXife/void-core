@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
+import { useRoute, useRouter } from "vue-router";
 import { Smartphone, ChevronDown } from "lucide-vue-next";
 import { useApprovalsStore } from "../stores/approvals.js";
 import { groupByDay } from "../lib/group-by-day.js";
@@ -18,6 +19,23 @@ const t = (key, vars = {}) => props.t(key, vars);
 const store = useApprovalsStore();
 const { items, scope, loading, loadingMore, error, counts, nextOffset } = storeToRefs(store);
 
+const route = useRoute();
+const router = useRouter();
+
+// Под-вкладка (Ожидают/История) — в URL (?scope=history), чтобы перезагрузка не сбрасывала вид.
+// store scope "all" ↔ url "history"; "pending" ↔ url-параметр отсутствует (дефолт).
+const scopeFromRoute = () => (route.query.scope === "history" ? "all" : "pending");
+const selectScope = (next) => {
+  const query = { ...route.query };
+  if (next === "all") query.scope = "history";
+  else delete query.scope;
+  router.replace({ query }); // watch ниже выполнит store.load — без двойной загрузки
+};
+watch(
+  () => route.query.scope,
+  () => store.load(scopeFromRoute())
+);
+
 // Дневные секции с заголовками (Сегодня/Вчера/дата) — общий рендер с лентой обновлений.
 const dayGroups = computed(() =>
   groupByDay(items.value, { t: props.t, locale: props.lang })
@@ -29,7 +47,7 @@ const detailLoading = ref(false);
 const busy = ref("");
 
 onMounted(() => {
-  store.load("pending");
+  store.load(scopeFromRoute());
   store.refreshCounts(); // индикаторы под-вкладок
 });
 
@@ -114,7 +132,7 @@ const onReject = async (item) => {
         class="approvals__tab"
         :class="{ 'approvals__tab--active': scope === 'pending' }"
         type="button"
-        @click="store.load('pending')"
+        @click="selectScope('pending')"
       >
         {{ t("approvals.tab.pending") }}
         <span v-if="counts.pending" class="approvals__tab-count">{{ counts.pending }}</span>
@@ -123,7 +141,7 @@ const onReject = async (item) => {
         class="approvals__tab"
         :class="{ 'approvals__tab--active': scope === 'all' }"
         type="button"
-        @click="store.load('all')"
+        @click="selectScope('all')"
       >
         {{ t("approvals.tab.history") }}
         <span v-if="counts.history" class="approvals__tab-count">{{ counts.history }}</span>
