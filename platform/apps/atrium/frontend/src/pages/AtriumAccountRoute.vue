@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantDevicesPanel from "../surfaces/assistant-standalone/AssistantDevicesPanel.vue";
@@ -12,6 +13,7 @@ import AtriumApprovalsPanel from "../surfaces/AtriumApprovalsPanel.vue";
 
 const appStore = useAtriumAppStore();
 const { t } = appStore;
+const { currentLang } = storeToRefs(appStore);
 const route = useRoute();
 
 const TABS = ["devices", "sessions", "approvals"];
@@ -63,7 +65,7 @@ const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : "device
       <div class="atrium-account__sections">
         <AssistantDevicesPanel v-if="activeTab === 'devices'" :t="t" />
         <AtriumSessionsPanel v-else-if="activeTab === 'sessions'" :t="t" />
-        <AtriumApprovalsPanel v-else :t="t" />
+        <AtriumApprovalsPanel v-else :t="t" :lang="currentLang" />
       </div>
     </div>
   </div>

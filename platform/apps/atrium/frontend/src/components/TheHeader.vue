@@ -122,7 +122,12 @@ watch(me, () => {
           <Sparkles :size="17" />
         </button>
 
-        <PlatformNotificationCenter v-if="hasAccount" :t="t" :open-approval="goApprovals" />
+        <PlatformNotificationCenter
+          v-if="hasAccount"
+          :t="t"
+          :lang="currentLang"
+          :open-approval="goApprovals"
+        />
 
         <PlatformAppsMenu current-product="atrium" :lang="currentLang" />
 

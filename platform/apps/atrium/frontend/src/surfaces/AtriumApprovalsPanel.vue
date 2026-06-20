@@ -1,19 +1,27 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { Smartphone, ChevronDown } from "lucide-vue-next";
 import { useApprovalsStore } from "../stores/approvals.js";
+import { groupByDay } from "../lib/group-by-day.js";
 
 // Web «Апрувы» (ADR-0034) как вкладка account-хаба: очередь pending + история/аудит.
 // approve device_factor — только на устройстве (WYSIWYS); тут просмотр + reject. Тело вынесено
 // из AtriumApprovalsRoute; scroll-контейнер/clearance даёт account-хаб, панель — просто грид.
 const props = defineProps({
-  t: { type: Function, required: true }
+  t: { type: Function, required: true },
+  // Локаль для дневных заголовков (Intl-форматирование дат). См. group-by-day.
+  lang: { type: String, default: "" }
 });
 const t = (key, vars = {}) => props.t(key, vars);
 
 const store = useApprovalsStore();
 const { items, scope, loading, loadingMore, error, counts, nextOffset } = storeToRefs(store);
+
+// Дневные секции с заголовками (Сегодня/Вчера/дата) — общий рендер с лентой обновлений.
+const dayGroups = computed(() =>
+  groupByDay(items.value, { t: props.t, locale: props.lang })
+);
 
 const expanded = ref(null); // id раскрытой карточки
 const detail = ref(null);
@@ -126,8 +134,11 @@ const onReject = async (item) => {
     <p v-else-if="error" class="approvals__error">{{ error }}</p>
     <p v-else-if="!items.length" class="approvals__muted">{{ t("approvals.empty") }}</p>
 
-    <ul v-else class="approvals__list">
-      <li v-for="item in items" :key="item.id" class="approvals__item">
+    <div v-else class="approvals__groups">
+      <section v-for="group in dayGroups" :key="group.key" class="approvals__day">
+        <h3 class="approvals__day-label">{{ group.label }}</h3>
+        <ul class="approvals__list">
+          <li v-for="item in group.items" :key="item.id" class="approvals__item">
         <button class="approvals__row" type="button" @click="toggle(item)">
           <div class="approvals__row-main">
             <span class="approvals__op">{{ titleOf(item) }}</span>
@@ -199,8 +210,10 @@ const onReject = async (item) => {
             </div>
           </div>
         </transition>
-      </li>
-    </ul>
+          </li>
+        </ul>
+      </section>
+    </div>
 
     <button
       v-if="nextOffset != null"
@@ -274,6 +287,24 @@ const onReject = async (item) => {
 .approvals__error {
   color: #f1857a;
   font-size: 0.9rem;
+}
+.approvals__groups {
+  display: grid;
+  gap: 1.1rem;
+  min-width: 0;
+}
+.approvals__day {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.approvals__day-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-secondary, #94a3b8);
 }
 .approvals__list {
   list-style: none;

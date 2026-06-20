@@ -79,6 +79,7 @@ const logout = async () => {
         <PlatformNotificationCenter
           v-if="hasAccount"
           :t="appStore.t"
+          :lang="currentLang"
           :open-approval="goApprovals"
         />
 

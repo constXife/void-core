@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Activity, Bell, Inbox, KeyRound, MessageSquare, ShieldCheck } from "lucide-vue-next";
 import { connectAssistantUserEvents } from "../../lib/assistant-user-events-client.js";
+import { groupByDay } from "../../lib/group-by-day.js";
 
 // Платформенный колокол ленты обновлений для продуктовых хедеров (calendar/finance/inventory).
 // Self-contained: без pinia/vue-router — состояние локальное, i18n через проп `t`. История —
@@ -11,6 +12,8 @@ import { connectAssistantUserEvents } from "../../lib/assistant-user-events-clie
 const props = defineProps({
   t: { type: Function, required: true },
   domain: { type: String, default: "" },
+  // Локаль для дневных заголовков (Intl-форматирование дат). См. group-by-day.
+  lang: { type: String, default: "" },
   // SPA-хост (atrium) передаёт колбэк для in-app навигации на «Апрувы»; продукты не передают —
   // тогда уход на atrium-страницу апрувов по `domain` (cross-origin).
   openApproval: { type: Function, default: null }
@@ -27,6 +30,9 @@ let connection = null;
 const unreadCount = computed(
   () => items.value.filter((item) => Number(item.id) > lastSeenId.value).length
 );
+
+// Дневные секции с заголовками (Сегодня/Вчера/дата) — общий рендер с панелью апрувов.
+const dayGroups = computed(() => groupByDay(items.value, { t: props.t, locale: props.lang }));
 
 async function callJson(path, options = {}) {
   const res = await fetch(path, {
@@ -187,22 +193,27 @@ const openApprovalItem = (item) => {
       <div class="notif__panel">
         <header class="notif__head">{{ t("feed.title") }}</header>
         <p v-if="!items.length" class="notif__empty">{{ t("feed.empty") }}</p>
-        <ul v-else class="notif__list">
-          <li v-for="item in items" :key="item.id" class="notif__item">
-            <component :is="iconFor(item.event)" :size="16" class="notif__item-icon" />
-            <div class="notif__item-main">
-              <span class="notif__item-title">{{ titleFor(item) }}</span>
-              <button
-                v-if="isPendingApproval(item)"
-                class="notif__item-action"
-                type="button"
-                @click="openApprovalItem(item)"
-              >
-                {{ t("feed.open") }}
-              </button>
-            </div>
-          </li>
-        </ul>
+        <div v-else class="notif__groups">
+          <section v-for="group in dayGroups" :key="group.key" class="notif__day">
+            <h4 class="notif__day-label">{{ group.label }}</h4>
+            <ul class="notif__list">
+              <li v-for="item in group.items" :key="item.id" class="notif__item">
+                <component :is="iconFor(item.event)" :size="16" class="notif__item-icon" />
+                <div class="notif__item-main">
+                  <span class="notif__item-title">{{ titleFor(item) }}</span>
+                  <button
+                    v-if="isPendingApproval(item)"
+                    class="notif__item-action"
+                    type="button"
+                    @click="openApprovalItem(item)"
+                  >
+                    {{ t("feed.open") }}
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
         <button
           v-if="nextCursor != null"
           type="button"
@@ -284,10 +295,24 @@ const openApprovalItem = (item) => {
   color: var(--ink-secondary, #94a3b8);
   font-size: 0.9rem;
 }
+.notif__groups {
+  padding: 0.3rem;
+  display: grid;
+  gap: 0.55rem;
+}
+.notif__day-label {
+  margin: 0;
+  padding: 0.15rem 0.3rem 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-secondary, #94a3b8);
+}
 .notif__list {
   list-style: none;
   margin: 0;
-  padding: 0.3rem;
+  padding: 0;
   display: grid;
   gap: 0.15rem;
 }
