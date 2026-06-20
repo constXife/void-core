@@ -143,7 +143,8 @@ const onReject = async (item) => {
         </button>
 
         <transition name="approvals__expand">
-          <div v-if="expanded === item.id" class="approvals__detail">
+          <div v-if="expanded === item.id" class="approvals__detail-wrap">
+            <div class="approvals__detail">
             <!-- Preview доступен из item сразу — рендерим без ожидания fetch (без flicker). -->
             <dl class="approvals__kv">
               <div v-for="[k, v] in previewPairs(item)" :key="k" class="approvals__kv-row">
@@ -177,7 +178,6 @@ const onReject = async (item) => {
                 · {{ g.created_at }}
               </div>
             </div>
-            <p v-else-if="detailLoading" class="approvals__muted">{{ t("approvals.loading") }}</p>
 
             <p v-if="item.error" class="approvals__error">{{ item.error }}</p>
 
@@ -195,6 +195,7 @@ const onReject = async (item) => {
               >
                 {{ t("approvals.reject") }}
               </button>
+            </div>
             </div>
           </div>
         </transition>
@@ -348,26 +349,31 @@ const onReject = async (item) => {
   color: var(--ink-secondary, #94a3b8);
   flex: none;
 }
+.approvals__detail-wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+}
 .approvals__detail {
+  overflow: hidden;
+  min-height: 0;
   padding: 0.5rem 1rem 1rem;
   border-top: 1px solid var(--border-1, #2a2c33);
   display: grid;
   gap: 0.75rem;
 }
-/* Плавное раскрытие карточки (max-height+opacity), чтобы не было резкого прыжка. */
+/* Раскрытие ровно до высоты контента (grid 0fr→1fr) — гладко, без max-height-мисматча. */
 .approvals__expand-enter-active,
 .approvals__expand-leave-active {
-  transition: max-height 0.22s ease, opacity 0.22s ease;
-  overflow: hidden;
+  transition: grid-template-rows 0.24s ease, opacity 0.24s ease;
 }
 .approvals__expand-enter-from,
 .approvals__expand-leave-to {
-  max-height: 0;
+  grid-template-rows: 0fr;
   opacity: 0;
 }
 .approvals__expand-enter-to,
 .approvals__expand-leave-from {
-  max-height: 520px;
+  grid-template-rows: 1fr;
   opacity: 1;
 }
 .approvals__kv {
