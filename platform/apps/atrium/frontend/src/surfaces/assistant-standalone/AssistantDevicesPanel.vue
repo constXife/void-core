@@ -49,6 +49,26 @@ const onAddDevice = () => store.startPairing();
 const onCancelPairing = () => store.stopPairing();
 const onConfirm = (grantId) => store.confirmPending(grantId);
 const onReject = (grantId) => store.rejectPending(grantId);
+
+// Desktop-компаньон (ADR-0031 §6) пэйрится вставкой кода, а не webcam-сканом QR —
+// показываем тот же payload {u,s} текстом с кнопкой копирования.
+const copied = ref(false);
+const onCopyCode = async () => {
+  const code = pairing.value?.qrPayload;
+  if (!code) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(code);
+    copied.value = true;
+    window.setTimeout(() => {
+      copied.value = false;
+    }, 2000);
+  } catch (error) {
+    // Clipboard недоступен (нет secure-context/permission) — код виден для ручного копирования.
+    console.warn("clipboard write failed", error);
+  }
+};
 </script>
 
 <template>
@@ -70,6 +90,14 @@ const onReject = (grantId) => store.rejectPending(grantId);
       <div class="assistant-devices__qr-wrap">
         <img v-if="qrImage" :src="qrImage" :alt="t('assistant.devices.scanHint')" class="assistant-devices__qr" />
         <p class="assistant-devices__scan-hint">{{ t("assistant.devices.scanHint") }}</p>
+      </div>
+
+      <div v-if="pairing?.qrPayload" class="assistant-devices__code-wrap">
+        <p class="assistant-devices__code-hint">{{ t("assistant.devices.codeHint") }}</p>
+        <code class="assistant-devices__code">{{ pairing.qrPayload }}</code>
+        <button type="button" class="assistant-devices__copy" @click="onCopyCode">
+          {{ copied ? t("assistant.devices.copiedCode") : t("assistant.devices.copyCode") }}
+        </button>
       </div>
 
       <div v-if="pending.length" class="assistant-devices__requests">
