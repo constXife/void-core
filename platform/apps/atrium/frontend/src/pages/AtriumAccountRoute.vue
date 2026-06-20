@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from "vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantDevicesPanel from "../surfaces/assistant-standalone/AssistantDevicesPanel.vue";
 import AtriumSessionsPanel from "../surfaces/AtriumSessionsPanel.vue";
@@ -6,10 +7,13 @@ import AtriumSessionsPanel from "../surfaces/AtriumSessionsPanel.vue";
 // Atrium account-хаб (ADR-0032 §5a / ADR-0033 §7): платформенный раздел
 // «Устройства» + «Сессии» на atrium-поверхности (не assistant-таб). Devices-панель
 // переиспользована из assistant-standalone (store same-origin → atrium backend);
-// sessions-панель — реестр web-сессий.
+// sessions-панель — реестр web-сессий. Разведены по вкладкам, чтобы страница не была
+// длинной стопкой и контент не упирался в fixed-хедер/футер.
 
 const appStore = useAtriumAppStore();
 const { t } = appStore;
+
+const activeTab = ref("devices");
 </script>
 
 <template>
@@ -20,9 +24,32 @@ const { t } = appStore;
         <p class="atrium-account__intro">{{ t("account.intro") }}</p>
       </header>
 
+      <nav class="atrium-account__tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          class="atrium-account__tab"
+          :class="{ 'atrium-account__tab--active': activeTab === 'devices' }"
+          :aria-selected="activeTab === 'devices'"
+          @click="activeTab = 'devices'"
+        >
+          {{ t("account.tab.devices") }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="atrium-account__tab"
+          :class="{ 'atrium-account__tab--active': activeTab === 'sessions' }"
+          :aria-selected="activeTab === 'sessions'"
+          @click="activeTab = 'sessions'"
+        >
+          {{ t("account.tab.sessions") }}
+        </button>
+      </nav>
+
       <div class="atrium-account__sections">
-        <AssistantDevicesPanel :t="t" />
-        <AtriumSessionsPanel :t="t" />
+        <AssistantDevicesPanel v-if="activeTab === 'devices'" :t="t" />
+        <AtriumSessionsPanel v-else :t="t" />
       </div>
     </div>
   </div>
@@ -45,7 +72,7 @@ const { t } = appStore;
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
-  padding: 6rem clamp(1rem, 4vw, 2rem) 5rem;
+  padding: 7.5rem clamp(1rem, 4vw, 2rem) 6.5rem;
   box-sizing: border-box;
 }
 
@@ -53,7 +80,7 @@ const { t } = appStore;
    увеличиваем верхний clearance, чтобы заголовок не подлезал под него. */
 @media (max-width: 1024px) {
   .atrium-account {
-    padding-top: 7.5rem;
+    padding-top: 9rem;
   }
 }
 
@@ -90,6 +117,36 @@ const { t } = appStore;
   color: color-mix(in srgb, var(--ink-secondary, #94a3b8) 88%, transparent);
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+/* Вкладки Устройства/Сессии — подчёркивание активной, без длинной стопки. */
+.atrium-account__tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border-default, rgba(148, 163, 184, 0.18));
+}
+
+.atrium-account__tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.6rem 0.95rem;
+  color: var(--ink-secondary, #94a3b8);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.atrium-account__tab:hover {
+  color: var(--ink-primary, #f8fafc);
+}
+
+.atrium-account__tab--active {
+  color: var(--ink-primary, #f8fafc);
+  border-bottom-color: var(--accent-purple, #a78bfa);
 }
 
 .atrium-account__sections {
