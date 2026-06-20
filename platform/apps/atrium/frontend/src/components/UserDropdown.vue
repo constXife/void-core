@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Gauge, ShieldCheck, Smartphone, UserCog } from "lucide-vue-next";
+import { Gauge, Smartphone, UserCog } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import PlatformSettingsRow from "../platform/components/PlatformSettingsRow.vue";
 import PlatformUserDropdownPanel from "../platform/components/PlatformUserDropdownPanel.vue";
@@ -56,6 +56,7 @@ const handleLogout = async () => {
     :language-labels="languageLabels"
     :language-options="languageOptions"
     :show-language="showLanguage"
+    :show-settings-link="false"
     :t="appStore.t"
     @set-lang="languageSelection = $event"
     @set-theme="themeSelection = $event"
@@ -75,14 +76,6 @@ const handleLogout = async () => {
       >
         <Smartphone :size="14" />
         {{ appStore.t("account.nav") }}
-      </RouterLink>
-      <RouterLink
-        class="user-dropdown-v2__account"
-        :to="{ name: 'approvals' }"
-        @click="showUserDropdown = false"
-      >
-        <ShieldCheck :size="14" />
-        {{ appStore.t("approvals.nav") }}
       </RouterLink>
     </template>
 

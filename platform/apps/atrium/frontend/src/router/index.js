@@ -4,7 +4,6 @@ import AdminLayout from "../layouts/AdminLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import AtriumHomePage from "../pages/AtriumHomePage.vue";
 import AtriumAccountRoute from "../pages/AtriumAccountRoute.vue";
-import AtriumApprovalsRoute from "../pages/AtriumApprovalsRoute.vue";
 import AssistantProductRoute from "../pages/AssistantProductRoute.vue";
 import AssistantRunReportRoute from "../pages/AssistantRunReportRoute.vue";
 import AssistantRunsRoute from "../pages/AssistantRunsRoute.vue";
@@ -189,17 +188,11 @@ const routes = [
           ]
         },
         {
-          // История/очередь апрувов (ADR-0034): account-уровень на atrium-поверхности.
+          // Апрувы (ADR-0034) консолидированы во вкладку account-хаба. Имя сохранено для
+          // существующих ссылок (notification center, deep-link) — редиректим в хаб.
           path: "/approvals",
-          component: AppLayout,
-          meta: { workspace: true, authRequired: true, accountRequired: true },
-          children: [
-            {
-              path: "",
-              name: "approvals",
-              component: AtriumApprovalsRoute
-            }
-          ]
+          name: "approvals",
+          redirect: { name: "account", query: { tab: "approvals" } }
         }
       ]),
   {

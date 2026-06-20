@@ -24,6 +24,12 @@ const props = defineProps({
   showLanguage: {
     type: Boolean,
     default: true
+  },
+  // Ссылка «Настройки» (профиль). На atrium account-хабе скрыта — её роль взяла одна кнопка
+  // «Аккаунт» + быстрые тоглы; на других поверхностях (assistant) остаётся.
+  showSettingsLink: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -106,7 +112,7 @@ const currentLanguageLabel = computed(() => String(props.currentLang || "ru").to
 
     <slot name="account-actions" />
 
-    <a class="platform-user-dropdown-panel__action" :href="profileHref">
+    <a v-if="showSettingsLink" class="platform-user-dropdown-panel__action" :href="profileHref">
       <Settings :size="14" />
       {{ t("app.settings") }}
     </a>

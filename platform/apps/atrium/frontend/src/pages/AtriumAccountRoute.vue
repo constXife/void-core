@@ -1,19 +1,22 @@
 <script setup>
 import { ref } from "vue";
+import { useRoute } from "vue-router";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantDevicesPanel from "../surfaces/assistant-standalone/AssistantDevicesPanel.vue";
 import AtriumSessionsPanel from "../surfaces/AtriumSessionsPanel.vue";
+import AtriumApprovalsPanel from "../surfaces/AtriumApprovalsPanel.vue";
 
-// Atrium account-хаб (ADR-0032 §5a / ADR-0033 §7): платформенный раздел
-// «Устройства» + «Сессии» на atrium-поверхности (не assistant-таб). Devices-панель
-// переиспользована из assistant-standalone (store same-origin → atrium backend);
-// sessions-панель — реестр web-сессий. Разведены по вкладкам, чтобы страница не была
-// длинной стопкой и контент не упирался в fixed-хедер/футер.
+// Atrium account-хаб (ADR-0032 §5a / ADR-0033 §7 / ADR-0034): единый раздел профиля —
+// «Устройства» + «Сессии» + «Апрувы» во вкладках (одна кнопка в дропдауне ведёт сюда).
+// Панели переиспользованы (devices из assistant-standalone, sessions/approvals — atrium).
 
 const appStore = useAtriumAppStore();
 const { t } = appStore;
+const route = useRoute();
 
-const activeTab = ref("devices");
+const TABS = ["devices", "sessions", "approvals"];
+// Глубокая ссылка ?tab= (напр. редирект /approvals → /account?tab=approvals).
+const activeTab = ref(TABS.includes(route.query.tab) ? route.query.tab : "devices");
 </script>
 
 <template>
@@ -45,11 +48,22 @@ const activeTab = ref("devices");
         >
           {{ t("account.tab.sessions") }}
         </button>
+        <button
+          type="button"
+          role="tab"
+          class="atrium-account__tab"
+          :class="{ 'atrium-account__tab--active': activeTab === 'approvals' }"
+          :aria-selected="activeTab === 'approvals'"
+          @click="activeTab = 'approvals'"
+        >
+          {{ t("account.tab.approvals") }}
+        </button>
       </nav>
 
       <div class="atrium-account__sections">
         <AssistantDevicesPanel v-if="activeTab === 'devices'" :t="t" />
-        <AtriumSessionsPanel v-else :t="t" />
+        <AtriumSessionsPanel v-else-if="activeTab === 'sessions'" :t="t" />
+        <AtriumApprovalsPanel v-else :t="t" />
       </div>
     </div>
   </div>
