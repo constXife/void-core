@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { Smartphone, ChevronDown } from "lucide-vue-next";
@@ -52,8 +52,40 @@ onMounted(() => {
 });
 
 const TERMINAL = new Set(["completed", "failed", "rejected", "cancelled", "expired"]);
-const isPending = (s) => s === "awaiting_approval";
+const isPending = (item) => (typeof item === "string" ? item : item?.status) === "awaiting_approval";
 const isDeviceFactor = (item) => item?.requirement?.method === "device_factor";
+
+// Живой отсчёт TTL для pending-запросов — видно валидность ДО клика (в вебе тик безопасен,
+// нет модалки как в native-карточке). `now` тикает раз в секунду, отсчёт идёт от expires_at.
+const now = ref(Date.now());
+let ttlTimer = null;
+onMounted(() => {
+  ttlTimer = setInterval(() => {
+    now.value = Date.now();
+  }, 1000);
+});
+onUnmounted(() => {
+  if (ttlTimer) clearInterval(ttlTimer);
+});
+const remainingSecs = (item) => {
+  if (!item?.expires_at) return null;
+  const ts = Date.parse(item.expires_at);
+  if (Number.isNaN(ts)) return null;
+  return Math.round((ts - now.value) / 1000);
+};
+const ttlExpired = (item) => {
+  const secs = remainingSecs(item);
+  return secs != null && secs <= 0;
+};
+const ttlLabel = (item) => {
+  if (!isPending(item)) return null;
+  const secs = remainingSecs(item);
+  if (secs == null) return null;
+  if (secs <= 0) return t("approvals.expiredNow");
+  const minutes = Math.floor(secs / 60);
+  const seconds = secs % 60;
+  return t("approvals.expiresIn", { time: `${minutes}:${String(seconds).padStart(2, "0")}` });
+};
 
 const statusLabel = (status) => t(`approvals.status.${status}`, {});
 const statusTone = (status) =>
@@ -163,6 +195,13 @@ const onReject = async (item) => {
             <span class="approvals__meta">
               {{ subjectLabel(item.subject_type) }} · {{ item.consequence_class }} ·
               {{ item.created_at }}
+            </span>
+            <span
+              v-if="ttlLabel(item)"
+              class="approvals__ttl"
+              :class="{ 'approvals__ttl--expired': ttlExpired(item) }"
+            >
+              {{ ttlLabel(item) }}
             </span>
           </div>
           <span class="approvals__badge" :class="`approvals__badge--${statusTone(item.status)}`">
@@ -371,6 +410,17 @@ const onReject = async (item) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.approvals__ttl {
+  justify-self: start;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #e6c34d;
+  white-space: nowrap;
+}
+.approvals__ttl--expired {
+  color: #f1a097;
 }
 .approvals__badge {
   font-size: 0.72rem;
