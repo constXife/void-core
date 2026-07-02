@@ -41,13 +41,6 @@ const greeting = computed(() => {
       <p class="assistant-empty__subtitle">{{ t("assistant.empty.subtitle") }}</p>
     </div>
 
-    <div class="assistant-empty__privacy" role="note">
-      <p>
-        {{ t("assistant.empty.providerNotice") }}
-      </p>
-      <p>{{ t("assistant.empty.reliabilityNotice") }}</p>
-    </div>
-
     <div v-if="suggestions.length" class="assistant-empty__suggestions">
       <button
         v-for="(suggestion, index) in suggestions"

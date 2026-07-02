@@ -3,20 +3,27 @@ import { describe, expect, it } from "vitest";
 import AssistantEmptyState from "./AssistantEmptyState.vue";
 
 const messages = {
-  "assistant.empty.subtitle": "Спроси что угодно или начни с подсказки.",
-  "assistant.empty.providerNotice": "Модель настраивает оператор: это может быть сторонний провайдер со своими правилами обработки и retention.",
-  "assistant.empty.reliabilityNotice": "ИИ может ошибаться. Не принимай ответы как проверенный факт без проверки."
+  "assistant.empty.subtitle": "Спроси что угодно или начни с подсказки."
 };
 
 const t = (key) => messages[key] || key;
 
 describe("AssistantEmptyState", () => {
-  it("shows provider and AI reliability notice before the first message", () => {
+  it("keeps the hero clean: provider/reliability notice lives in the composer now", () => {
     const wrapper = mount(AssistantEmptyState, { props: { t } });
 
-    const notice = wrapper.find(".assistant-empty__privacy");
-    expect(notice.exists()).toBe(true);
-    expect(notice.text()).toContain("сторонний провайдер");
-    expect(notice.text()).toContain("ИИ может ошибаться");
+    expect(wrapper.find(".assistant-empty__privacy").exists()).toBe(false);
+    expect(wrapper.find(".assistant-empty__subtitle").text()).toContain("начни с подсказки");
+  });
+
+  it("renders suggestion chips and emits the chosen one", async () => {
+    const wrapper = mount(AssistantEmptyState, {
+      props: { t, suggestions: ["Что у меня в инвентаре?", "Собери дайджест Hacker News"] }
+    });
+
+    const chips = wrapper.findAll(".assistant-empty__chip");
+    expect(chips).toHaveLength(2);
+    await chips[0].trigger("click");
+    expect(wrapper.emitted("choose")).toEqual([["Что у меня в инвентаре?"]]);
   });
 });

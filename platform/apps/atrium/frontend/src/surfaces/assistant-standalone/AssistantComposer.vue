@@ -1,6 +1,6 @@
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
-import { ArrowUp, Square } from "lucide-vue-next";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { ArrowUp, Info, Square } from "lucide-vue-next";
 import AssistantModelPicker from "./AssistantModelPicker.vue";
 
 const props = defineProps({
@@ -109,6 +109,34 @@ const resize = () => {
   node.style.height = `${Math.min(node.scrollHeight, limit)}px`;
 };
 
+// Дисклеймер: короткая строка видна всегда, полный текст (provider + reliability)
+// раскрывается по ⓘ. Закрытие — клик вне или Escape.
+const noteRef = ref(null);
+const noteDetailsOpen = ref(false);
+const closeNoteDetails = () => {
+  noteDetailsOpen.value = false;
+};
+const onDocumentPointerDown = (event) => {
+  if (!noteDetailsOpen.value) return;
+  if (noteRef.value && !noteRef.value.contains(event.target)) closeNoteDetails();
+};
+const onDocumentKeydown = (event) => {
+  if (event.key === "Escape") closeNoteDetails();
+};
+watch(noteDetailsOpen, (open) => {
+  if (open) {
+    document.addEventListener("pointerdown", onDocumentPointerDown, true);
+    document.addEventListener("keydown", onDocumentKeydown);
+  } else {
+    document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+    document.removeEventListener("keydown", onDocumentKeydown);
+  }
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+  document.removeEventListener("keydown", onDocumentKeydown);
+});
+
 watch(
   () => props.modelValue,
   () => {
@@ -181,6 +209,23 @@ watch(
             </Transition>
           </button>
         </div>
+      </div>
+    </div>
+    <div ref="noteRef" class="assistant-composer__note">
+      <span class="assistant-composer__note-text">{{ t("assistant.composer.disclaimer") }}</span>
+      <button
+        type="button"
+        class="assistant-composer__note-info"
+        :aria-label="t('assistant.composer.disclaimerInfo')"
+        :title="t('assistant.composer.disclaimerInfo')"
+        :aria-expanded="noteDetailsOpen"
+        @click="noteDetailsOpen = !noteDetailsOpen"
+      >
+        <Info :size="12" />
+      </button>
+      <div v-if="noteDetailsOpen" class="assistant-composer__note-details" role="note">
+        <p>{{ t("assistant.composer.providerNotice") }}</p>
+        <p>{{ t("assistant.composer.reliabilityNotice") }}</p>
       </div>
     </div>
   </form>

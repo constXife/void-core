@@ -45,3 +45,23 @@ describe("AssistantComposer paste trimming", () => {
     expect(wrapper.emitted("update:modelValue")).toBeFalsy();
   });
 });
+
+describe("AssistantComposer disclaimer", () => {
+  it("shows the short disclaimer and reveals full notices on ⓘ toggle", async () => {
+    const wrapper = mountComposer("");
+
+    const note = wrapper.find(".assistant-composer__note");
+    expect(note.exists()).toBe(true);
+    expect(note.text()).toContain("assistant.composer.disclaimer");
+    expect(wrapper.find(".assistant-composer__note-details").exists()).toBe(false);
+
+    await wrapper.find(".assistant-composer__note-info").trigger("click");
+    const details = wrapper.find(".assistant-composer__note-details");
+    expect(details.exists()).toBe(true);
+    expect(details.text()).toContain("assistant.composer.providerNotice");
+    expect(details.text()).toContain("assistant.composer.reliabilityNotice");
+
+    await wrapper.find(".assistant-composer__note-info").trigger("click");
+    expect(wrapper.find(".assistant-composer__note-details").exists()).toBe(false);
+  });
+});

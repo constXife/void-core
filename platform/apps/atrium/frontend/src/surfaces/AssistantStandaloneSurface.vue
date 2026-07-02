@@ -165,11 +165,13 @@ const activeTabLabel = computed(() => {
   if (activeTab.value === "devices") return t("assistant.tabs.devices");
   return "";
 });
+// Подсказки пустого экрана — витрина реальных способностей платформы
+// (инвентарь, календарь, память, дайджест), а не generic-шаблоны чат-бота.
 const suggestions = computed(() => [
-  t("assistant.suggestion.explainCode"),
-  t("assistant.suggestion.generateIdea"),
-  t("assistant.suggestion.helpEmail"),
-  t("assistant.suggestion.summarize")
+  t("assistant.suggestion.inventory"),
+  t("assistant.suggestion.calendar"),
+  t("assistant.suggestion.memory"),
+  t("assistant.suggestion.digest")
 ]);
 const localizedGroupedSessions = computed(() =>
   groupedSessions.value.map((group) => ({
