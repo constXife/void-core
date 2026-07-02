@@ -50,6 +50,18 @@ export function useAtriumI18n({
   const getStoredLang = () =>
     normalizePlatformLang(settingsStore.getCurrentSpaceJSON("lang", "", LANG_STORAGE_KEY));
   const getSpaceDefaultLang = () => normalizePlatformLang(parseDisplayConfig(currentSpace.value).default_lang);
+  // Язык браузера — сигнал для первого визита, когда ни пользователь, ни оператор
+  // ещё ничего не выбрали. Явный выбор (url/stored) и default пространства выше.
+  const getBrowserLang = () => {
+    const candidates = Array.isArray(navigator.languages) && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language];
+    for (const candidate of candidates) {
+      const normalized = normalizePlatformLang(candidate);
+      if (normalized) return normalized;
+    }
+    return "";
+  };
 
   const resolveLang = () => {
     const supported = supportedLangs.value;
@@ -57,7 +69,8 @@ export function useAtriumI18n({
     const candidates = [
       getLangFromUrl(),
       getStoredLang(),
-      getSpaceDefaultLang()
+      getSpaceDefaultLang(),
+      getBrowserLang()
     ];
     for (const candidate of candidates) {
       if (isSupported(candidate)) return candidate;
