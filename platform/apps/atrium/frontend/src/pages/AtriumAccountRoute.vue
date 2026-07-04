@@ -6,9 +6,10 @@ import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantDevicesPanel from "../surfaces/assistant-standalone/AssistantDevicesPanel.vue";
 import AtriumSessionsPanel from "../surfaces/AtriumSessionsPanel.vue";
 import AtriumApprovalsPanel from "../surfaces/AtriumApprovalsPanel.vue";
+import AtriumNotificationsPanel from "../surfaces/AtriumNotificationsPanel.vue";
 
 // Atrium account-хаб (ADR-0032 §5a / ADR-0033 §7 / ADR-0034): единый раздел профиля —
-// «Устройства» + «Сессии» + «Апрувы» во вкладках (одна кнопка в дропдауне ведёт сюда).
+// «Устройства» + «Сессии» + «Апрувы» + «Уведомления» во вкладках (одна кнопка в дропдауне ведёт сюда).
 // Панели переиспользованы (devices из assistant-standalone, sessions/approvals — atrium).
 // Активная вкладка — в URL (?tab=), чтобы deep-link и перезагрузка не сбрасывали вид.
 
@@ -18,7 +19,7 @@ const { currentLang } = storeToRefs(appStore);
 const route = useRoute();
 const router = useRouter();
 
-const TABS = ["devices", "sessions", "approvals"];
+const TABS = ["devices", "sessions", "approvals", "notifications"];
 const tabFromRoute = () => (TABS.includes(route.query.tab) ? route.query.tab : "devices");
 const activeTab = ref(tabFromRoute());
 
@@ -77,11 +78,22 @@ watch(
         >
           {{ t("account.tab.approvals") }}
         </button>
+        <button
+          type="button"
+          role="tab"
+          class="atrium-account__tab"
+          :class="{ 'atrium-account__tab--active': activeTab === 'notifications' }"
+          :aria-selected="activeTab === 'notifications'"
+          @click="selectTab('notifications')"
+        >
+          {{ t("account.tab.notifications") }}
+        </button>
       </nav>
 
       <div class="atrium-account__sections">
         <AssistantDevicesPanel v-if="activeTab === 'devices'" :t="t" />
         <AtriumSessionsPanel v-else-if="activeTab === 'sessions'" :t="t" />
+        <AtriumNotificationsPanel v-else-if="activeTab === 'notifications'" :t="t" />
         <AtriumApprovalsPanel v-else :t="t" :lang="currentLang" />
       </div>
     </div>
