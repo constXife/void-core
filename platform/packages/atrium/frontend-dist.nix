@@ -26,8 +26,8 @@
     outputHashMode = "recursive";
     outputHash =
       {
-        "aarch64-darwin" = "sha256-Q0Rr2Yb8Vjc/srZbUuuXatD2R80heD1qLlikV4B0uiQ=";
-        "x86_64-linux" = "sha256-YNPjiZFQgRQkMlpZyDBFLhp38//0czgCVdvKx9atuTM=";
+        "aarch64-darwin" = "sha256-n3K1bh3l77Ikwitqz8hho/tarnJMyNDDkFiZelcxoEs=";
+        "x86_64-linux" = "sha256-7mEX/NdgYW036vC8YDmSd2j7rgCqwCILB/7bWvTGmj0=";
       }
       .${
         pkgs.stdenv.hostPlatform.system
