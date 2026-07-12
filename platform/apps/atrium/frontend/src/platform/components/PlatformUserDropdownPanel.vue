@@ -38,8 +38,8 @@ const emit = defineEmits(["set-lang", "toggle-lang", "set-theme", "logout"]);
 const account = computed(() => resolvePlatformUserIdentity(props.user));
 
 const profileHref = computed(() => {
-  if (!props.domain) return "/settings";
-  return `https://atrium.${props.domain}/settings/profile`;
+  if (!props.domain) return "/account";
+  return `https://atrium.${props.domain}/account`;
 });
 
 const resolvedLanguageOptions = computed(() =>
