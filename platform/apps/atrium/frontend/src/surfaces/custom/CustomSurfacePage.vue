@@ -8,7 +8,7 @@
 // Доступен на atrium host (там AppState + inventory dashboard-data endpoint same-origin).
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronLeft } from "lucide-vue-next";
+import { ChevronLeft } from "@lucide/vue";
 
 import {
   fetchLatestPagespec,

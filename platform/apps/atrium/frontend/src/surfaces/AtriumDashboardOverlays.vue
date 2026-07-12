@@ -1,5 +1,5 @@
 <script setup>
-import { X } from "lucide-vue-next";
+import { X } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import Tooltip from "../components/Tooltip.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";

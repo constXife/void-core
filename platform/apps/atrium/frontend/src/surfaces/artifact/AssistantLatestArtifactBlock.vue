@@ -11,7 +11,7 @@
 // Backend resolver уже rendered envelope.blocks per renderProfile (mini | cards | newspaper);
 // мы просто delegating к existing block renderers symmetric с chat-inline / fullscreen flows.
 import { computed } from "vue";
-import { ChevronRight } from "lucide-vue-next";
+import { ChevronRight } from "@lucide/vue";
 
 import BlockRenderer from "../assistant-standalone/blocks/BlockRenderer.vue";
 

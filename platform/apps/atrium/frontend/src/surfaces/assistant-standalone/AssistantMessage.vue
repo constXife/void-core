@@ -9,7 +9,7 @@ import {
   Bot,
   AlertCircle,
   LoaderCircle
-} from "lucide-vue-next";
+} from "@lucide/vue";
 import PlatformUserAvatar from "../../platform/components/PlatformUserAvatar.vue";
 import { hasResolvedPlatformAccount } from "../../platform/account.js";
 import { surfaceRenderHref } from "../../lib/surfaceOrigin.js";

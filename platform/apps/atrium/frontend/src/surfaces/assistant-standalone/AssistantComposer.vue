@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { ArrowUp, Info, Square } from "lucide-vue-next";
+import { ArrowUp, Info, Square } from "@lucide/vue";
 import AssistantModelPicker from "./AssistantModelPicker.vue";
 
 const props = defineProps({

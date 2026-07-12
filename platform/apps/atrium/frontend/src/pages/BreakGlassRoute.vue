@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { TriangleAlert, ChevronLeft, Terminal, Smartphone } from "lucide-vue-next";
+import { TriangleAlert, ChevronLeft, Terminal, Smartphone } from "@lucide/vue";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { runBreakGlassShell, pollBreakGlassResult } from "../lib/assistant-breakglass.js";

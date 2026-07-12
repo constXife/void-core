@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronLeft, Settings } from "lucide-vue-next";
+import { ChevronLeft, Settings } from "@lucide/vue";
 import { computed } from "vue";
 
 const props = defineProps({

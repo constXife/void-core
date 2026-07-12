@@ -1,5 +1,5 @@
 <script setup>
-import { Layout, Settings, Users } from "lucide-vue-next";
+import { Layout, Settings, Users } from "@lucide/vue";
 import { computed } from "vue";
 
 const props = defineProps({

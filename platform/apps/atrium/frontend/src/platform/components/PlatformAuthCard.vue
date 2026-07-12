@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Globe, Moon, Sun, Monitor } from "lucide-vue-next";
+import { Globe, Moon, Sun, Monitor } from "@lucide/vue";
 import PlatformSegmentedControl from "./PlatformSegmentedControl.vue";
 
 const props = defineProps({

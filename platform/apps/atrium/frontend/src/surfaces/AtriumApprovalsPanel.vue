@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
-import { Smartphone, ChevronDown } from "lucide-vue-next";
+import { Smartphone, ChevronDown } from "@lucide/vue";
 import { useApprovalsStore } from "../stores/approvals.js";
 import { groupByDay } from "../lib/group-by-day.js";
 

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
-import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-vue-next";
+import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, ChevronDown } from "@lucide/vue";
 import AssistantSidebarItem from "./AssistantSidebarItem.vue";
 import PlatformIdentityBrand from "../../platform/components/PlatformIdentityBrand.vue";
 

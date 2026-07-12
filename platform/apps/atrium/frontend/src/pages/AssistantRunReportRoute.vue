@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ChevronLeft } from "lucide-vue-next";
+import { ChevronLeft } from "@lucide/vue";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import BlockRenderer from "../surfaces/assistant-standalone/blocks/BlockRenderer.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";

@@ -1,5 +1,5 @@
 <script setup>
-import { Activity, Sparkles } from "lucide-vue-next";
+import { Activity, Sparkles } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";

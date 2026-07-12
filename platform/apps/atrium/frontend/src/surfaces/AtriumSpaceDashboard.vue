@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronDown, X } from "lucide-vue-next";
+import { ChevronDown, X } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import Tooltip from "../components/Tooltip.vue";

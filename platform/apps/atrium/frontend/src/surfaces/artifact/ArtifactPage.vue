@@ -5,7 +5,7 @@
 // Adding a new artifact type later = добавить import + один branch в `rendererFor`.
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronLeft, Trash2 } from "lucide-vue-next";
+import { ChevronLeft, Trash2 } from "@lucide/vue";
 
 import { deleteAssistantSkillRun, readAssistantSkillRun } from "../../lib/assistant-skill-runs.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";

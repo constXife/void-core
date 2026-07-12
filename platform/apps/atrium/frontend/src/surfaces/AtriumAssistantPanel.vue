@@ -1,5 +1,5 @@
 <script setup>
-import { MessageCircle, Send, Square, X } from "lucide-vue-next";
+import { MessageCircle, Send, Square, X } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import { computed, nextTick, ref, watch } from "vue";
 import { useAssistantStore } from "../stores/assistant.js";

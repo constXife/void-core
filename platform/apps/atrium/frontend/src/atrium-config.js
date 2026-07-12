@@ -1,4 +1,4 @@
-import { Bookmark } from "lucide-vue-next";
+import { Bookmark } from "@lucide/vue";
 import { PLATFORM_FALLBACK_LANG } from "./platform/i18n/index.js";
 
 export const HOTKEYS = {

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Sparkles } from "lucide-vue-next";
+import { Sparkles } from "@lucide/vue";
 import { resolvePlatformAccount } from "../../platform/account.js";
 
 const props = defineProps({

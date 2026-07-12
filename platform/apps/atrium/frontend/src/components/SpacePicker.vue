@@ -1,5 +1,5 @@
 <script setup>
-import { Pin, Search, X } from "lucide-vue-next";
+import { Pin, Search, X } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import Tooltip from "./Tooltip.vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";

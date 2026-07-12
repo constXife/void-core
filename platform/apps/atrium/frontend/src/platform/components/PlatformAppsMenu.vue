@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { LayoutGrid } from "lucide-vue-next";
+import { LayoutGrid } from "@lucide/vue";
 import PlatformDropdownAnchor from "./PlatformDropdownAnchor.vue";
 import { loadProductCatalog } from "./platformAppsCatalog.js";
 

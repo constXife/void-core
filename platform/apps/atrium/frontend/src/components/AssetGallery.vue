@@ -5,7 +5,7 @@
 // + чипы для не-картинок. Источник данных (item-тулы / entity-assets read /
 // surface-slot) — забота вызывающего; компонент чисто презентационный.
 import { computed } from "vue";
-import { FileText, Trash2 } from "lucide-vue-next";
+import { FileText, Trash2 } from "@lucide/vue";
 
 const props = defineProps({
   // [{ asset_id, url?, title?, previewable?, mime_type?, asset_type?, original_filename? }]

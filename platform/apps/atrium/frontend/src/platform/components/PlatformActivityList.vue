@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Activity, Inbox, KeyRound, MessageSquare, ShieldCheck } from "lucide-vue-next";
+import { Activity, Inbox, KeyRound, MessageSquare, ShieldCheck } from "@lucide/vue";
 import { groupByDay } from "../../lib/group-by-day.js";
 
 // Презентационный список событий, сгруппированный по дням — общий рендер для колокола

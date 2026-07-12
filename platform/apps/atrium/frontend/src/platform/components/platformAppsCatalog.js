@@ -1,3 +1,5 @@
+const PRODUCT_CLASSIFICATIONS = new Set(["official-product", "client-owned-product"]);
+
 export async function loadProductCatalog(catalogPath, lang) {
   const response = await fetch(catalogPath, { credentials: "same-origin" });
   if (!response.ok) {
@@ -11,7 +13,7 @@ export function productsFromCatalog(payload, lang) {
   const entries = payload?.products;
   if (!Array.isArray(entries)) return [];
   return entries
-    .filter((entry) => entry?.classification === "official-product")
+    .filter((entry) => PRODUCT_CLASSIFICATIONS.has(entry?.classification))
     .sort((left, right) => Number(left?.order || 0) - Number(right?.order || 0))
     .map((entry) => {
       const key = String(entry?.key || "").trim().toLowerCase();

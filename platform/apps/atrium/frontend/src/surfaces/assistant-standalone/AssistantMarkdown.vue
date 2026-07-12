@@ -1,5 +1,5 @@
 <script setup>
-import { X } from "lucide-vue-next";
+import { X } from "@lucide/vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   normalizeMermaidSvgLabels,

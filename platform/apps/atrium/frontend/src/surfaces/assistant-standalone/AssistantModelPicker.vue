@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { ChevronDown, Check, Star, Search, Cpu } from "lucide-vue-next";
+import { ChevronDown, Check, Star, Search, Cpu } from "@lucide/vue";
 
 const props = defineProps({
   targets: { type: Array, default: () => [] },

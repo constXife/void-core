@@ -2,7 +2,7 @@
 import { computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ChevronLeft } from "lucide-vue-next";
+import { ChevronLeft } from "@lucide/vue";
 import TheShellBackdrop from "../components/TheShellBackdrop.vue";
 import { useAssistantRoutinesStore } from "../stores/assistant-routines.js";
 import { useAssistantRunsStore } from "../stores/assistant-runs.js";

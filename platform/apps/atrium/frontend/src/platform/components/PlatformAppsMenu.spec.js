@@ -13,7 +13,7 @@ describe("PlatformAppsMenu", () => {
     vi.unstubAllGlobals();
   });
 
-  it("loads official product surfaces from the product catalog", async () => {
+  it("loads official and explicit client-owned product surfaces from the product catalog", async () => {
     const fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -53,6 +53,13 @@ describe("PlatformAppsMenu", () => {
               title: "Mailpit",
               href: "https://mail.example.test",
               order: 4
+            },
+            {
+              key: "museion",
+              classification: "client-owned-product",
+              title: { translations: { en: "Museion", ru: "Мусейон" } },
+              href: "https://museion.example.test",
+              order: 5
             }
           ]
         })
@@ -80,11 +87,12 @@ describe("PlatformAppsMenu", () => {
       .map((item) => item.attributes("src"));
 
     expect(fetch).toHaveBeenCalledWith("/product-catalog.json", { credentials: "same-origin" });
-    expect(labels).toEqual(["Atrium", "Assistant", "Calendar"]);
+    expect(labels).toEqual(["Atrium", "Assistant", "Calendar", "Museion"]);
     expect(hrefs).toEqual([
       "https://atrium.example.test",
       "https://assistant.example.test",
-      "https://calendar.example.test"
+      "https://calendar.example.test",
+      "https://museion.example.test"
     ]);
     expect(iconImages).toEqual(["/icons/assistant.png"]);
   });

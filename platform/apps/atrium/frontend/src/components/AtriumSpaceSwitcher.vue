@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { ChevronDown, ChevronLeft, ChevronRight } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import { useSpaceStore } from "../stores/space.js";

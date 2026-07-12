@@ -2,7 +2,7 @@
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { Smartphone } from "lucide-vue-next";
+import { Smartphone } from "@lucide/vue";
 import PlatformAppsMenu from "../platform/components/PlatformAppsMenu.vue";
 import PlatformUserDropdown from "../platform/components/UserDropdown.vue";
 import PlatformNotificationCenter from "../platform/components/PlatformNotificationCenter.vue";

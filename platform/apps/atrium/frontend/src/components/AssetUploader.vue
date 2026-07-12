@@ -4,7 +4,7 @@
 // ЛЮБОЙ сущности (attach-to-entity-id), не inventory-specific. Логика заливки целиком
 // в useAssetUpload; здесь только UI и локализация.
 import { onBeforeUnmount, ref } from "vue";
-import { UploadCloud, X, RotateCcw, FileText, Trash2 } from "lucide-vue-next";
+import { UploadCloud, X, RotateCcw, FileText, Trash2 } from "@lucide/vue";
 
 import { useAssetUpload } from "../lib/useAssetUpload.js";
 

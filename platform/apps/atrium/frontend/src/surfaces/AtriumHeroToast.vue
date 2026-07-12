@@ -1,5 +1,5 @@
 <script setup>
-import { Bell, X } from "lucide-vue-next";
+import { Bell, X } from "@lucide/vue";
 import Tooltip from "../components/Tooltip.vue";
 
 defineProps({

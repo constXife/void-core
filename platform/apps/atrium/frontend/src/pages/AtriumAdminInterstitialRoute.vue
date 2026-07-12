@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ShieldCheck, TriangleAlert, Smartphone } from "lucide-vue-next";
+import { ShieldCheck, TriangleAlert, Smartphone } from "@lucide/vue";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import {
   requestAdminElevation,

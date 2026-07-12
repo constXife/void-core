@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Gauge, Smartphone, UserCog } from "lucide-vue-next";
+import { Gauge, Smartphone, UserCog } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import PlatformSettingsRow from "../platform/components/PlatformSettingsRow.vue";
 import PlatformUserDropdownPanel from "../platform/components/PlatformUserDropdownPanel.vue";

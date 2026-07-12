@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { Settings, LogOut, Globe, Sun, Moon, Monitor } from "lucide-vue-next";
+import { Settings, LogOut, Globe, Sun, Moon, Monitor } from "@lucide/vue";
 import PlatformSettingsRow from "./PlatformSettingsRow.vue";
 import PlatformSegmentedControl from "./PlatformSegmentedControl.vue";
 import PlatformUserAvatar from "./PlatformUserAvatar.vue";

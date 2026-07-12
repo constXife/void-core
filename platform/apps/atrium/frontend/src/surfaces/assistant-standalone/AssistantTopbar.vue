@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue";
-import { Menu, ChevronDown } from "lucide-vue-next";
+import { Menu, ChevronDown } from "@lucide/vue";
 
 const props = defineProps({
   activeTab: { type: String, required: true },

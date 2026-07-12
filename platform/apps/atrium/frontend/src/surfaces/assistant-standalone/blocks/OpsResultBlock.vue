@@ -3,7 +3,7 @@
 // НЕ ArtifactLink: у ops-результата нет durable artifact page, output живёт inline.
 // Backend contract: { type: "ops_result", title, category, summary, output? }
 import { computed, ref } from "vue";
-import { Activity, Search, Terminal, RefreshCw, ShieldAlert } from "lucide-vue-next";
+import { Activity, Search, Terminal, RefreshCw, ShieldAlert } from "@lucide/vue";
 
 const props = defineProps({
   block: { type: Object, required: true },

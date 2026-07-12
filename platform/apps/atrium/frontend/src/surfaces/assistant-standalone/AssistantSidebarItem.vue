@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { MoreHorizontal, Pencil, Trash2, RotateCcw } from "lucide-vue-next";
+import { MoreHorizontal, Pencil, Trash2, RotateCcw } from "@lucide/vue";
 
 const props = defineProps({
   session: { type: Object, required: true },

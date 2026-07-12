@@ -7,7 +7,7 @@
 // row click'а симметрично с chat card click'ом.
 import { computed, ref, onMounted } from "vue";
 
-import { Trash2 } from "lucide-vue-next";
+import { Trash2 } from "@lucide/vue";
 
 import { deleteAssistantSkillRun, listAssistantSkillRuns } from "../../lib/assistant-skill-runs.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";

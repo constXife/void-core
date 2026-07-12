@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { Bell, ArrowRight } from "lucide-vue-next";
+import { Bell, ArrowRight } from "@lucide/vue";
 import { connectAssistantUserEvents } from "../../lib/assistant-user-events-client.js";
 import PlatformActivityList from "./PlatformActivityList.vue";
 
