@@ -32,11 +32,17 @@ const policyOptions = computed(() => [
   { id: "external-confirmed", label: t("admin.models.policy.externalConfirmed") }
 ]);
 
+const reasoningOptions = computed(() => [
+  { id: "provider-default", label: t("admin.models.reasoning.providerDefault") },
+  { id: "disabled", label: t("admin.models.reasoning.disabled") }
+]);
+
 const syncDrafts = () => {
   for (const binding of bindings.value) {
     drafts[binding.job_id] = {
       targetId: binding.target_id,
-      dataPolicy: binding.data_policy
+      dataPolicy: binding.data_policy,
+      reasoningPolicy: binding.reasoning_policy
     };
   }
 };
@@ -73,7 +79,9 @@ const isDirty = (binding) => {
   const draft = drafts[binding.job_id];
   return Boolean(
     draft &&
-      (draft.targetId !== binding.target_id || draft.dataPolicy !== binding.data_policy)
+      (draft.targetId !== binding.target_id ||
+        draft.dataPolicy !== binding.data_policy ||
+        draft.reasoningPolicy !== binding.reasoning_policy)
   );
 };
 
@@ -91,6 +99,7 @@ const save = async (binding) => {
         body: JSON.stringify({
           targetId: draft.targetId,
           dataPolicy: draft.dataPolicy,
+          reasoningPolicy: draft.reasoningPolicy,
           expectedRevision: binding.revision
         })
       }
@@ -145,7 +154,7 @@ onMounted(load);
             </div>
           </div>
 
-          <div class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)_auto]">
+          <div class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(190px,0.36fr)_minmax(190px,0.36fr)_auto]">
             <label class="space-y-2">
               <span class="text-xs text-white/50">{{ t("admin.models.model") }}</span>
               <select
@@ -164,6 +173,17 @@ onMounted(load);
                 class="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
               >
                 <option v-for="policy in policyOptions" :key="policy.id" :value="policy.id">
+                  {{ policy.label }}
+                </option>
+              </select>
+            </label>
+            <label class="space-y-2">
+              <span class="text-xs text-white/50">{{ t("admin.models.reasoningPolicy") }}</span>
+              <select
+                v-model="drafts[binding.job_id].reasoningPolicy"
+                class="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
+              >
+                <option v-for="policy in reasoningOptions" :key="policy.id" :value="policy.id">
                   {{ policy.label }}
                 </option>
               </select>
