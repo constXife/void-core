@@ -17,6 +17,7 @@ import AtriumPrivacyRoute from "../pages/AtriumPrivacyRoute.vue";
 import AdminContentRoute from "../pages/admin/AdminContentRoute.vue";
 import AdminDashboardRoute from "../pages/admin/AdminDashboardRoute.vue";
 import AdminMembersRoute from "../pages/admin/AdminMembersRoute.vue";
+import AdminModelsRoute from "../pages/admin/AdminModelsRoute.vue";
 import AdminOverviewRoute from "../pages/admin/AdminOverviewRoute.vue";
 import AdminSpacesRoute from "../pages/admin/AdminSpacesRoute.vue";
 import { hasResolvedPlatformAccount } from "../platform/account.js";
@@ -302,6 +303,11 @@ const routes = [
         path: "members",
         name: "admin-members",
         component: AdminMembersRoute
+      },
+      {
+        path: "models",
+        name: "admin-models",
+        component: AdminModelsRoute
       },
       {
         path: "content",

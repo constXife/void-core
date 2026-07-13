@@ -4,6 +4,7 @@ const ADMIN_TAB_TITLES = {
   overview: "admin.title.overview",
   spaces: "admin.title.spaces",
   members: "admin.title.members",
+  models: "admin.title.models",
   content: "admin.title.content",
   dashboard: "admin.title.dashboard"
 };
@@ -12,6 +13,7 @@ const ADMIN_TAB_SUBTITLES = {
   overview: "admin.subtitle.overview",
   spaces: "admin.subtitle.spaces",
   members: "admin.subtitle.members",
+  models: "admin.subtitle.models",
   content: "admin.subtitle.content",
   dashboard: "admin.subtitle.dashboard"
 };

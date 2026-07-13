@@ -1,6 +1,6 @@
 import { computed, ref, shallowRef } from "vue";
 
-const ADMIN_TABS = new Set(["overview", "spaces", "members", "content", "dashboard"]);
+const ADMIN_TABS = new Set(["overview", "spaces", "members", "models", "content", "dashboard"]);
 
 export const createFallbackRoute = () => ({
   name: "home",
