@@ -1,8 +1,10 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onMounted, reactive, ref } from "vue";
+import { useRoute } from "vue-router";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 
 const appStore = useAtriumAppStore();
+const route = useRoute();
 const { fetchJSON, t } = appStore;
 
 const bindings = ref([]);
@@ -49,6 +51,9 @@ const load = async () => {
       : [];
     targets.value = Array.isArray(payload?.targets) ? payload.targets : [];
     syncDrafts();
+    await nextTick();
+    const selectedJob = String(route.query.job || "");
+    document.querySelector(`[data-model-job="${CSS.escape(selectedJob)}"]`)?.scrollIntoView({ block: "center" });
   } catch (error) {
     console.error("atrium: model routing load failed", error);
     loadFailed.value = true;
@@ -129,7 +134,7 @@ onMounted(load);
     <div v-for="group in groupedBindings" :key="group.elementId" class="admin-card">
       <div class="section-title">{{ group.elementId }}</div>
       <div class="mt-4 divide-y divide-white/5">
-        <div v-for="binding in group.jobs" :key="binding.job_id" class="py-5 first:pt-0 last:pb-0">
+        <div v-for="binding in group.jobs" :key="binding.job_id" :data-model-job="binding.job_id" class="py-5 first:pt-0 last:pb-0" :class="{ 'rounded-xl bg-lime-300/5 px-3 ring-1 ring-lime-300/20': route.query.job === binding.job_id }">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div class="font-medium text-white">{{ binding.operation_id }}</div>
