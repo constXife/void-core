@@ -59,6 +59,11 @@ const load = async () => {
 
 const targetFor = (targetId) => targets.value.find((target) => target.id === targetId) || null;
 
+const executionZoneLabel = (targetId) => {
+  const zone = targetFor(targetId)?.execution_zone;
+  return zone ? t(`admin.models.executionZone.${zone}`) : "";
+};
+
 const isDirty = (binding) => {
   const draft = drafts[binding.job_id];
   return Boolean(
@@ -169,7 +174,8 @@ onMounted(load);
 
           <p class="mt-2 text-xs text-white/35">
             {{ targetFor(drafts[binding.job_id].targetId)?.provider_label || "" }} ·
-            {{ targetFor(drafts[binding.job_id].targetId)?.model || "" }}
+            {{ targetFor(drafts[binding.job_id].targetId)?.model || "" }} ·
+            {{ executionZoneLabel(drafts[binding.job_id].targetId) }}
           </p>
           <p v-if="savedJobId === binding.job_id" class="mt-2 text-xs text-lime-300">
             {{ t("admin.models.saved") }}
