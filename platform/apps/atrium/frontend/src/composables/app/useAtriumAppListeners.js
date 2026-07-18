@@ -25,7 +25,10 @@ export function useAtriumAppListeners({
 
   const updateViewport = () => {
     if (typeof window === "undefined") return;
-    isMobile.value = window.matchMedia("(max-width: 768px)").matches;
+    // Планшетный порог = 1024px, как у ассистент-поверхности (NARROW_QUERY) и CSS
+    // shell/panel-брейкпоинтов. Ниже него виджет-дашборд стекается в колонку
+    // (dashboard-grid-mobile), иначе жёсткая 12-колоночная сетка тесна на iPad.
+    isMobile.value = window.matchMedia("(max-width: 1024px)").matches;
     if (resourcePopoverOpen.value && resourcePopoverAnchor.value) {
       updateResourcePopoverPlacement(resourcePopoverAnchor.value);
     }
