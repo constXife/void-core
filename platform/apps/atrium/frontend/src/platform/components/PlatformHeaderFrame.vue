@@ -1,14 +1,45 @@
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from "vue";
+
 defineProps({
   variant: {
     type: String,
     default: "overlay"
   }
 });
+
+// Overlay-шапка — `position: fixed`, поэтому не резервирует высоту в потоке. На
+// узкой раскладке (≤1024) секции складываются в колонку и высота прыгает. Публикуем
+// реальную высоту как `--platform-header-height`, чтобы контент под ней резервировал
+// именно её (см. `.stage-panel` padding-top), без хардкод-магии.
+const frameRef = ref(null);
+let observer = null;
+
+const publishHeight = (height) => {
+  document.documentElement.style.setProperty(
+    "--platform-header-height",
+    `${Math.round(height)}px`
+  );
+};
+
+onMounted(() => {
+  if (!frameRef.value) return;
+  observer = new ResizeObserver(() => {
+    publishHeight(frameRef.value.getBoundingClientRect().height);
+  });
+  observer.observe(frameRef.value);
+  publishHeight(frameRef.value.getBoundingClientRect().height);
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  document.documentElement.style.removeProperty("--platform-header-height");
+});
 </script>
 
 <template>
   <header
+    ref="frameRef"
     class="platform-header-frame"
     :class="{
       'platform-header-frame--overlay': variant === 'overlay',

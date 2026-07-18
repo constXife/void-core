@@ -77,3 +77,13 @@
   }
 
 }
+
+/* Overlay-шапка складывается в колонку на ≤1024 и вырастает до ~180px. Fixed-элемент
+   не резервирует высоту в потоке, поэтому контент сцены должен отступать сверху на
+   реальную высоту шапки (`--platform-header-height`, публикует PlatformHeaderFrame),
+   иначе stage-title наезжает на переключатель пространства. */
+@media (max-width: 1024px) {
+  .stage-panel {
+    padding-top: calc(var(--platform-header-height, 7rem) + 1rem);
+  }
+}
