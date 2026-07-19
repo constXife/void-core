@@ -105,17 +105,34 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* Планшет (≤1024): всё в одну строку topbar — бренд · переключатель · контролы;
+   бренд/контролы по контенту, переключатель тянется в середине. */
 @media (max-width: 1024px) {
-  /* Бренд и правые контролы в одну строку topbar, переключатель — строкой ниже
-     (иначе логотип занимал целую полосу, а иконки/профиль уезжали отдельным рядом). */
+  .platform-header-frame {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding-inline: 0.75rem;
+  }
+
+  .platform-header-frame__section--right {
+    justify-content: flex-end;
+  }
+
+  .platform-header-frame__section--center {
+    justify-content: stretch;
+  }
+}
+
+/* Телефон (≤640): места на одну строку нет — переключатель уезжает строкой ниже
+   под бренд+контролы, чтобы его не сплющивало. */
+@media (max-width: 640px) {
   .platform-header-frame {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "brand actions"
       "switcher switcher";
     gap: 0.6rem 0.75rem;
-    align-items: center;
-    padding-inline: 0.75rem;
   }
 
   .platform-header-frame__section--left {
@@ -124,12 +141,10 @@ onBeforeUnmount(() => {
 
   .platform-header-frame__section--right {
     grid-area: actions;
-    justify-content: flex-end;
   }
 
   .platform-header-frame__section--center {
     grid-area: switcher;
-    justify-content: stretch;
   }
 }
 </style>
