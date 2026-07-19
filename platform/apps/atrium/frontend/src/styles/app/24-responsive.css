@@ -32,10 +32,6 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-resources {
-    grid-template-columns: 1fr;
-  }
-
   .resource-card {
     width: 100%;
   }
@@ -85,5 +81,25 @@
 @media (max-width: 1024px) {
   .stage-panel {
     padding-top: calc(var(--platform-header-height, 7rem) + 1rem);
+  }
+}
+
+/* Карточки ресурсов: телефон — 1 в ряд; планшет, включая iPad mini в обеих
+   ориентациях (768/1024) — по 2 в ряд, иначе на портрете была одна широкая колонка. */
+@media (max-width: 640px) {
+  .dashboard-resources {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .dashboard-resources {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* База даёт карточкам фиксированные ~200px — в 2-колоночной сетке они бы жались
+     влево в ячейке; тянем на всю ячейку. */
+  .dashboard-resources .resource-card {
+    width: 100%;
   }
 }
