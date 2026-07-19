@@ -8,7 +8,9 @@
 }
 
 @utility stage-scroll-low {
-  scroll-snap-type: none;
+  /* НЕ выключаем scroll-snap в low-perf: он дешёвый (native, GPU) и на iOS
+     единственный надёжный способ залипания (программный scrollTo iOS игнорирует
+     пока не затихла тач-инерция). Low-perf гасит только smooth-анимацию. */
   scroll-behavior: auto;
 }
 
