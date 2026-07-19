@@ -25,6 +25,11 @@ export function useAtriumStageRuntime({
   const lastSpaceSlug = ref("");
 
   let scrollLockTimer = null;
+  let snapIdleTimer = null;
+  // Native `scroll-snap-type: x mandatory` не всегда докручивает на touch (iOS),
+  // из-за чего сцена застревает между дашбордами. После остановки скролла
+  // гарантированно доводим до ближайшей панели (та, которой больше в вьюпорте).
+  const SNAP_IDLE_MS = 110;
 
   const currentSpace = computed(() => spaces.value[currentIndex.value] || null);
   const prevSpace = computed(() => {
@@ -93,6 +98,19 @@ export function useAtriumStageRuntime({
     initialScrollDone.value = true;
   };
 
+  const snapToNearest = () => {
+    if (scrollLock.value) return;
+    const el = stageRef.value;
+    if (!el) return;
+    const width = el.clientWidth;
+    if (!width) return;
+    const index = Math.round(el.scrollLeft / width);
+    const target = width * index;
+    if (Math.abs(el.scrollLeft - target) <= 1) return;
+    const behavior = getPerformanceMode() === "low" ? "auto" : "smooth";
+    el.scrollTo({ left: target, behavior });
+  };
+
   const updateIndex = () => {
     if (scrollLock.value) return;
     const el = stageRef.value;
@@ -107,6 +125,10 @@ export function useAtriumStageRuntime({
         onRecentSpace(active.id);
       }
     }
+    if (snapIdleTimer) {
+      clearTimeout(snapIdleTimer);
+    }
+    snapIdleTimer = setTimeout(snapToNearest, SNAP_IDLE_MS);
   };
 
   watch(currentSpace, (space) => {
@@ -133,6 +155,10 @@ export function useAtriumStageRuntime({
     if (scrollLockTimer) {
       clearTimeout(scrollLockTimer);
       scrollLockTimer = null;
+    }
+    if (snapIdleTimer) {
+      clearTimeout(snapIdleTimer);
+      snapIdleTimer = null;
     }
   };
 

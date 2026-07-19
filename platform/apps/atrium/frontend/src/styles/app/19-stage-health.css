@@ -15,6 +15,7 @@
 @utility stage-panel {
   @apply min-w-screen px-8 pt-28 pb-36;
   scroll-snap-align: center;
+  scroll-snap-stop: always;
 }
 
 @utility stage-header {
