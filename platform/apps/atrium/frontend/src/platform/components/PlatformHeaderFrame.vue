@@ -106,19 +106,30 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1024px) {
+  /* Бренд и правые контролы в одну строку topbar, переключатель — строкой ниже
+     (иначе логотип занимал целую полосу, а иконки/профиль уезжали отдельным рядом). */
   .platform-header-frame {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand actions"
+      "switcher switcher";
+    gap: 0.6rem 0.75rem;
+    align-items: center;
     padding-inline: 0.75rem;
   }
 
-  .platform-header-frame__section--center {
-    order: 3;
-    justify-content: stretch;
+  .platform-header-frame__section--left {
+    grid-area: brand;
   }
 
   .platform-header-frame__section--right {
-    order: 2;
+    grid-area: actions;
+    justify-content: flex-end;
+  }
+
+  .platform-header-frame__section--center {
+    grid-area: switcher;
+    justify-content: stretch;
   }
 }
 </style>

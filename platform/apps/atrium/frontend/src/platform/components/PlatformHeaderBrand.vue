@@ -108,7 +108,6 @@ const props = defineProps({
 
 @media (max-width: 1024px) {
   .platform-header-brand {
-    width: 100%;
     justify-content: flex-start;
   }
 }
