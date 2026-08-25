@@ -11,9 +11,37 @@
     then cfg.generatedConfigPath
     else "/etc/rauthy/config.toml";
   templateEnvFiles = [cfg.envFile] ++ cfg.templateExtraEnvFiles;
+
+  # Шаблон нельзя подставлять как сырой path: любое превращение path в строку
+  # через toString отбрасывает string context, а его делают и
+  # lib.escapeShellArg, и генератор systemd-юнитов NixOS. Без контекста файл не
+  # попадает в references деривации, первый же GC его удаляет — и тогда
+  # activation-скрипт молча пропускает генерацию конфига, а
+  # ConditionPathExists у podman-rauthy становится ложным навсегда: юнит
+  # «skipped, unmet condition check», без единой ошибки в журнале.
+  #
+  # Во флейках это особенно коварно: `configTemplate = ../rauthy.toml`
+  # резолвится в подпуть внутри store path самого флейка, так что даже прямая
+  # интерполяция контекста не даёт — ссылаться на подпуть Nix не умеет.
+  # Поэтому импортируем шаблон отдельным store path и дальше работаем со
+  # строкой, у которой контекст сохранён.
+  #
+  # Строки (абсолютные runtime-пути вроде /etc/rauthy/config.toml.template)
+  # пропускаем как есть: их не нужно и нельзя импортировать в store на
+  # build-машине.
+  configTemplateFile =
+    if cfg.configTemplate == null
+    then null
+    else if builtins.isPath cfg.configTemplate
+    then "${builtins.path {
+      path = cfg.configTemplate;
+      name = "rauthy-config-template";
+    }}"
+    else cfg.configTemplate;
+
   templateScript = ''
-    if [ ! -r ${lib.escapeShellArg cfg.configTemplate} ]; then
-      echo "Missing ${cfg.configTemplate}; skipping Rauthy config generation" >&2
+    if [ ! -r ${lib.escapeShellArg configTemplateFile} ]; then
+      echo "Missing ${configTemplateFile}; skipping Rauthy config generation" >&2
       exit 0
     fi
 
@@ -64,7 +92,7 @@
     ${lib.concatStringsSep " \\\n" (map (entry: ''
       -e "s|${entry.placeholder}|$(escape_sed "$(${pkgs.coreutils}/bin/printenv ${lib.escapeShellArg entry.envVar})")|g"'')
     cfg.secretPlaceholders)} \
-      ${lib.escapeShellArg cfg.configTemplate} > "$tmp"
+      ${lib.escapeShellArg configTemplateFile} > "$tmp"
 
     ${pkgs.coreutils}/bin/install -D -m ${cfg.generatedConfigMode} -o ${cfg.generatedConfigOwner} -g ${cfg.generatedConfigGroup} "$tmp" ${lib.escapeShellArg configPath}
     ${pkgs.coreutils}/bin/rm -f "$tmp"
@@ -269,7 +297,7 @@ in {
         unitConfig.ConditionPathExists =
           [
             cfg.envFile
-            cfg.configTemplate
+            configTemplateFile
           ]
           ++ cfg.templateExtraEnvFiles;
       };
