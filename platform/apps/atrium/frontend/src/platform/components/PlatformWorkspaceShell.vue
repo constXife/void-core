@@ -33,6 +33,7 @@ watch(() => props.narrow && props.sidebarOpen, async (open) => {
     sidebar.value?.querySelector('button, a[href], input')?.focus();
   } else {
     document.removeEventListener("keydown", onKeydown);
+    await nextTick();
     returnFocus?.focus(); returnFocus = null;
   }
 });

@@ -19,6 +19,7 @@ describe("PlatformWorkspaceShell", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(wrapper.emitted("close-sidebar")).toHaveLength(1);
     await wrapper.setProps({ sidebarOpen: false });
+    await nextTick();
     expect(document.activeElement).toBe(wrapper.get(".trigger").element);
     wrapper.unmount();
   });
