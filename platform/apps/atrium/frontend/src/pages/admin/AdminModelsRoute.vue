@@ -1,11 +1,13 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
+import { modelJobPresentation } from "./model-job-presentation.js";
 import { useAtriumAppStore } from "../../stores/atrium-app.js";
 
 const appStore = useAtriumAppStore();
 const route = useRoute();
 const { fetchJSON, t } = appStore;
+const jobCopy = (binding) => modelJobPresentation(binding, t);
 
 const bindings = ref([]);
 const targets = ref([]);
@@ -141,12 +143,13 @@ onMounted(load);
     </div>
 
     <div v-for="group in groupedBindings" :key="group.elementId" class="admin-card">
-      <div class="section-title">{{ group.elementId }}</div>
+      <div class="section-title">{{ group.elementId === "assistant" ? t("admin.models.element.assistant") : group.elementId }}</div>
       <div class="mt-4 divide-y divide-white/5">
         <div v-for="binding in group.jobs" :key="binding.job_id" :data-model-job="binding.job_id" class="py-5 first:pt-0 last:pb-0" :class="{ 'rounded-xl bg-lime-300/5 px-3 ring-1 ring-lime-300/20': route.query.job === binding.job_id }">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div class="font-medium text-white">{{ binding.operation_id }}</div>
+              <div class="font-medium text-white">{{ jobCopy(binding).label }}</div>
+              <p v-if="jobCopy(binding).hint" class="mt-1 max-w-2xl text-sm text-white/50">{{ jobCopy(binding).hint }}</p>
               <div class="mt-1 text-xs text-white/35">{{ binding.job_id }}</div>
             </div>
             <div class="text-xs text-white/35">
@@ -154,34 +157,34 @@ onMounted(load);
             </div>
           </div>
 
-          <div class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(190px,0.36fr)_minmax(190px,0.36fr)_auto]">
-            <label class="space-y-2">
+          <div class="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(190px,0.36fr)_minmax(190px,0.36fr)_auto]">
+            <label class="min-w-0 space-y-2">
               <span class="text-xs text-white/50">{{ t("admin.models.model") }}</span>
               <select
                 v-model="drafts[binding.job_id].targetId"
-                class="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
+                class="w-full min-w-0 rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
               >
                 <option v-for="target in targets" :key="target.id" :value="target.id">
                   {{ target.label }}
                 </option>
               </select>
             </label>
-            <label class="space-y-2">
+            <label class="min-w-0 space-y-2">
               <span class="text-xs text-white/50">{{ t("admin.models.dataPolicy") }}</span>
               <select
                 v-model="drafts[binding.job_id].dataPolicy"
-                class="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
+                class="w-full min-w-0 rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
               >
                 <option v-for="policy in policyOptions" :key="policy.id" :value="policy.id">
                   {{ policy.label }}
                 </option>
               </select>
             </label>
-            <label class="space-y-2">
+            <label class="min-w-0 space-y-2">
               <span class="text-xs text-white/50">{{ t("admin.models.reasoningPolicy") }}</span>
               <select
                 v-model="drafts[binding.job_id].reasoningPolicy"
-                class="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
+                class="w-full min-w-0 rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white"
               >
                 <option v-for="policy in reasoningOptions" :key="policy.id" :value="policy.id">
                   {{ policy.label }}
