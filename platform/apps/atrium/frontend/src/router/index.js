@@ -405,7 +405,7 @@ export function createAtriumRouter(pinia) {
   router.afterEach((to) => {
     if (typeof document === "undefined") return;
     const name = String(to.name || "");
-    document.title = name === "assistant" || name.startsWith("assistant-")
+    document.title = assistantHost || name === "assistant" || name.startsWith("assistant-")
       ? "Void Assistant"
       : "Atrium";
   });

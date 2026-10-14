@@ -1,5 +1,6 @@
 /* Общий workspace + композиция Assistant из Penpot. */
 .assistant-workspace__main { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; }
+.assistant-workspace__main--section { grid-template-rows: minmax(0, 1fr); }
 .assistant-workspace__location { padding: 16px 32px; font-size: 14px; color: var(--ink-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .assistant-workspace .assistant-sidebar { height: 100%; box-sizing: border-box; padding: 8px 16px 12px; }
 .assistant-workspace .assistant-sidebar__top { margin-top: 8px; }

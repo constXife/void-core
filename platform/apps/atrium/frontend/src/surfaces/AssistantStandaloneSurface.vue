@@ -138,19 +138,12 @@ const { instances, filters: routineFilters, saving: routinesSaving } = storeToRe
 // Один список destinations для desktop sidebar и мобильного drawer.
 const sectionTabs = computed(() => [
   { id: "chat", label: t("assistant.tabs.chat") },
-  { id: "artifacts", label: t("assistant.navigation.results"), primary: true },
-  { id: "routines", label: t("assistant.navigation.tasks"), primary: true },
+  { id: "artifacts", label: t("assistant.tabs.artifacts"), primary: true },
+  { id: "routines", label: t("assistant.tabs.routines"), primary: true },
   { id: "capabilities", label: t("assistant.tabs.capabilities") },
   { id: "memory", label: t("assistant.tabs.memory") },
   { id: "pages", label: t("assistant.tabs.pages") }
 ]);
-const activeTabLabel = computed(() => {
-  const inTabs = sectionTabs.value.find((tab) => tab.id === activeTab.value)?.label;
-  if (inTabs) return inTabs;
-  // Account-разделы вне ряда табов (devices) — заголовок для narrow-топбара.
-  if (activeTab.value === "devices") return t("assistant.tabs.devices");
-  return "";
-});
 // Подсказки пустого экрана — витрина реальных способностей платформы
 // (инвентарь и календарь). Остальные сценарии доступны через discovery.
 const suggestions = computed(() => [
@@ -658,8 +651,8 @@ function savePreferredTarget(value) {
     </AssistantSidebar>
 
     </template>
-    <div class="assistant-workspace__main">
-      <div class="assistant-workspace__location">{{ activeTab === 'chat' ? (currentSession?.title || t('assistant.sidebar.newChat')) : activeTabLabel }}</div>
+    <div class="assistant-workspace__main" :class="{ 'assistant-workspace__main--section': activeTab !== 'chat' }">
+      <div v-if="activeTab === 'chat'" class="assistant-workspace__location">{{ currentSession?.title || t('assistant.sidebar.newChat') }}</div>
       <!-- Chat tab — conversation + composer, существующий поток. -->
       <section
         v-if="activeTab === 'chat'"
