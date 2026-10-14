@@ -126,8 +126,8 @@ main content slot. Its caller owns the responsive mode, open/collapsed state and
 sidebar width; the shell owns drawer focus, inert regions and dismissal. Assistant
 is the first workspace consumer. Product data and destinations stay outside this primitive.
 
-Product `PlatformHeaderFrame variant="bar"` uses one row (minimum 64px) across
-viewport sizes. Shared app/account/notification triggers have a 44px touch target.
+Product `PlatformHeaderFrame variant="bar"` keeps global actions on one row
+(minimum 64px). Product-local center content moves below when it no longer fits. Shared app/account/notification triggers have a 44px touch target.
 The app launcher remains catalog-driven and marks the current product with
 `aria-current="page"`. `PlatformDropdownAnchor` closes on Escape and restores
 focus to its trigger.

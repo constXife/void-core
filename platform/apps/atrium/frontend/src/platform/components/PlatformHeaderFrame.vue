@@ -43,7 +43,8 @@ onBeforeUnmount(() => {
     class="platform-header-frame"
     :class="{
       'platform-header-frame--overlay': variant === 'overlay',
-      'platform-header-frame--bar': variant === 'bar'
+      'platform-header-frame--bar': variant === 'bar',
+      'platform-header-frame--with-center': Boolean($slots.center)
     }"
   >
     <div class="platform-header-frame__section platform-header-frame__section--left">
@@ -164,4 +165,14 @@ onBeforeUnmount(() => {
 .platform-header-frame--bar .platform-header-frame__section--left { grid-area: brand; gap: 8px; overflow: hidden; }
 .platform-header-frame--bar .platform-header-frame__section--center { grid-area: switcher; }
 .platform-header-frame--bar .platform-header-frame__section--right { grid-area: actions; }
+/* Локальные инструменты продукта переносятся ниже глобальных действий,
+   когда контент перестаёт помещаться в одной строке. */
+@media (max-width: 760px) {
+  .platform-header-frame--bar.platform-header-frame--with-center {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "brand actions" "switcher switcher";
+    row-gap: 12px;
+  }
+  .platform-header-frame--bar .platform-header-frame__section--center { width: 100%; }
+}
 </style>
