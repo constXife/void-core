@@ -5,6 +5,7 @@ import { computed, nextTick, ref, watch } from "vue";
 import { useAssistantStore } from "../stores/assistant.js";
 import { useAtriumAppStore } from "../stores/atrium-app.js";
 import AssistantMarkdown from "./assistant-standalone/AssistantMarkdown.vue";
+import AssistantModelsStatus from "./assistant-standalone/AssistantModelsStatus.vue";
 import BlockRenderer from "./assistant-standalone/blocks/BlockRenderer.vue";
 
 const assistantStore = useAssistantStore();
@@ -165,6 +166,8 @@ watch(
     </div>
 
     <footer class="atrium-assistant__footer">
+      <AssistantModelsStatus :state="assistantStore.modelsState" :error="assistantStore.modelsError"
+        :t="appStore.t" @retry="assistantStore.loadModels({ force: true })" />
       <div v-if="activeTarget" class="atrium-assistant__model">
         {{ activeTarget.provider_label }} · {{ activeTarget.model }}
       </div>

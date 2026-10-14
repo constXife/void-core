@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { ChevronDown, Check, Star, Search } from "@lucide/vue";
 
 import AssistantExecutionZone from "./AssistantExecutionZone.vue";
+import { useModelMenuPosition } from "./useModelMenuPosition.js";
 
 const props = defineProps({
   targets: { type: Array, default: () => [] },
@@ -21,6 +22,8 @@ const open = ref(false);
 const query = ref("");
 const rootRef = ref(null);
 const searchRef = ref(null);
+const menuRef = ref(null);
+const menuStyle = useModelMenuPosition(open, rootRef);
 const t = (key, vars = {}) => props.t(key, vars);
 
 // Контекстное окно в компактном виде: 160000 → "160k", 1000000 → "1M".
@@ -123,7 +126,7 @@ watch(open, (isOpen) => {
 
 const onDocumentMouseDown = (event) => {
   if (!rootRef.value) return;
-  if (rootRef.value.contains(event.target)) return;
+  if (rootRef.value.contains(event.target) || menuRef.value?.contains(event.target)) return;
   close();
 };
 
@@ -165,7 +168,8 @@ onUnmounted(() => {
       <ChevronDown :size="12" class="assistant-model-picker__chevron" />
     </button>
 
-    <div v-if="open" class="assistant-model-picker__menu" role="listbox">
+    <Teleport to="body">
+    <div v-if="open" ref="menuRef" class="assistant-model-picker__menu" :style="menuStyle">
       <div class="assistant-model-picker__search">
         <Search :size="13" class="assistant-model-picker__search-icon" aria-hidden="true" />
         <input
@@ -178,6 +182,7 @@ onUnmounted(() => {
         />
       </div>
 
+      <div class="assistant-model-picker__options" role="listbox" :aria-label="t('assistant.composer.modelSearch')">
       <p v-if="!hasResults" class="assistant-model-picker__empty">
         {{ t("assistant.composer.modelSearchEmpty") }}
       </p>
@@ -225,6 +230,8 @@ onUnmounted(() => {
           />
         </button>
       </div>
+      </div>
     </div>
+    </Teleport>
   </div>
 </template>

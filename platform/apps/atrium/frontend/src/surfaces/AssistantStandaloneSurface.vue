@@ -8,6 +8,7 @@ import AssistantConversation from "./assistant-standalone/AssistantConversation.
 import ArtifactListPanel from "./artifact/ArtifactListPage.vue";
 import CustomSurfacePagesPanel from "./custom/CustomSurfacePagesPage.vue";
 import AssistantComposer from "./assistant-standalone/AssistantComposer.vue";
+import AssistantModelsStatus from "./assistant-standalone/AssistantModelsStatus.vue";
 import AssistantTopbar from "./assistant-standalone/AssistantTopbar.vue";
 import AssistantCapabilitiesPanel from "./assistant-standalone/AssistantCapabilitiesPanel.vue";
 import AssistantCapabilitiesSidebarFilters from "./assistant-standalone/AssistantCapabilitiesSidebarFilters.vue";
@@ -66,7 +67,7 @@ const t = (key, vars = {}) => props.t(key, vars);
 // Оператор (role === "admin") видит технический slug модели в пикере; резидент — нет.
 const isOperator = computed(() => (props.currentUser?.role || "") === "admin");
 
-const { enabled, loaded, targets, selectedTargetId } = storeToRefs(coreStore);
+const { enabled, modelsState, modelsError, targets, selectedTargetId } = storeToRefs(coreStore);
 const {
   sessions,
   trashedSessions,
@@ -304,7 +305,7 @@ const composerTargetId = computed(() => {
   return selectedTargetId.value || "";
 });
 
-const composerDisabled = computed(() => loaded.value && !enabled.value);
+const composerDisabled = computed(() => !enabled.value);
 
 // Счётчик заполненности контекста: max — окно выбранной модели (если объявлено
 // в конфиге), N — prompt_tokens последнего turn'а текущей сессии (если провайдер
@@ -350,6 +351,7 @@ const onChooseSuggestion = (text) => {
 };
 
 const onSend = async () => {
+  if (!enabled.value) return;
   await sessionsStore.send({ targetId: composerTargetId.value });
   if (currentSessionId.value && route.params.id !== currentSessionId.value) {
     router.replace({ name: "assistant-chat", params: { id: currentSessionId.value } });
@@ -683,10 +685,13 @@ function savePreferredTarget(value) {
           @change-layout="onChangeLayout"
         />
 
+        <AssistantModelsStatus :state="modelsState" :error="modelsError" :t="t"
+          @retry="coreStore.loadModels({ force: true })" />
         <AssistantComposer
           v-model="draft"
+          :models-state="modelsState"
           :streaming="streaming"
-          :can-send="canSend"
+          :can-send="enabled && canSend"
           :targets="targets"
           :selected-target-id="composerTargetId"
           :preferred-target-id="preferredTargetId"

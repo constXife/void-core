@@ -6,7 +6,7 @@ const t = (key) => key;
 
 function mountComposer(modelValue = "") {
   return mount(AssistantComposer, {
-    props: { modelValue, t },
+    props: { modelValue, modelsState: "ready", t },
     global: { stubs: { AssistantModelPicker: true } }
   });
 }
@@ -47,6 +47,14 @@ describe("AssistantComposer paste trimming", () => {
 });
 
 describe("AssistantComposer disclaimer", () => {
+  it("не называет ошибку загрузки отключённым ассистентом", async () => {
+    const wrapper = mountComposer("Черновик");
+    await wrapper.setProps({ modelsState: "error", disabled: true });
+    expect(wrapper.get("textarea").attributes("placeholder")).toBe("assistant.models.unavailable");
+    expect(wrapper.get("textarea").element.value).toBe("Черновик");
+    await wrapper.setProps({ modelsState: "disabled" });
+    expect(wrapper.get("textarea").attributes("placeholder")).toBe("assistant.composer.disabled");
+  });
   it("shows the short disclaimer and reveals full notices on ⓘ toggle", async () => {
     const wrapper = mountComposer("");
 

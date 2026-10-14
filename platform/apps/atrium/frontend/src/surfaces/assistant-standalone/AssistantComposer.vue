@@ -19,6 +19,7 @@ const props = defineProps({
   // Накопительная стоимость сессии в долларах (operator-only); null — не показываем.
   sessionCost: { type: Number, default: null },
   disabled: { type: Boolean, default: false },
+  modelsState: { type: String, required: true },
   t: { type: Function, required: true }
 });
 
@@ -55,9 +56,12 @@ const emit = defineEmits(["update:modelValue", "send", "stop", "select-target"])
 const textareaRef = ref(null);
 const t = (key, vars = {}) => props.t(key, vars);
 
-const placeholder = computed(() =>
-  props.disabled ? props.t("assistant.composer.disabled") : props.t("assistant.composer.placeholder")
-);
+const placeholder = computed(() => {
+  if (props.modelsState === "disabled") return props.t("assistant.composer.disabled");
+  if (props.modelsState === "error") return props.t("assistant.models.unavailable");
+  if (props.modelsState !== "ready") return props.t("assistant.models.loading");
+  return props.t("assistant.composer.placeholder");
+});
 
 const onInput = (event) => {
   emit("update:modelValue", event.target.value);

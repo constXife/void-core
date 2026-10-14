@@ -1991,15 +1991,11 @@
 }
 
 .assistant-model-picker__menu {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  /* The picker sits at the composer's left edge now, so the menu anchors left. */
-  left: 0;
-  z-index: 20;
-  min-width: 18rem;
-  max-width: min(28rem, calc(100vw - 2rem));
-  max-height: 22rem;
-  overflow-y: auto;
+  position: fixed;
+  z-index: 100;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
   padding: 0.4rem;
   background: var(--surface-overlay, var(--surface-raised));
   border: 1px solid var(--border-default);
@@ -2008,6 +2004,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  scrollbar-width: thin;
+}
+
+.assistant-model-picker__options {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 
@@ -2111,6 +2114,7 @@
 }
 
 .assistant-model-picker__search {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.4rem;

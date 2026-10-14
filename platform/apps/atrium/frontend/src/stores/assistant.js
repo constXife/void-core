@@ -9,8 +9,10 @@ import {
 let nextMessageId = 1;
 
 export const useAssistantStore = defineStore("void-assistant", () => {
-  const loaded = ref(false);
-  const enabled = ref(false);
+  const modelsState = ref("idle");
+  const modelsError = ref("");
+  const loaded = computed(() => !["idle", "loading"].includes(modelsState.value));
+  const enabled = computed(() => modelsState.value === "ready");
   const isOpen = ref(false);
   const providers = ref([]);
   const targets = ref([]);
@@ -29,11 +31,13 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     targets.value.find((target) => target.id === selectedTargetId.value) || null
   );
 
-  const visible = computed(() => loaded.value && enabled.value);
+  const visible = computed(() => enabled.value || modelsState.value === "error");
   const canSend = computed(() => enabled.value && !streaming.value && draft.value.trim().length > 0);
 
   const loadModels = async ({ force = false } = {}) => {
-    if (loaded.value && !force) return enabled.value;
+    if (modelsState.value === "loading") return false;
+    if (loaded.value && modelsState.value !== "error" && !force) return enabled.value;
+    modelsState.value = "loading";
 
     try {
       const response = await fetch("/assistant/models", {
@@ -43,36 +47,45 @@ export const useAssistantStore = defineStore("void-assistant", () => {
         }
       });
 
-      if (response.status === 404 || response.status === 401 || response.status === 403) {
-        disableAssistant();
-        return false;
-      }
       if (!response.ok) {
-        throw new Error(response.statusText || "Assistant models request failed");
+        const payload = response.headers.get("Content-Type")?.includes("application/json")
+          ? await response.json() : null;
+        if (response.status === 404 && payload?.error === "void_assistant_disabled") {
+          disableAssistant();
+          return false;
+        }
+        throw new Error(`GET /assistant/models: HTTP ${response.status}: ${payload?.message || response.statusText}`);
       }
 
       const payload = await response.json();
-      providers.value = Array.isArray(payload.providers) ? payload.providers : [];
-      targets.value = Array.isArray(payload.targets) ? payload.targets : [];
-      defaultTargetId.value = String(payload.default_target_id || "");
-      enabled.value = payload.enabled === true && targets.value.length > 0;
-      selectedTargetId.value = targets.value.some((target) => target.id === defaultTargetId.value)
-        ? defaultTargetId.value
-        : "";
-      loaded.value = true;
-      if (!enabled.value) isOpen.value = false;
-      return enabled.value;
+      if (payload.enabled === false) {
+        disableAssistant();
+        return false;
+      }
+      if (payload.enabled !== true || !Array.isArray(payload.providers) ||
+          !Array.isArray(payload.targets) || !payload.targets.length ||
+          !payload.targets.some((target) => target.id === payload.default_target_id)) {
+        throw new Error("GET /assistant/models: invalid model catalog or default target");
+      }
+      providers.value = payload.providers;
+      targets.value = payload.targets;
+      defaultTargetId.value = payload.default_target_id;
+      selectedTargetId.value = payload.default_target_id;
+      modelsError.value = "";
+      modelsState.value = "ready";
+      return true;
     } catch (error) {
       console.error("void-assistant: loadModels failed", error);
-      status.value = String(error?.message || "Assistant load failed");
-      disableAssistant();
+      clearModelCatalog();
+      modelsError.value = String(error?.message || "Assistant models request failed");
+      modelsState.value = "error";
       return false;
     }
   };
 
   const open = async () => {
     const available = await loadModels();
-    if (!available) return;
+    if (!available && modelsState.value !== "error") return;
     isOpen.value = true;
   };
 
@@ -242,14 +255,18 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     );
   };
 
-  const disableAssistant = () => {
-    loaded.value = true;
-    enabled.value = false;
-    isOpen.value = false;
+  const clearModelCatalog = () => {
     providers.value = [];
     targets.value = [];
     defaultTargetId.value = "";
     selectedTargetId.value = "";
+  };
+
+  const disableAssistant = () => {
+    clearModelCatalog();
+    modelsError.value = "";
+    modelsState.value = "disabled";
+    isOpen.value = false;
   };
 
   return {
@@ -266,6 +283,8 @@ export const useAssistantStore = defineStore("void-assistant", () => {
     loadModels,
     loaded,
     messages,
+    modelsState,
+    modelsError,
     open,
     providers,
     selectedTargetId,
