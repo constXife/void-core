@@ -117,7 +117,6 @@ watch(
         <AssistantEmptyState
           v-if="showEmpty && !loading"
           :suggestions="suggestions"
-          :current-user="currentUser"
           :t="t"
           @choose="(value) => emit('choose-suggestion', value)"
         />

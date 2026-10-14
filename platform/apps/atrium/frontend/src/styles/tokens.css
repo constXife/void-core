@@ -60,8 +60,8 @@
 
   /* Ink */
   --ink-primary: var(--color-gray-100);
-  --ink-secondary: var(--color-gray-400);
-  --ink-muted: var(--color-gray-500);
+  --ink-secondary: var(--color-gray-300);
+  --ink-muted: var(--color-gray-400);
 
   /* Border */
   --border-default: var(--color-gray-600);
@@ -75,6 +75,7 @@
   --status-pending: var(--color-blue-500);
 
   /* Accent */
+  --ink-on-accent: var(--color-gray-950);
   --accent-primary: var(--color-blue-500);
   --accent-cyan: var(--color-cyan-500);
   --accent-purple: var(--color-purple-500);
@@ -119,6 +120,7 @@
   --status-pending: var(--color-blue-500);
 
   /* Accent */
+  --ink-on-accent: var(--color-gray-50);
   --accent-primary: var(--color-blue-600);
   --accent-cyan: var(--color-cyan-500);
   --accent-purple: var(--color-purple-500);

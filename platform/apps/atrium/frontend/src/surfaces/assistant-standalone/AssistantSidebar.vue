@@ -1,29 +1,29 @@
 <script setup>
 import { computed, ref } from "vue";
-import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, ChevronDown } from "@lucide/vue";
+import { Plus, Trash2, ChevronDown } from "@lucide/vue";
 import AssistantSidebarItem from "./AssistantSidebarItem.vue";
-import PlatformIdentityBrand from "../../platform/components/PlatformIdentityBrand.vue";
+import AssistantSections from "./AssistantSections.vue";
 
 const props = defineProps({
+  tabs: { type: Array, default: () => [] },
   groups: { type: Array, default: () => [] },
   trashed: { type: Array, default: () => [] },
   trashedLoaded: { type: Boolean, default: false },
   activeId: { type: String, default: "" },
   loading: { type: Boolean, default: false },
   collapsed: { type: Boolean, default: false },
-  identity: { type: Object, required: true },
   activeTab: { type: String, default: "chat" },
   t: { type: Function, required: true }
 });
 
 const emit = defineEmits([
+  "tab-change",
   "new-chat",
   "select",
   "rename",
   "delete",
   "restore",
   "open-trash",
-  "toggle-collapsed",
   "resize-start"
 ]);
 
@@ -71,43 +71,7 @@ const toggleTrash = () => {
 
 <template>
   <aside class="assistant-sidebar" :class="{ 'assistant-sidebar--collapsed': collapsed }">
-    <div class="assistant-sidebar__brand">
-      <!-- В collapsed brand-полоса занята кнопкой untoggle: иконка-логотип в узкой
-           колонке избыточна, а у пользователя должен быть очевидный способ вернуть
-           sidebar обратно. В expanded brand-полоса показывает identity слева и
-           collapse-toggle справа — одна линия с topbar'ом, без отдельного top-блока. -->
-      <button
-        v-if="collapsed"
-        type="button"
-        class="assistant-sidebar__toggle assistant-sidebar__toggle--brand"
-        :title="t('assistant.sidebar.expand')"
-        :aria-label="t('assistant.sidebar.expand')"
-        @click="emit('toggle-collapsed')"
-      >
-        <PanelLeftOpen :size="16" />
-      </button>
-      <template v-else>
-        <slot name="brand" :identity="identity" :collapsed="collapsed">
-          <PlatformIdentityBrand
-            :identity="identity"
-            :collapsed="collapsed"
-            :mark-size="26"
-            :mark-rounded="6"
-          />
-        </slot>
-        <button
-          type="button"
-          class="assistant-sidebar__toggle assistant-sidebar__toggle--brand-end"
-          :title="t('assistant.sidebar.collapse')"
-          :aria-label="t('assistant.sidebar.collapse')"
-          @click="emit('toggle-collapsed')"
-        >
-          <PanelLeftClose :size="14" />
-        </button>
-      </template>
-    </div>
-
-    <div v-if="activeTab === 'chat'" class="assistant-sidebar__top">
+    <div class="assistant-sidebar__top">
       <button
         type="button"
         class="assistant-sidebar__new"
@@ -117,6 +81,14 @@ const toggleTrash = () => {
         <Plus :size="14" />
         <span class="assistant-sidebar__new-label">{{ t("assistant.sidebar.newChat") }}</span>
       </button>
+
+    </div>
+
+    <AssistantSections :tabs="tabs" :active-tab="activeTab" :collapsed="collapsed" :t="t"
+      @select="(id) => emit('tab-change', id)" />
+    <!-- История и фильтры текущего раздела. -->
+    <template v-if="activeTab === 'chat'">
+      <div v-if="!collapsed" class="assistant-sidebar__history-heading">{{ t('assistant.navigation.dialogues') }}</div>
       <input
         v-if="!collapsed"
         v-model="searchQuery"
@@ -126,10 +98,6 @@ const toggleTrash = () => {
         :aria-label="t('assistant.sidebar.searchPlaceholder')"
         @keydown.escape="searchQuery = ''"
       />
-    </div>
-
-    <!-- Chat mode: history list + trash -->
-    <template v-if="activeTab === 'chat'">
       <div class="assistant-sidebar__list">
         <p v-if="loading && groups.length === 0" class="assistant-sidebar__hint">
           {{ t("assistant.sidebar.loadingChats") }}

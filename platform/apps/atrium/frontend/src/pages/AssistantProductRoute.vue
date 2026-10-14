@@ -67,7 +67,7 @@ const logout = async () => {
 </script>
 
 <template>
-  <main class="assistant-product-root">
+  <div class="assistant-product-root">
     <TheShellBackdrop tone="assistant" />
 
     <AssistantStandaloneSurface
@@ -115,7 +115,7 @@ const logout = async () => {
         </a>
       </template>
     </AssistantStandaloneSurface>
-  </main>
+  </div>
 </template>
 
 <style scoped>

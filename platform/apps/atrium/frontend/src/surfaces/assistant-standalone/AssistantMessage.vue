@@ -570,7 +570,7 @@ const onChangeLayout = () => {
           :copy-code-label="t('assistant.message.copyCode')"
           :copied-code-label="t('assistant.message.copiedCode')"
         />
-        <template v-if="!isSkillProposal && !isSurfacePatchProposal && !hasSkillBlocks && isAssistant && (hasRenderableContent || !isStreamingTail)">
+        <template v-if="!isSkillProposal && !isSurfacePatchProposal && !hasSkillBlocks && isAssistant && !message.error && (hasRenderableContent || !isStreamingTail)">
           <template v-for="(segment, index) in contentSegments" :key="`${segment.kind}-${index}`">
             <AssistantMarkdown
               v-if="segment.kind === 'answer'"
@@ -703,9 +703,12 @@ const onChangeLayout = () => {
           <span>{{ streamingStatus }}</span>
         </p>
         <span v-if="showCursor" class="assistant-message__cursor" aria-hidden="true" />
-        <p v-if="message.error" class="assistant-message__error-line">
-          <AlertCircle :size="14" />
-          <span>{{ message.content }}</span>
+        <div v-if="message.error" class="assistant-message__failure" role="alert">
+          <div class="assistant-message__failure-title"><AlertCircle :size="20" />{{ t("assistant.message.failed") }}</div>
+          <p>{{ t("assistant.message.failureHint") }}</p>
+          <details v-if="message.content" class="assistant-message__failure-details">
+            <summary>{{ t("assistant.message.failureDetails") }}</summary><p>{{ message.content }}</p>
+          </details>
           <button
             v-if="showRegenerate"
             type="button"
@@ -715,7 +718,7 @@ const onChangeLayout = () => {
             <RotateCcw :size="13" />
             <span>{{ t("assistant.message.retry") }}</span>
           </button>
-        </p>
+        </div>
         <p v-else-if="message.stopped" class="assistant-message__stopped-line">
           {{ t("assistant.message.stopped") }}
         </p>
@@ -749,7 +752,7 @@ const onChangeLayout = () => {
             <Copy :size="14" />
           </button>
           <button
-            v-if="showRegenerate"
+            v-if="showRegenerate && !message.error"
             type="button"
             class="assistant-message__action"
             @click="onRegenerate"

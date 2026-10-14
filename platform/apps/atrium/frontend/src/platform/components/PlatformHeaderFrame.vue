@@ -50,7 +50,7 @@ onBeforeUnmount(() => {
       <slot name="left" />
     </div>
 
-    <div class="platform-header-frame__section platform-header-frame__section--center">
+    <div v-if="$slots.center" class="platform-header-frame__section platform-header-frame__section--center">
       <slot name="center" />
     </div>
 
@@ -79,6 +79,7 @@ onBeforeUnmount(() => {
 }
 
 .platform-header-frame__section--right {
+  grid-column: 3;
   justify-content: flex-end;
 }
 
@@ -147,4 +148,20 @@ onBeforeUnmount(() => {
     grid-area: switcher;
   }
 }
+/* Общая продуктовая полоса: одна строка на desktop и телефоне. */
+.platform-header-frame--bar {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  grid-template-areas: "brand switcher actions";
+  align-items: center;
+  min-height: 64px;
+  box-sizing: border-box;
+  gap: 8px;
+  padding: 8px clamp(8px, 2vw, 24px);
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+  backdrop-filter: none;
+}
+.platform-header-frame--bar .platform-header-frame__section--left { grid-area: brand; gap: 8px; overflow: hidden; }
+.platform-header-frame--bar .platform-header-frame__section--center { grid-area: switcher; }
+.platform-header-frame--bar .platform-header-frame__section--right { grid-area: actions; }
 </style>

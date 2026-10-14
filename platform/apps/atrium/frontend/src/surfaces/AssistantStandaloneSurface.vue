@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
+import PlatformWorkspaceShell from "../platform/components/PlatformWorkspaceShell.vue";
 import AssistantSidebar from "./assistant-standalone/AssistantSidebar.vue";
 import AssistantConversation from "./assistant-standalone/AssistantConversation.vue";
 import ArtifactListPanel from "./artifact/ArtifactListPage.vue";
@@ -45,7 +46,7 @@ const STORAGE_KEY_PREFERRED_TARGET = "void.assistant.preferred_target_id";
 
 const SIDEBAR_MIN_WIDTH = 220;
 const SIDEBAR_MAX_WIDTH = 480;
-const SIDEBAR_DEFAULT_WIDTH = 280;
+const SIDEBAR_DEFAULT_WIDTH = 260;
 
 const route = useRoute();
 const router = useRouter();
@@ -113,9 +114,7 @@ const TAB_DEFAULTS = {
   routines: { name: "assistant-routines" },
   memory: { name: "assistant-memory" },
   devices: { name: "assistant-devices" },
-  // artifact-list — top-level route (не внутри assistant host wrapper); клик по tab
-  // выводит юзера в standalone ArtifactListPage. Возврат — browser back или клик
-  // на другой tab (router.push снова приведёт в assistant host).
+  // На assistant host список результатов рендерится в общей оболочке.
   artifacts: { name: "artifact-list" },
   // pages — список страниц (shipped ∪ custom). Composer-экрана нет (ADR-0025 §1),
   // авторинг переехал в чат; этот список — нормальная destination таба.
@@ -133,30 +132,17 @@ const activeTab = computed(() => {
   return "chat";
 });
 
-// Counts для tab badges (D5 — показываем всегда, даже 0; null = ещё не загрузили).
-const { skillsCount, skills, filters: skillFilters, availableTrustClasses } = storeToRefs(skillsStore);
-const {
-  instancesCount,
-  instances,
-  filters: routineFilters,
-  loaded: routinesLoaded,
-  saving: routinesSaving
-} = storeToRefs(routinesStore);
-const capabilitiesCount = computed(() => (skillsCount.value > 0 ? skillsCount.value : null));
-const routinesCount = computed(() => (routinesLoaded.value ? instancesCount.value : null));
+const { skills, filters: skillFilters, availableTrustClasses } = storeToRefs(skillsStore);
+const { instances, filters: routineFilters, saving: routinesSaving } = storeToRefs(routinesStore);
 
-// Единый источник табов-разделов для topbar (десктоп) и drawer-навигации
-// (narrow): на телефоне ряд табов не помещается, поэтому переключение
-// разделов переезжает в drawer, а topbar показывает только активный раздел.
+// Один список destinations для desktop sidebar и мобильного drawer.
 const sectionTabs = computed(() => [
-  { id: "chat", label: t("assistant.tabs.chat"), count: null, showCount: false },
-  { id: "capabilities", label: t("assistant.tabs.capabilities"), count: capabilitiesCount.value, showCount: true },
-  { id: "routines", label: t("assistant.tabs.routines"), count: routinesCount.value, showCount: true },
-  { id: "memory", label: t("assistant.tabs.memory"), count: null, showCount: false },
-  // devices — account-раздел (ADR-0032 §5a), не раздел чата: в ряду табов/dropdown
-  // его НЕТ, вход — из account-меню под аватаром; роут/панель ниже сохранены.
-  { id: "artifacts", label: t("assistant.tabs.artifacts"), count: null, showCount: false },
-  { id: "pages", label: t("assistant.tabs.pages"), count: null, showCount: false }
+  { id: "chat", label: t("assistant.tabs.chat") },
+  { id: "artifacts", label: t("assistant.navigation.results"), primary: true },
+  { id: "routines", label: t("assistant.navigation.tasks"), primary: true },
+  { id: "capabilities", label: t("assistant.tabs.capabilities") },
+  { id: "memory", label: t("assistant.tabs.memory") },
+  { id: "pages", label: t("assistant.tabs.pages") }
 ]);
 const activeTabLabel = computed(() => {
   const inTabs = sectionTabs.value.find((tab) => tab.id === activeTab.value)?.label;
@@ -166,12 +152,10 @@ const activeTabLabel = computed(() => {
   return "";
 });
 // Подсказки пустого экрана — витрина реальных способностей платформы
-// (инвентарь, календарь, память, дайджест), а не generic-шаблоны чат-бота.
+// (инвентарь и календарь). Остальные сценарии доступны через discovery.
 const suggestions = computed(() => [
   t("assistant.suggestion.inventory"),
-  t("assistant.suggestion.calendar"),
-  t("assistant.suggestion.memory"),
-  t("assistant.suggestion.digest")
+  t("assistant.suggestion.calendar")
 ]);
 const localizedGroupedSessions = computed(() =>
   groupedSessions.value.map((group) => ({
@@ -274,9 +258,6 @@ const onDrawerSave = async (formValues) => {
   }
 };
 
-const sidebarStyle = computed(() => ({
-  "--assistant-sidebar-width": `${sidebarWidth.value}px`
-}));
 
 let resizeStartX = 0;
 let resizeStartWidth = 0;
@@ -546,8 +527,7 @@ onMounted(async () => {
   // Realtime-канал уровня пользователя: сообщения/статусы/апрувы из других
   // вкладок, устройств и routines применяются без reload страницы.
   sessionsStore.connectUserEvents();
-  // Подгружаем routines + skills в фоне, чтобы counts в tab badges были корректными
-  // ещё до перехода в Capabilities/Routines tab.
+  // Подготавливаем каталоги и фильтры соответствующих разделов.
   skillsStore.loadSkills({ locale: props.lang });
   routinesStore.loadInstances();
 });
@@ -626,14 +606,18 @@ function savePreferredTarget(value) {
 </script>
 
 <template>
-  <section
-    class="assistant-standalone"
-    :class="{
-      'assistant-standalone--sidebar-collapsed': !isNarrow && sidebarCollapsed,
-      'assistant-standalone--mobile-open': isNarrow && mobileSidebarOpen
-    }"
-    :style="sidebarStyle"
-  >
+  <PlatformWorkspaceShell class="assistant-workspace"
+    :sidebar-open="mobileSidebarOpen" :collapsed="sidebarCollapsed" :narrow="isNarrow"
+    :sidebar-width="sidebarWidth" :close-label="t('assistant.sidebar.collapse')"
+    :sidebar-label="t('assistant.tabs.ariaLabel')"
+    @close-sidebar="closeMobileSidebar">
+    <template #header>
+      <AssistantTopbar :identity="identity" :collapsed="isNarrow ? !mobileSidebarOpen : sidebarCollapsed"
+        :t="t" @toggle-sidebar="onSidebarToggle">
+        <template #actions><slot name="main-actions" /></template>
+      </AssistantTopbar>
+    </template>
+    <template #sidebar>
     <AssistantSidebar
       :groups="localizedGroupedSessions"
       :trashed="trashedSessions"
@@ -641,22 +625,18 @@ function savePreferredTarget(value) {
       :active-id="currentSessionId"
       :loading="loadingSessions && sessions.length === 0"
       :collapsed="!isNarrow && sidebarCollapsed"
-      :identity="props.identity"
       :active-tab="activeTab"
+      :tabs="sectionTabs"
       :t="t"
+      @tab-change="onTabChange"
       @new-chat="onNewChat"
       @select="onSelect"
       @rename="onRename"
       @delete="onDelete"
       @restore="onRestore"
       @open-trash="onOpenTrash"
-      @toggle-collapsed="onSidebarToggle"
       @resize-start="onSidebarResizeStart"
     >
-      <template v-if="$slots['sidebar-brand']" #brand="{ identity, collapsed }">
-        <slot name="sidebar-brand" :identity="identity" :collapsed="collapsed" />
-      </template>
-
       <template #capabilities>
         <AssistantCapabilitiesSidebarFilters
           :skills="skills"
@@ -677,34 +657,14 @@ function savePreferredTarget(value) {
       </template>
     </AssistantSidebar>
 
-    <!-- Backdrop drawer'а на narrow: тап вне сайдбара закрывает его. -->
-    <button
-      v-if="isNarrow && mobileSidebarOpen"
-      type="button"
-      class="assistant-standalone__backdrop"
-      :aria-label="t('assistant.sidebar.collapse')"
-      @click="mobileSidebarOpen = false"
-    />
-
-    <main class="assistant-standalone__main">
-      <AssistantTopbar
-        :active-tab="activeTab"
-        :t="t"
-        :show-menu="isNarrow"
-        :tabs="sectionTabs"
-        :active-tab-label="activeTabLabel"
-        @tab-change="onTabChange"
-        @toggle-sidebar="onSidebarToggle"
-      >
-        <template v-if="$slots['main-actions']" #actions>
-          <slot name="main-actions" />
-        </template>
-      </AssistantTopbar>
-
+    </template>
+    <div class="assistant-workspace__main">
+      <div class="assistant-workspace__location">{{ activeTab === 'chat' ? (currentSession?.title || t('assistant.sidebar.newChat')) : activeTabLabel }}</div>
       <!-- Chat tab — conversation + composer, существующий поток. -->
       <section
         v-if="activeTab === 'chat'"
         class="assistant-standalone__tab-panel assistant-standalone__tab-panel--chat"
+        :class="{ 'assistant-standalone__tab-panel--empty': !currentMessages.length && !loadingCurrent }"
       >
         <AssistantConversation
           :messages="currentMessages"
@@ -714,7 +674,7 @@ function savePreferredTarget(value) {
           :latency-tick="latencyTick"
           :loading="loadingCurrent"
           :has-session="Boolean(currentSession)"
-          :suggestions="suggestions"
+          :suggestions="[]"
           :session-key="currentSessionId || 'draft'"
           :lang="props.lang"
           :t="t"
@@ -748,6 +708,12 @@ function savePreferredTarget(value) {
           @stop="onStop"
           @select-target="onSelectTarget"
         />
+
+        <div v-if="!currentMessages.length && !loadingCurrent" class="assistant-workspace__suggestions">
+          <button v-for="suggestion in suggestions" :key="suggestion" type="button"
+            class="assistant-workspace__suggestion" @click="onChooseSuggestion(suggestion)">{{ suggestion }}</button>
+          <button type="button" class="assistant-workspace__discover" @click="onTabChange('capabilities')">{{ t('assistant.navigation.discover') }} →</button>
+        </div>
 
         <p
           v-if="status"
@@ -843,6 +809,6 @@ function savePreferredTarget(value) {
         @switch-to-edit="onDrawerSwitchToEdit"
         @save="onDrawerSave"
       />
-    </main>
-  </section>
+    </div>
+  </PlatformWorkspaceShell>
 </template>

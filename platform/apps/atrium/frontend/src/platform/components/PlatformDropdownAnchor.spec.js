@@ -31,6 +31,15 @@ const Host = defineComponent({
 });
 
 describe("PlatformDropdownAnchor", () => {
+  it("closes on Escape and restores focus to its trigger", async () => {
+    const wrapper = mount(Host, { attachTo: document.body });
+    await wrapper.get(".first-trigger").trigger("click");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
+    await nextTick();
+    expect(wrapper.vm.firstOpen).toBe(false);
+    expect(document.activeElement).toBe(wrapper.get(".first-trigger").element);
+    wrapper.unmount();
+  });
   it("closes other open dropdown anchors when one opens", async () => {
     const wrapper = mount(Host);
 

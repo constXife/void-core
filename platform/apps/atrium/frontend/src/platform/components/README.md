@@ -118,3 +118,16 @@ The contract is composition-first:
 ```
 
 That pattern is the current canonical path for header composition in this app.
+
+## Workspace shell
+
+`PlatformWorkspaceShell.vue` composes named `header` / `sidebar` slots with the
+main content slot. Its caller owns the responsive mode, open/collapsed state and
+sidebar width; the shell owns drawer focus, inert regions and dismissal. Assistant
+is the first workspace consumer. Product data and destinations stay outside this primitive.
+
+Product `PlatformHeaderFrame variant="bar"` uses one row (minimum 64px) across
+viewport sizes. Shared app/account/notification triggers have a 44px touch target.
+The app launcher remains catalog-driven and marks the current product with
+`aria-current="page"`. `PlatformDropdownAnchor` closes on Escape and restores
+focus to its trigger.

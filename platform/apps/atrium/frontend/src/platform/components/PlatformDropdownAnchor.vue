@@ -55,6 +55,13 @@ const handleDocumentClick = (event) => {
   close();
 };
 
+const handleKeydown = (event) => {
+  if (event.key !== "Escape" || !props.open) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  close();
+  rootEl.value?.querySelector("button")?.focus();
+};
 const handleSiblingOpen = (event) => {
   if (!props.open) return;
   if (event?.detail?.anchorId === anchorId) return;
@@ -62,11 +69,13 @@ const handleSiblingOpen = (event) => {
 };
 
 onMounted(() => {
+  document.addEventListener("keydown", handleKeydown);
   document.addEventListener("click", handleDocumentClick);
   document.addEventListener(DROPDOWN_OPEN_EVENT, handleSiblingOpen);
 });
 
 onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeydown);
   document.removeEventListener("click", handleDocumentClick);
   document.removeEventListener(DROPDOWN_OPEN_EVENT, handleSiblingOpen);
 });

@@ -1,6 +1,8 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { ChevronDown, Check, Star, Search, Cpu } from "@lucide/vue";
+import { ChevronDown, Check, Star, Search } from "@lucide/vue";
+
+import AssistantExecutionZone from "./AssistantExecutionZone.vue";
 
 const props = defineProps({
   targets: { type: Array, default: () => [] },
@@ -129,6 +131,7 @@ const onKeydown = (event) => {
   if (event.key === "Escape" && open.value) {
     event.preventDefault();
     close();
+    rootRef.value?.querySelector("button")?.focus();
   }
 };
 
@@ -157,8 +160,8 @@ onUnmounted(() => {
       :aria-haspopup="'listbox'"
       @click="toggle"
     >
-      <Cpu :size="13" class="assistant-model-picker__trigger-icon" aria-hidden="true" />
-      <span class="assistant-model-picker__label">{{ triggerLabel }}</span>
+      <AssistantExecutionZone :zone="activeTarget?.execution_zone || ''" :t="t" />
+      <span class="assistant-model-picker__label" :title="triggerLabel">{{ activeTarget ? displayName(activeTarget) : triggerLabel }}</span>
       <ChevronDown :size="12" class="assistant-model-picker__chevron" />
     </button>
 
@@ -195,12 +198,7 @@ onUnmounted(() => {
           :aria-selected="target.id === selectedId"
           @click="choose(target)"
         >
-          <Check
-            v-if="target.id === selectedId"
-            :size="13"
-            class="assistant-model-picker__check"
-          />
-          <span v-else class="assistant-model-picker__check-spacer" aria-hidden="true" />
+          <AssistantExecutionZone :zone="target.execution_zone || ''" :t="t" />
           <span class="assistant-model-picker__item-text">
             <span class="assistant-model-picker__item-label">{{ displayName(target) }}</span>
             <span
@@ -220,6 +218,11 @@ onUnmounted(() => {
               :aria-label="t('assistant.composer.defaultForNew')"
             />
           </span>
+          <Check
+            v-if="target.id === selectedId"
+            :size="13"
+            class="assistant-model-picker__check"
+          />
         </button>
       </div>
     </div>

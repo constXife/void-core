@@ -183,8 +183,8 @@ const openActivityPage = () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 44px;
+  height: 44px;
   border-radius: 9px;
   border: none;
   background: transparent;

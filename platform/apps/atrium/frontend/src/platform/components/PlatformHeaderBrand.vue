@@ -65,6 +65,7 @@ const props = defineProps({
 }
 
 .platform-header-brand--flat {
+  color: var(--ink-primary);
   padding: 0;
 }
 

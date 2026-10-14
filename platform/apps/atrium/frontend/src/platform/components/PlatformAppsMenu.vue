@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { LayoutGrid } from "@lucide/vue";
+import { LayoutGrid, Check } from "@lucide/vue";
 import PlatformDropdownAnchor from "./PlatformDropdownAnchor.vue";
 import { loadProductCatalog } from "./platformAppsCatalog.js";
 
@@ -113,6 +113,7 @@ function resolveProductHref(productKey) {
         type="button"
         :aria-label="localized.title"
         :title="localized.title"
+        :aria-expanded="open"
         @click.stop="toggle"
       >
         <LayoutGrid :size="17" />
@@ -134,6 +135,7 @@ function resolveProductHref(productKey) {
               'platform-apps-menu__item--disabled': !item.href
             }"
             :href="item.href || undefined"
+            :aria-current="item.key === currentProduct ? 'page' : undefined"
             :type="item.href ? undefined : 'button'"
             :disabled="!item.href"
             :title="!item.href ? localized.unavailable : item.label"
@@ -150,6 +152,7 @@ function resolveProductHref(productKey) {
               <span v-else>{{ item.accent }}</span>
             </span>
             <span class="platform-apps-menu__item-label">{{ item.label }}</span>
+            <Check v-if="item.key === currentProduct" :size="16" aria-hidden="true" />
           </component>
         </div>
       </div>
@@ -158,126 +161,31 @@ function resolveProductHref(productKey) {
 </template>
 
 <style scoped>
-:deep(.platform-apps-menu__panel) {
-  width: min(18rem, calc(100vw - 1.5rem));
-}
-
+:deep(.platform-apps-menu__panel) { width: min(280px, calc(100vw - 24px)); }
 .platform-apps-menu__trigger {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-    rgba(15, 18, 24, 0.84);
-  color: rgba(236, 240, 255, 0.8);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 10px 24px rgba(0, 0, 0, 0.2);
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
+  width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 8px;
+  background: transparent; color: var(--ink-secondary); cursor: pointer;
 }
-
-.platform-apps-menu__trigger:hover {
-  color: rgba(255, 255, 255, 0.96);
-  border-color: rgba(120, 171, 255, 0.26);
-  transform: translateY(-1px);
-}
-
+.platform-apps-menu__trigger:hover { background: var(--surface-overlay); color: var(--ink-primary); }
 .platform-apps-menu {
-  padding: 0.8rem;
-  border-radius: 1.15rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background:
-    radial-gradient(circle at top, rgba(88, 166, 255, 0.14), transparent 52%),
-    rgba(15, 18, 24, 0.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  padding: 8px; border-radius: 12px; border: 1px solid var(--border-default);
+  background: var(--surface-raised); box-shadow: 0 16px 40px #0004;
+  max-height: min(560px, calc(100dvh - 88px)); overflow-y: auto;
 }
-
-.platform-apps-menu__title {
-  margin-bottom: 0.6rem;
-  color: rgba(255, 255, 255, 0.54);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.platform-apps-menu__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem;
-}
-
+.platform-apps-menu__title { padding: 8px; color: var(--ink-secondary); font-size: 13px; }
+.platform-apps-menu__grid { display: grid; gap: 4px; }
 .platform-apps-menu__item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.55rem;
-  min-height: 5.6rem;
-  padding: 0.8rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(247, 249, 255, 0.86);
-  text-decoration: none;
-  text-align: left;
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    transform 160ms ease;
+  display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px;
+  border-radius: 8px; border: 0; background: transparent; color: var(--ink-primary);
+  text-decoration: none; text-align: start; cursor: pointer;
 }
-
-.platform-apps-menu__item:hover {
-  border-color: rgba(120, 171, 255, 0.24);
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-1px);
-}
-
-.platform-apps-menu__item--active {
-  border-color: rgba(120, 171, 255, 0.35);
-  background:
-    linear-gradient(180deg, rgba(88, 166, 255, 0.16), rgba(88, 166, 255, 0.05)),
-    rgba(255, 255, 255, 0.04);
-}
-
-.platform-apps-menu__item--disabled {
-  opacity: 0.48;
-  cursor: default;
-}
-
+.platform-apps-menu__item:hover, .platform-apps-menu__item--active { background: var(--surface-overlay); }
+.platform-apps-menu__item--disabled { opacity: 0.5; cursor: default; }
 .platform-apps-menu__item-icon {
-  width: 2.1rem;
-  height: 2.1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.85rem;
-  font-weight: 700;
-  overflow: hidden;
+  width: 32px; height: 32px; display: grid; place-items: center; flex: 0 0 auto;
+  border-radius: 8px; background: var(--surface-overlay); color: var(--ink-secondary); font-size: 14px;
 }
-
-.platform-apps-menu__item-icon-image {
-  width: 1.55rem;
-  height: 1.55rem;
-  display: block;
-  object-fit: contain;
-}
-
-.platform-apps-menu__item-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-}
+.platform-apps-menu__item-icon-image { width: 24px; height: 24px; object-fit: contain; }
+.platform-apps-menu__item-label { flex: 1; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.platform-apps-menu__trigger:focus-visible, .platform-apps-menu__item:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
 </style>
