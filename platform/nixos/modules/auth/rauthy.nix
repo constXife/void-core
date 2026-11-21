@@ -76,7 +76,7 @@
           exit 1
         fi
 
-        bootstrap_admin_line="password_argon2id = \"$admin_password_hash\""
+        bootstrap_admin_line="pasword_argon2id = \"$admin_password_hash\""
       fi
     ''}
 
@@ -104,8 +104,8 @@ in {
     image = lib.mkOption {
       # governance-open-contract: OCI image references are intentionally free-form.
       type = lib.types.str;
-      default = "ghcr.io/sebadob/rauthy:0.37.2";
-      example = "ghcr.io/sebadob/rauthy:0.37.2";
+      default = "ghcr.io/sebadob/rauthy:0.36.2";
+      example = "ghcr.io/sebadob/rauthy:0.36.2";
       description = "OCI image used for the Rauthy container.";
     };
 
